@@ -1,5 +1,7 @@
   * starting DVD playback at specific title/part positions with
     dvdnav_{title,part}_play() works again
+  * removed wrong SPU stream change event filter
+    (fixes unwanted subtitles in the trailer of "Girl, interrupted", RC2)
 
 libdvdnav (0.1.10)
   * filter the symbols that we export.
