@@ -48,6 +48,7 @@ static uint32_t new_bits(command_t *command, int32_t start, int32_t count) {
   uint64_t result = 0;
   uint64_t bit_mask=0xffffffffffffffff;  /* I could put -1 instead */
   uint64_t examining = 0;
+  int32_t  bits;
   if (count == 0) return 0;
 
   if ( ((count+start) > 64) ||
@@ -59,9 +60,10 @@ static uint32_t new_bits(command_t *command, int32_t start, int32_t count) {
     assert(0);
   }
   bit_mask >>= start;
-  examining = ((bit_mask >> (64-count-start)) << (64-count-start) );
+  bits = 64-count-start;
+  examining = ((bit_mask >> bits) << bits );
   command->examined |= examining;
-  result = (command->instruction & bit_mask) >> (64-count-start);
+  result = (command->instruction & bit_mask) >> bits;
   return (uint32_t) result;
 }
 

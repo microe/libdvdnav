@@ -60,6 +60,7 @@ static int get_video_aspect(vm_t *vm);
 static int get_TT(vm_t *vm,int tt);
 static int get_VTS_TT(vm_t *vm,int vtsN, int vts_ttn);
 static int get_VTS_PTT(vm_t *vm,int vtsN, int vts_ttn, int part);
+static int find_TT(vm_t *vm, int vtsN, int vts_ttn);
 
 static int get_MENU(vm_t *vm,int menu); /*  VTSM & VMGM */
 static int get_FP_PGC(vm_t *vm); /*  FP */
@@ -1314,6 +1315,23 @@ static link_t process_command(vm_t *vm, link_t link_values)
   return link_values;
 }
 
+/* Searches the TT tables, to find the current TT.
+ * returns the current TT.
+ * returns 0 if not found.
+ */
+static int find_TT(vm_t *vm, int vtsN, int vts_ttn) {
+  int i;
+  int tt=0;
+  for(i = 1; i <= vm->vmgi->tt_srpt->nr_of_srpts; i++) {
+    if( vm->vmgi->tt_srpt->title[i - 1].title_set_nr == vtsN && 
+        vm->vmgi->tt_srpt->title[i - 1].vts_ttn == vts_ttn) {
+      tt=i;
+      break;
+    }
+  }
+  return tt; 
+}
+
 static int get_TT(vm_t *vm, int tt)
 {  
   //fprintf(stderr,"****** get_TT is Broken, please fix me!!! ****\n");
@@ -1328,26 +1346,17 @@ static int get_TT(vm_t *vm, int tt)
 
 static int get_VTS_TT(vm_t *vm, int vtsN, int vts_ttn)
 {
-  int pgcN;
-  //fprintf(stderr,"****** get_VTS_TT is Broken, please fix me!!! ****\n");
-  fprintf(stderr,"title_set_nr=%d\n", vtsN);
-  fprintf(stderr,"vts_ttn=%d\n", vts_ttn);
-  
-  (vm->state).domain = VTS_DOMAIN;
-  if(vtsN != (vm->state).vtsN) {
-    fprintf(stderr,"****** opening new VTSI ****\n");
-    ifoOpenNewVTSI(vm, vm->dvd, vtsN); /*  Also sets (vm->state).vtsN */
-    fprintf(stderr,"****** opened VTSI ****\n");
-  }
-  
-  pgcN = get_ID(vm, vts_ttn); /*  This might return -1 */
-  assert(pgcN != -1);
+  fprintf(stderr, "get_VTS_TT called, testing!!! vtsN=%d, vts_ttn=%d\n", vtsN, vts_ttn);
+  return get_VTS_PTT(vm, vtsN, vts_ttn, 1);
+  //pgcN = get_ID(vm, vts_ttn); /*  This might return -1 */
+  //assert(pgcN != -1);
 
-  /* (vm->state).TTN_REG = ?? Must search tt_srpt for a matching entry...   */
-  (vm->state).VTS_TTN_REG = vts_ttn;
+  //(vm->state).TTN_REG = find_TT(*vm, vtsN, vts_ttn);
+  //(vm->state).VTS_TTN_REG = vts_ttn;
+  //(vm->state).vtsN = 
   /* Any other registers? */
   
-  return get_PGC(vm, pgcN);
+  //return get_PGC(vm, pgcN);
 }
 
 
@@ -1364,9 +1373,14 @@ static int get_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int
   
   pgcN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgcn;
   pgN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgn;
-  
-  /* (vm->state).TTN_REG = ?? Must search tt_srpt for a matchhing entry... */
+ 
+  (vm->state).TT_PGCN_REG = pgcN;
+  (vm->state).PTTN_REG = pgN;
+
+  (vm->state).TTN_REG = find_TT(vm, vtsN, vts_ttn);
+  assert( (vm->state.TTN_REG) != 0 );
   (vm->state).VTS_TTN_REG = vts_ttn;
+  (vm->state).vtsN = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
   /* Any other registers? */
   
   (vm->state).pgN = pgN; /*  ?? */
@@ -1555,6 +1569,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.7  2002/04/10 13:09:40  jcdutton
+ * Some improvements to decoder.c
+ * Registers should be updated correctly now, but still needs checking.
+ *
  * Revision 1.6  2002/04/09 15:19:07  jcdutton
  * Added some debug info, to hopefully help in tracking bugs in libdvdnav.
  *
