@@ -177,14 +177,16 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   }
     
   found = 0;
-  target += state->pgc->cell_playback[first_cell_nr-1].first_sector;
   for(cell_nr = first_cell_nr; (cell_nr <= last_cell_nr) && !found; cell_nr ++) {
     cell =  &(state->pgc->cell_playback[cell_nr-1]);
-    if((cell->first_sector <= target) && (cell->last_sector >= target)) {
+    length = cell->last_sector - cell->first_sector + 1;
+    if (target >= length) {
+      target -= length;
+    } else {
+      /* convert the target sector from PG-relative to absolute physical sector */
+      target += cell->first_sector;
       found = 1;
-      state->cellN = cell_nr;
-      state->blockN = 0;
-      state->cell_restart++;
+      break;
     }
   }
 
@@ -192,10 +194,14 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     int32_t vobu, start;
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: Seeking to cell %i from choice of %i to %i\n",
-	    state->cellN, first_cell_nr, last_cell_nr);
+	    cell_nr, first_cell_nr, last_cell_nr);
 #endif
     dvdnav_scan_admap(this, state->domain, target, &vobu);
-    start = state->pgc->cell_playback[state->cellN - 1].first_sector;
+
+    start         = state->pgc->cell_playback[cell_nr-1].first_sector;
+    state->blockN = vobu - start;
+    state->cellN  = cell_nr;
+    state->cell_restart++;
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
       state->cellN,
@@ -203,13 +209,6 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
       target,
       vobu,
       start);
-#endif
-    state->blockN = vobu - start;
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: After vobu=%x start=%x blockN=%x\n" ,
-      vobu,
-      start,
-      state->blockN);
 #endif
     this->vm->hop_channel += HOP_SEEK;
     pthread_mutex_unlock(&this->vm_lock);
@@ -379,8 +378,10 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
 dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
 				    unsigned int *len) {
   uint32_t cur_sector;
+  uint32_t cell_nr;
   uint32_t first_cell_nr;
   uint32_t last_cell_nr;
+  cell_playback_t *cell;
   cell_playback_t *first_cell;
   cell_playback_t *last_cell;
   dvd_state_t *state;
@@ -416,9 +417,21 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
     last_cell_nr = state->pgc->nr_of_cells;
   }
   last_cell = &(state->pgc->cell_playback[last_cell_nr-1]);
+  
+  *pos = -1;
+  *len = 0;
+  for (cell_nr = first_cell_nr; cell_nr <= last_cell_nr; cell_nr++) {
+    cell = &(state->pgc->cell_playback[cell_nr-1]);
+    if (cell_nr == state->cellN) {
+      /* the current sector is in this cell,
+       * pos is length of PG up to here + sector's offset in this cell */
+      *pos = *len + cur_sector - cell->first_sector;
+    }
+    *len += cell->last_sector - cell->first_sector + 1;
+  }
+  
+  assert(*pos != -1);
 
-  *pos= cur_sector - first_cell->first_sector;
-  *len= last_cell->last_sector - first_cell->first_sector;
   pthread_mutex_unlock(&this->vm_lock);
 
   return S_OK;
