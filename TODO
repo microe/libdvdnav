@@ -2,4 +2,4 @@
 * Support Random and Shuffle Titles. Only sequencial Titles are currently supported.
 * Support Still PGCs. Only Still Cells are currently supported.
 * Fix the Next_PGC = 0 problem with some DVDs. Not enought details on this yet.
-* Properly implement seeking and position reporting (do not rely on sequential physical layout)
+* implement PGC based positioning
