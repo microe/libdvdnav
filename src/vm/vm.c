@@ -44,13 +44,7 @@
 
 #ifdef _MSC_VER
 #include <io.h>   /* read() */
-#define lseek64 lseek
 #endif /* _MSC_VER */
-
-#ifdef __CYGWIN__
-# define off64_t off_t
-# define lseek64 lseek
-#endif
 
 /*
 #define STRICT
@@ -132,22 +126,21 @@ static void vm_print_current_domain_state(vm_t *vm) {
 #endif
 
 static void dvd_read_name(char *name, const char *device) {
-    int fd, i;
-#if !defined(__FreeBSD__) && !defined(WIN32)
-    off64_t off;
-#else
+    /* Because we are compiling with _FILE_OFFSET_BITS=64
+     * all off_t are 64bit.
+     */
     off_t off;
-#endif
+    int fd, i;
     uint8_t data[DVD_VIDEO_LB_LEN];
 
     /* Read DVD name */
     fd = open(device, O_RDONLY | O_EXCL);
     if (fd > 0) { 
-      off = lseek64( fd, 32 * (int64_t) DVD_VIDEO_LB_LEN, SEEK_SET );
-      if( off == ( 32 * (int64_t) DVD_VIDEO_LB_LEN ) ) {
+      off = lseek( fd, 32 * (off_t) DVD_VIDEO_LB_LEN, SEEK_SET );
+      if( off == ( 32 * (off_t) DVD_VIDEO_LB_LEN ) ) {
         off = read( fd, data, DVD_VIDEO_LB_LEN ); 
         close(fd);
-        if (off == ( (int64_t) DVD_VIDEO_LB_LEN )) {
+        if (off == ( (off_t) DVD_VIDEO_LB_LEN )) {
           fprintf(MSG_OUT, "libdvdnav: DVD Title: ");
           for(i=25; i < 73; i++ ) {
             if((data[i] == 0)) break;
