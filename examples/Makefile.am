@@ -1,7 +1,7 @@
 
-CFLAGS = -I$(top_srcdir)/src/ 
+CFLAGS = @GLOBAL_CFLAGS@ @THREAD_CFLAGS@ -I$(top_srcdir)/src/
 
-LDFLAGS = -L$(top_srcdir)/src/
+LDFLAGS = @LDFLAGS@ -L$(top_srcdir)/src/
 
 noinst_PROGRAMS = menus
 
