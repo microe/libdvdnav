@@ -597,13 +597,13 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_letterbox=%d\n",stream_change.physical_letterbox);
     fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_pan_scan=%d\n",stream_change.physical_pan_scan);
 #endif
-    pthread_mutex_unlock(&this->vm_lock); 
     if (stream_change.physical_wide != -1 &&
         stream_change.physical_letterbox != -1 &&
         stream_change.physical_pan_scan != -1) {
 #ifdef LOG_DEBUG
       fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE returning S_OK\n");
 #endif
+      pthread_mutex_unlock(&this->vm_lock); 
       return S_OK;
     }
   }
@@ -1010,6 +1010,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.37  2002/09/18 14:26:42  mroi
+ * fix possible unlock on not locked mutex
+ *
  * Revision 1.36  2002/09/17 11:00:21  jcdutton
  * First patch for personalized dvd viewing. I have not tested it yet.
  *
