@@ -162,7 +162,7 @@ dvd_reader_t *vm_get_dvd_reader(vm_t *vm) {
   return vm->dvd;
 }
 
-int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ { 
+int vm_reset(vm_t *vm, const char *dvdroot) /*  , register_t regs) */ { 
   /*  Setup State */
   memset((vm->state).registers.SPRM, 0, sizeof(uint16_t)*24);
   memset((vm->state).registers.GPRM, 0, sizeof((vm->state).registers.GPRM));
@@ -1569,6 +1569,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.8  2002/04/10 16:40:52  jcdutton
+ * Fix a const problem.
+ *
  * Revision 1.7  2002/04/10 13:09:40  jcdutton
  * Some improvements to decoder.c
  * Registers should be updated correctly now, but still needs checking.
