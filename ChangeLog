@@ -1,3 +1,6 @@
+libdvdnav (0.1.9)
+  * libdvdnav does not depend on libdvdread any more. It has it's own version.
+
 libdvdnav (0.1.8)
   * more timing info in cell change event struct
   * documentation review
