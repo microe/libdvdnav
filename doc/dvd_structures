@@ -24,11 +24,16 @@ not know), but they are practically proven in libdvdnav.
          multiangle features
    - VOB (video object)
        * contains multiple ILVUs (usually quite a lot)
-       * one of the *.vob files on the disc
+       * each NAV packet has a CellID, so VOBs are divided into physical Cells
+   - VOBS (video object set)
+       * contains multiple VOBs (addressed by VOB_ID)
+       * a VOBS is the physical analogy to the playback domains below,
+	 therefore, a VMGM_VOBS, a VTSM_VOBS and a VTS_VOBS exist
 2. navigational structure - logical playback control
    - Cell
        * smallest unit which is layed out in sequence physically
-       * points to a first and last VOBU
+       * points to a first and last VOBU (by sector)
+       * also points to the corresponding CellID and VOB_ID
        * smallest unit to execute VM commands (cell_post commands)
        * smallest unit accesible by VM commands (apart from LinkRSM)
    - PG (program)
@@ -67,6 +72,8 @@ not know), but they are practically proven in libdvdnav.
        * one special PGC in the VMGM domain run on start of the disc
    - VMGM (video manager menu) - files video_ts.{vob,ifo,bup}
        * the menu which allows you to select between title sets
+       * physically corresponds to the VMGM_VOBS (video_ts.vob) and
+	 the VMGI (video_ts.ifo)
        * contains sets of PGCs, differentiated by language
        * contains a global table of TTs each pointing to a VTS and a local VTS_TT
        * contains parental management information
@@ -75,10 +82,16 @@ not know), but they are practically proven in libdvdnav.
        * contains a Cell and a VOBU lists with physical sector info (for seeking)
    - VTSM (video title set menu) - files vts_<vtsN>_0.{vob,ifo,bup}
        * the menu which allows you to select between the TTs of a VTS
+       * physically corresponds to the VTSM_VOBS (vts_<vtsN>_0.vob) and
+	 the VTSI (vts_<vtsN>_0.ifo)
        * contains sets of PGCs, differentiated by language
        * contains a Cell and a VOBU lists with physical sector info (for seeking)
-   - VTS (video title set) - files vts_<vtsN>_[1-9].vob, vts_<vtsN>_0.{ifo,bup}
+   - VTS (video title set) - files vts_<vtsN>_[1-x].vob, vts_<vtsN>_0.{ifo,bup}
        * regular playback domain
+       * physically corresponds to the VTS_VOBS (vts_<vtsN>_[1-x].vob) and
+	 the VTSI (vts_<vtsN>_0.ifo)
        * contains one VTS with its VTS_TTs and PGCs
-       * contains a time map (?)
+       * contains a time map (for time-based seeking)
        * contains a Cell and a VOBU lists with physical sector info (for seeking)
+   - STOP
+       * 'nuff said
