@@ -426,21 +426,25 @@ static void eval_set_op(command_t* command, int32_t op, int32_t reg, int32_t reg
       break;
     case 5:
       tmp = get_GPRM(command->registers, reg) * data;
-      if(tmp >= shortmax) tmp = shortmax;
+      if(tmp > shortmax) tmp = shortmax;
       set_GPRM(command->registers, reg, (uint16_t)tmp);
       break;
     case 6:
       if (data != 0) {
         set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) / data) );
       } else {
-        set_GPRM(command->registers, reg, 0); /* Avoid that divide by zero! */
+        set_GPRM(command->registers, reg, 0xffff); /* Avoid that divide by zero! */
       }
       break;
     case 7:
-      set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) % data) );
+      if (data != 0) {
+        set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) % data) );
+      } else {
+        set_GPRM(command->registers, reg, 0xffff); /* Avoid that divide by zero! */
+      }
       break;
-    case 8: /* SPECIAL CASE - RND! */
-      set_GPRM(command->registers, reg, ((uint16_t) ((float) data * rand()/(RAND_MAX+1.0))) );
+    case 8: /* SPECIAL CASE - RND! Return numbers between 1 and data. */
+      set_GPRM(command->registers, reg, 1 + ((uint16_t) ((float) data * rand()/(RAND_MAX+1.0))) );
       break;
     case 9:
       set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) & data) );
