@@ -24,8 +24,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <dlfcn.h>
+
 #include "dvd_reader.h"
 #include "dvd_input.h"
+
+
+#ifndef _MSC_VER
+#define LIBDVDCSS_NAME = "libdvdcss.so.2"
+#else
+#define LIBDVDCSS_NAME = "libdvdcss.dll"
+#endif
 
 /* The function pointers that is the exported interface of this file. */
 dvd_input_t (*dvdinput_open)  (const char *);
@@ -45,8 +54,10 @@ char *      (*dvdinput_error) (dvd_input_t);
 #define DVDcss_read    dvdcss_read
 #define DVDcss_error   dvdcss_error
 #else
+
 /* dlopening libdvdcss */
 #include <dlfcn.h>
+
 typedef struct dvdcss_s *dvdcss_handle;
 static dvdcss_handle (*DVDcss_open)  (const char *);
 static int           (*DVDcss_close) (dvdcss_handle);
@@ -274,8 +285,13 @@ int dvdinput_setup(void)
 
 #else
   /* dlopening libdvdcss */
+
+#ifndef _MSC_VER
   dvdcss_library = dlopen("libdvdcss.so.2", RTLD_LAZY);
-  
+#else
+  dvdcss_library = dlopen("libdvdcss.dll", RTLD_LAZY);
+#endif
+
   if(dvdcss_library != NULL) {
 #if defined(__OpenBSD__) && !defined(__ELF__)
 #define U_S "_"

@@ -21,9 +21,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if defined(_MSC_VER)
-typedef long ssize_t;
-#endif /* _MSC_VER */
+#ifdef _MSC_VER
+#include <config.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#endif
 
 #include <sys/types.h>
 

@@ -314,15 +314,10 @@ dvd_reader_t *DVDOpen( const char *path )
 
 #ifdef _MSC_VER
 
-#ifdef WIN32_CSS
     /* Try to open libdvdcss or fall back to standard functions */
     have_css = dvdinput_setup();
 
     return DVDOpenImageFile( path, have_css );
-#else
-    /* Under Win32, we only try to open image files */
-    return DVDOpenImageFile( path, DVDInputSetup() );
-#endif
 
 #else
 
