@@ -61,7 +61,7 @@ typedef int dvdnav_status_t;
  *   dest     -- Pointer to a dvdnav_t pointer to fill in.
  *   path     -- Any libdvdread acceptable path
  */
-dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path); 
+dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path); 
 
 /**
  * Closes a dvdnav_t previously opened with dvdnav_open(), freeing any 
@@ -286,7 +286,15 @@ dvdnav_status_t dvdnav_get_title_string(dvdnav_t *self, char **title_str);
  * part and the length (in blocks) of said part.
  */
 dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int* pos,
-				   unsigned int *len);
+				    unsigned int *len);
+
+/**
+ * Return the current position (in blocks) within the current
+ * title and the length (in blocks) of said title.
+ */
+dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
+					     unsigned int* pos,
+					     unsigned int *len);
 
 /** Highlights **/
 

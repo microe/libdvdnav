@@ -82,7 +82,7 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * self) {
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
+dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
   dvdnav_t *self;
   
   /* Create a new structure */
@@ -988,6 +988,9 @@ dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.6  2002/04/07 14:10:11  richwareham
+ * Stop C++ bitching about some things and extend the menus example
+ *
  * Revision 1.5  2002/04/06 18:42:05  jcdutton
  * Slight correction to handle quicker menu transitions.
  *

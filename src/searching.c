@@ -318,3 +318,40 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int* pos,
   return S_OK;
 }
 
+dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
+					     unsigned int *pos,
+					     unsigned int *len) {
+  uint32_t cur_sector;
+  uint32_t first_cell_nr;
+  uint32_t last_cell_nr;
+  cell_playback_t *first_cell;
+  cell_playback_t *last_cell;
+  dvd_state_t *state;
+  if((!self) || (!self->vm) )
+   return S_ERR;
+  
+  state = &(self->vm->state);
+  if((!state) || (!state->pgc) )
+   return S_ERR;
+   
+  /* Sanity check */
+  if(state->pgN > state->pgc->nr_of_programs) {
+    return S_ERR;
+  }
+  
+  /* Get current sector */
+  cur_sector = self->vobu_start + self->blockN;
+
+  /* Now find first and last cells in title. */
+  first_cell_nr = state->pgc->program_map[0];
+  first_cell = &(state->pgc->cell_playback[first_cell_nr-1]);
+  last_cell_nr = state->pgc->nr_of_cells;
+  last_cell = &(state->pgc->cell_playback[last_cell_nr-1]);
+  
+  *pos = cur_sector - first_cell->first_sector;
+  *len = last_cell->last_sector - first_cell->first_sector;
+  
+  return S_OK;
+}
+
+
