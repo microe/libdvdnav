@@ -215,7 +215,7 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int *button) {
   }
 
   /* Simply return the appropriate value based on the SPRM */
-  (*button) = (this->vm->state.HL_BTNN_REG) >> 10;
+  (*button) = this->position_current.button;
   
   return S_OK;
 }
@@ -223,10 +223,12 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int *button) {
 static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
   int button = 0;
 
-  if(dvdnav_get_current_highlight(this, &button) != S_OK) {
-    printerr("Unable to get information on current highlight.");
-    return NULL;
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
   }
+
+  button = this->vm->state.HL_BTNN_REG >> 10;
 #ifdef BUTTON_TESTING
   nav_print_PCI(&(this->pci));
 #endif
@@ -353,10 +355,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
 
   pthread_mutex_lock(&this->vm_lock); 
 
-  if(dvdnav_get_current_highlight(this, &button) != S_OK) {
-    pthread_mutex_unlock(&this->vm_lock);
-    return S_ERR;
-  }
+  button = this->vm->state.HL_BTNN_REG >> 10;
 
   if((button <= 0) || (button > pci->hli.hl_gi.btn_ns)) {
     /* Special code to handle still menus with no buttons.
@@ -465,8 +464,7 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int x, int y) {
     return S_ERR;
   }
 
-  if(dvdnav_get_current_highlight(this, &cur_button) != S_OK)
-    return S_ERR;
+  cur_button = this->vm->state.HL_BTNN_REG >> 10;
 
   best = 0;
   dist = 0x08000000; /* >> than  (720*720)+(567*567); */
