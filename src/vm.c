@@ -121,7 +121,7 @@ static void vm_print_current_domain_state(vm_t *vm) {
 }
 #endif
 
-void dvd_read_name( vm_t *this, const char *devname) {
+static void dvd_read_name(char *name, const char *device) {
     int fd, i;
 #ifndef __FreeBSD__
     off64_t off;
@@ -131,7 +131,7 @@ void dvd_read_name( vm_t *this, const char *devname) {
     uint8_t data[DVD_VIDEO_LB_LEN];
 
     /* Read DVD name */
-    fd=open(devname, O_RDONLY);
+    fd=open(device, O_RDONLY);
     if (fd > 0) { 
       off = lseek64( fd, 32 * (int64_t) DVD_VIDEO_LB_LEN, SEEK_SET );
       if( off == ( 32 * (int64_t) DVD_VIDEO_LB_LEN ) ) {
@@ -147,8 +147,8 @@ void dvd_read_name( vm_t *this, const char *devname) {
               fprintf(MSG_OUT, " ");
             }
           }
-          strncpy(&this->dvd_name[0], &data[25], 48);
-          this->dvd_name[48]=0;
+          strncpy(name, &data[25], 48);
+          name[48] = 0;
           fprintf(MSG_OUT, "\nlibdvdnav: DVD Serial Number: ");
           for(i=73; i < 89; i++ ) {
             if((data[i] == 0)) break;
@@ -315,7 +315,7 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
       fprintf(MSG_OUT, "libdvdnav: vm: faild to open/read the DVD\n");
       return 0;
     }
-    dvd_read_name(vm, dvdroot);
+    dvd_read_name(vm->dvd_name, dvdroot);
     vm->map  = remap_loadmap(vm->dvd_name);
     vm->vmgi = ifoOpenVMGI(vm->dvd);
     if(!vm->vmgi) {
@@ -1808,6 +1808,9 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.50  2003/03/29 12:21:15  mroi
+ * dvd_read_name can be static and does not need the whole vm_t*
+ *
  * Revision 1.49  2003/03/27 15:12:22  mroi
  * reorganize mutual header inclusion to fix warnings when compiling with TRACE defined
  * fix vm_jump_title_part to use correct title number (up to now the number was
