@@ -813,9 +813,15 @@ dvdnav_status_t dvdnav_get_title_string(dvdnav_t *this, const char **title_str) 
 uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
   uint8_t         retval;
   
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
-  
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
+
   pthread_mutex_lock(&this->vm_lock);
   retval = (uint8_t)vm_get_video_aspect(this->vm);
   pthread_mutex_unlock(&this->vm_lock);
@@ -826,8 +832,14 @@ uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
 uint8_t dvdnav_get_video_scale_permission(dvdnav_t *this) {
   uint8_t         retval;
   
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock);
   retval = (uint8_t)vm_get_video_scale_permission(this->vm);
@@ -839,8 +851,14 @@ uint8_t dvdnav_get_video_scale_permission(dvdnav_t *this) {
 uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   audio_attr_t  attr;
   
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock); 
   attr = vm_get_audio_attr(this->vm, stream);
@@ -855,8 +873,14 @@ uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *this, uint8_t stream) {
 uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   subp_attr_t  attr;
   
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock); 
   attr = vm_get_subp_attr(this->vm, stream);
@@ -871,11 +895,18 @@ uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *this, uint8_t stream) {
 int8_t dvdnav_get_audio_logical_stream(dvdnav_t *this, uint8_t audio_num) {
   int8_t       retval;
   
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock);
   if (!this->vm->state.pgc) {
+    printerr("No current PGC.");
     pthread_mutex_unlock(&this->vm_lock); 
     return -1;
   }
@@ -888,11 +919,18 @@ int8_t dvdnav_get_audio_logical_stream(dvdnav_t *this, uint8_t audio_num) {
 int8_t dvdnav_get_spu_logical_stream(dvdnav_t *this, uint8_t subp_num) {
   int8_t       retval;
 
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
 
   pthread_mutex_lock(&this->vm_lock);
   if (!this->vm->state.pgc) {
+    printerr("No current PGC.");
     pthread_mutex_unlock(&this->vm_lock); 
     return -1;
   }
@@ -905,11 +943,18 @@ int8_t dvdnav_get_spu_logical_stream(dvdnav_t *this, uint8_t subp_num) {
 int8_t dvdnav_get_active_audio_stream(dvdnav_t *this) {
   int8_t        retval;
 
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock); 
   if (!this->vm->state.pgc) {
+    printerr("No current PGC.");
     pthread_mutex_unlock(&this->vm_lock); 
     return -1;
   }
@@ -922,11 +967,18 @@ int8_t dvdnav_get_active_audio_stream(dvdnav_t *this) {
 int8_t dvdnav_get_active_spu_stream(dvdnav_t *this) {
   int8_t        retval;
 
-  if(!this)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock); 
   if (!this->vm->state.pgc) {
+    printerr("No current PGC.");
     pthread_mutex_unlock(&this->vm_lock); 
     return -1;
   }
@@ -939,8 +991,14 @@ int8_t dvdnav_get_active_spu_stream(dvdnav_t *this) {
 static int8_t dvdnav_is_domain(dvdnav_t *this, domain_t domain) {
   int8_t        retval;
   
-  if (!this || !this->started)
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return -1;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
   
   pthread_mutex_lock(&this->vm_lock);
   retval = (this->vm->state.domain == domain);
@@ -1021,6 +1079,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.49  2003/04/01 11:28:54  mroi
+ * some more sanity checking will prevent segfaults in these functions
+ *
  * Revision 1.48  2003/03/31 13:48:36  mroi
  * update position on HOP_CHANNEL, do not rely on a following CELL_CHANGE
  *
