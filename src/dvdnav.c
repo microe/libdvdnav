@@ -593,6 +593,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     cell_event->pgN   = state->pgN;
     cell_event->cell_length =
       dvdnav_convert_time(&state->pgc->cell_playback[state->cellN-1].playback_time);
+
     cell_event->pg_length = 0;
     /* Find start cell of program. */
     first_cell_nr = state->pgc->program_map[state->pgN-1];
@@ -610,7 +611,12 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     for (i = 1; i < state->cellN; i++)
       cell_event->cell_start +=
         dvdnav_convert_time(&state->pgc->cell_playback[i - 1].playback_time);
-    
+
+    cell_event->pg_start = 0;
+    for (i = 1; i < state->pgc->program_map[state->pgN-1]; i++)
+      cell_event->pg_start +=
+        dvdnav_convert_time(&state->pgc->cell_playback[i - 1].playback_time);
+
     this->position_current.cell         = this->position_next.cell;
     this->position_current.cell_restart = this->position_next.cell_restart;
     this->position_current.cell_start   = this->position_next.cell_start;
@@ -1084,6 +1090,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.52  2003/04/06 13:05:45  mroi
+ * report start of PG as well
+ *
  * Revision 1.51  2003/04/04 14:21:32  mroi
  * fill in new timing member in cell_change event
  *
