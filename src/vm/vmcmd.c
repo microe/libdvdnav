@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2000, 2001 Martin Norbäck, Håkan Hjort
+ *               2002-2004 the dvdnav project
  * 
  * This file is part of libdvdnav, a DVD navigation library. It is modified
  * from a file originally part of the Ogle DVD player.
@@ -29,7 +30,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <inttypes.h>
-#include <assert.h>
 
 #include "dvdnav_internal.h"
 

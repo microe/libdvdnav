@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2000, 2001 Håkan Hjort
  * Copyright (C) 2001 Rich Wareham <richwareham@users.sourceforge.net>
+ *               2002-2004 the dvdnav project
  * 
  * This file is part of libdvdnav, a DVD navigation library. It is modified
  * from a file originally part of the Ogle DVD player.
@@ -866,8 +867,9 @@ video_attr_t vm_get_video_attr(vm_t *vm) {
   case VMGM_DOMAIN:
   case FP_DOMAIN:
     return vm->vmgi->vmgi_mat->vmgm_video_attr;
+  default:
+    abort();
   }
-  assert(0);
 }
 
 audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN) {
@@ -879,8 +881,9 @@ audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN) {
   case VMGM_DOMAIN:
   case FP_DOMAIN:
     return vm->vmgi->vmgi_mat->vmgm_audio_attr;
+  default:
+    abort();
   }
-  assert(0);
 }
 
 subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN) {
@@ -892,8 +895,9 @@ subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN) {
   case VMGM_DOMAIN:
   case FP_DOMAIN:
     return vm->vmgi->vmgi_mat->vmgm_subp_attr;
+  default:
+    abort();
   }
-  assert(0);
 }
 
 
@@ -1055,6 +1059,7 @@ static link_t play_Cell(vm_t *vm) {
     switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type) {
     case 0: /*  Not part of a block */
       assert(0);
+      break;
     case 1: /*  Angle block */
       /* Loop and check each cell instead? So we don't get outside the block? */
       (vm->state).cellN += (vm->state).AGL_REG - 1;
@@ -1159,6 +1164,7 @@ static link_t play_Cell_post(vm_t *vm) {
     switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type) {
     case 0: /*  Not part of a block */
       assert(0);
+      break;
     case 1: /*  Angle block */
       /* Skip the 'other' angles */
       (vm->state).cellN++;
@@ -1808,11 +1814,7 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
     pgcit = get_MENU_PGCIT(vm, vm->vmgi, (vm->state).registers.SPRM[0]);
     break;
   default:
-    pgcit = NULL;    /* Should never hapen */
-    fprintf(MSG_OUT, "libdvdnav: get_PGCIT: Unknown domain:%d\n",
-             (vm->state).domain);
-    assert(0);
-    break;
+    abort();
   }
   
   return pgcit;

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2000, 2001 Martin Norbäck, Håkan Hjort
+ *               2002-2004 the dvdnav project
  * 
  * This file is part of libdvdnav, a DVD navigation library. It is modified
  * from a file originally part of the Ogle DVD player.
@@ -31,7 +32,6 @@
 #include <inttypes.h>
 #include <string.h>  /* For memset */
 #include "ifo_types.h" /* vm_cmd_t */
-#include <assert.h>
 
 #include "dvdnav_internal.h"
 
@@ -49,7 +49,7 @@ uint32_t vm_getbits(command_t *command, int32_t start, int32_t count) {
        (count < 0) ||
        (start < 0) ) {
     fprintf(MSG_OUT, "libdvdnav: Bad call to vm_getbits. Parameter out of range\n");
-    assert(0);
+    abort();
   }
   /* all ones, please */
   bit_mask = ~bit_mask;
@@ -512,7 +512,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
       res = eval_special_instruction(&command, cond);
       if(res == -1) {
 	fprintf(MSG_OUT, "libdvdnav: Unknown Instruction!\n");
-	assert(0);
+	abort();
       }
       break;
     case 1: /*  Link/jump instructions */
@@ -566,7 +566,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
       break;
     default: /* Unknown command */
       fprintf(MSG_OUT, "libdvdnav: WARNING: Unknown Command=%x\n", vm_getbits(&command, 63, 3));
-      assert(0);
+      abort();
   }
   /*  Check if there are bits not yet examined */
 
