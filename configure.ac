@@ -16,7 +16,7 @@ dnl --------------------------------------------------------------
 DVDNAV_MAJOR=0
 DVDNAV_MINOR=1
 DVDNAV_SUB=10
-DVDNAV_PRE="cvs"
+DVDNAV_PRE=""
 
 AC_SUBST(DVDNAV_MAJOR)
 AC_SUBST(DVDNAV_MINOR)
