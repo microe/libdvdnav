@@ -782,7 +782,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
     
     /* release NAV menu filter, when we reach the same NAV packet again */
     if (this->last_cmd_nav_lbn == this->pci.pci_gi.nv_pck_lbn)
-      this->last_cmd_nav_lbn = 0;
+      this->last_cmd_nav_lbn = SRI_END_OF_CELL;
     
     /* Successfully got a NAV packet */
     (*event) = DVDNAV_NAV_PACKET;
