@@ -1394,7 +1394,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
       if(set_VTS_PTT(vm,(vm->state).vtsN, link_values.data1, link_values.data2) == -1)
 	assert(0);
-      link_values = play_PGC_PG(vm, link_values.data2);
+      link_values = play_PGC_PG( vm, (vm->state).pgN ); 
       break;
       
     case JumpSS_FP:
@@ -1834,6 +1834,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.32  2002/09/02 00:27:14  jcdutton
+ * Fix bug in JumpVTS_PTT command.
+ *
  * Revision 1.31  2002/09/01 10:57:15  jcdutton
  * Add a bit more debug info. Now print PGCN in debug.
  *
