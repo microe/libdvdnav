@@ -42,6 +42,10 @@
 #include "vm.h"
 #include "dvdnav_internal.h"
 
+/*
+#define STRICT
+*/
+
 /* Local prototypes */
 
 static void saveRSMinfo(vm_t *vm,int cellN, int blockN);
@@ -987,9 +991,17 @@ static link_t play_Cell(vm_t *vm)
     case 1: /*  Angle block */
       /* Loop and check each cell instead? So we don't get outsid the block. */
       (vm->state).cellN += (vm->state).AGL_REG - 1;
+#ifdef STRICT
       assert((vm->state).cellN <= (vm->state).pgc->nr_of_cells);
       assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0);
       assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1);
+#endif
+      if (!((vm->state).cellN <= (vm->state).pgc->nr_of_cells) ||
+          !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0) ||
+	  !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1)) {
+	fprintf(stderr, "libdvdnav: Invalid angle block\n");
+	(vm->state).cellN -= (vm->state).AGL_REG - 1;
+      }
       break;
     case 2: /*  ?? */
     case 3: /*  ?? */
@@ -1038,17 +1050,24 @@ static link_t play_Cell_post(vm_t *vm)
   if(cell->cell_cmd_nr != 0) {
     link_t link_values;
     
+#ifdef STRICT
     assert((vm->state).pgc->command_tbl != NULL);
     assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
-#ifdef TRACE
-    fprintf(stderr, "Cell command pressent, executing\n");
 #endif
-    if(vmEval_CMD(&(vm->state).pgc->command_tbl->cell_cmds[cell->cell_cmd_nr - 1], 1,
-		  &(vm->state).registers, &link_values)) {
-      return link_values;
+    if ((vm->state).pgc->command_tbl != NULL &&
+        (vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr) {
+#ifdef TRACE
+      fprintf(stderr, "Cell command pressent, executing\n");
+#endif
+      if(vmEval_CMD(&(vm->state).pgc->command_tbl->cell_cmds[cell->cell_cmd_nr - 1], 1,
+		    &(vm->state).registers, &link_values)) {
+        return link_values;
+      } else {
+        fprintf(stderr, "Cell command didn't do a Jump, Link or Call\n");
+        /*  Error ?? goto tail? goto next PG? or what? just continue? */
+      }
     } else {
-       fprintf(stderr, "Cell command didn't do a Jump, Link or Call\n");
-      /*  Error ?? goto tail? goto next PG? or what? just continue? */
+      fprintf(stderr, "libdvdnav: Invalid Cell command\n");
     }
   }
   
@@ -1798,6 +1817,11 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.25  2002/08/21 15:25:50  mroi
+ * fix playback of the following dvds
+ *  - Bram Stoker's Dracula RC2
+ *  - The Cell RC2, German FSK16
+ *
  * Revision 1.24  2002/07/05 14:18:55  mroi
  * report all spu types (widescreen, letterbox and pan&scan), not widescreen
  * only and report the stream's scale permissions to detect pan&scan material
