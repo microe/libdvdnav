@@ -114,22 +114,64 @@ static const char *system_reg_abbr_table[] = {
   NULL,
   NULL,
 };
+
+typedef struct {
+  uint16_t SPRM[24];
+  uint16_t GPRM[16];
+  uint8_t  GPRM_mode[16];  /* Need to have some thing to indicate normal/counter mode for every
+GPRM */
+  struct timeval GPRM_time[16]; /* For counter mode */
+} registers_t;
+
+typedef struct
+{
+  uint64_t instruction;
+  uint64_t examined;
+  registers_t *registers;
+} command_t;
+
+uint32_t vm_getbits(command_t *command, int start, int count) {
+  uint64_t result = 0;
+  uint64_t bit_mask=0xffffffffffffffff;  /* I could put -1 instead */
+  uint64_t examining = 0;
+  int32_t  bits;
+  if (count == 0) return 0;
+
+  if ( ((start - count) < -1) ||
+       (count > 32) ||
+       (start > 63) ||
+       (count < 0) ||
+       (start < 0) ){
+    fprintf(stderr, "Bad call to vm_getbits. Parameter out of range\n");
+    assert(0);
+  }
+  bit_mask >>= 63 - start;
+  bits = start + 1 - count;
+  examining = ((bit_mask >> bits) << bits );
+  command->examined |= examining;
+  result = (command->instruction & bit_mask) >> bits;
+  return (uint32_t) result;
+}
     
 static void print_system_reg(uint16_t reg) {
   if(reg < sizeof(system_reg_abbr_table) / sizeof(char *))
-    fprintf(MSG_OUT, " %s (SRPM:%d)", system_reg_table[reg], reg);
+    fprintf(MSG_OUT, "%s (SRPM:%d)", system_reg_table[reg], reg);
   else
     fprintf(MSG_OUT, " WARNING: Unknown system register ( reg=%d ) ", reg);
+}
+
+static void print_g_reg(uint8_t reg) {
+    if(reg < 16)
+      fprintf(MSG_OUT, "g[%" PRIu8 "]", reg);
+    else
+      fprintf(MSG_OUT, " WARNING: Unknown general register ");
 }
 
 static void print_reg(uint8_t reg) {
   if(reg & 0x80)
     print_system_reg(reg & 0x7f);
   else
-    if(reg < 16)
-      fprintf(MSG_OUT, " g[%" PRIu8 "]", reg);
-    else
-      fprintf(MSG_OUT, " WARNING: Unknown general register ");
+    print_g_reg(reg & 0x7f);
 }
 
 static void print_cmp_op(uint8_t op) {
@@ -146,99 +188,133 @@ static void print_set_op(uint8_t op) {
     fprintf(MSG_OUT, " WARNING: Unknown set op ");
 }
 
-static void print_reg_or_data(command_t* command, int immediate, int byte) {
+static void print_reg_or_data(command_t* command, int immediate, int start) {
   if(immediate) {
-    int i = vm_getbits(command, (byte*8), 16);
+    int i = vm_getbits(command, start, 16);
     
     fprintf(MSG_OUT, "0x%x", i);
     if(isprint(i & 0xff) && isprint((i>>8) & 0xff))
       fprintf(MSG_OUT, " (\"%c%c\")", (char)((i>>8) & 0xff), (char)(i & 0xff));
   } else {
-    print_reg(vm_getbits(command, ((byte + 1)*8), 8));
+    print_reg(vm_getbits(command, start - 8, 8));
   }
 }
 
-static void print_reg_or_data_2(command_t* command, int immediate, int byte) {
+static void print_reg_or_data_2(command_t* command, int immediate, int start) {
   if(immediate)
-    fprintf(MSG_OUT, "0x%x", vm_getbits(command, ((byte*8)+1), 7));
+    fprintf(MSG_OUT, "0x%x", vm_getbits(command, start - 9, 7));
   else
-    fprintf(MSG_OUT, "g[%" PRIu8 "]", vm_getbits(command, ((byte*8)+4), 4));
+    fprintf(MSG_OUT, "g[%" PRIu8 "]", vm_getbits(command, start - 4, 4));
 }
 
+static void print_reg_or_data_3(command_t* command, int immediate, int start) {
+  if(immediate) {
+    int i = vm_getbits(command, start, 16);
+    
+    fprintf(MSG_OUT, "0x%x", i);
+    if(isprint(i & 0xff) && isprint((i>>8) & 0xff))
+      fprintf(MSG_OUT, " (\"%c%c\")", (char)((i>>8) & 0xff), (char)(i & 0xff));
+  } else {
+    print_reg(vm_getbits(command, start, 8));
+  }
+}
+
+
 static void print_if_version_1(command_t* command) {
-  uint8_t op = vm_getbits(command, 9, 3);
+  uint8_t op = vm_getbits(command, 54, 3);
   
   if(op) {
     fprintf(MSG_OUT, "if (");
-    print_reg(vm_getbits(command,24,8));
+    print_reg(vm_getbits(command,39,8));
     print_cmp_op(op);
-    print_reg_or_data(command, vm_getbits(command, 8,1), 4);
+    print_reg_or_data(command, vm_getbits(command, 55,1), 31);
     fprintf(MSG_OUT, ") ");
   }
 }
 
 static void print_if_version_2(command_t* command) {
-  uint8_t op = vm_getbits(command, 9, 3);
+  uint8_t op = vm_getbits(command, 54, 3);
   
   if(op) {
     fprintf(MSG_OUT, "if (");
-    print_reg(vm_getbits(command, 48, 8));
+    print_reg(vm_getbits(command, 15, 8));
     print_cmp_op(op);
-    print_reg(vm_getbits(command, 56, 8));
+    print_reg(vm_getbits(command, 7, 8));
     fprintf(MSG_OUT, ") ");
   }
 }
 
 static void print_if_version_3(command_t* command) {
-  uint8_t op = vm_getbits(command, 9, 3);
+  uint8_t op = vm_getbits(command, 54, 3);
   
   if(op) {
     fprintf(MSG_OUT, "if (");
-    print_reg(vm_getbits(command, 20, 4));
+    print_reg(vm_getbits(command, 43, 4));
     print_cmp_op(op);
-    print_reg_or_data(command, vm_getbits(command, 8, 1), 6);
+    print_reg_or_data(command, vm_getbits(command, 55, 1), 15);
     fprintf(MSG_OUT, ") ");
   }
 }
 
 static void print_if_version_4(command_t* command) {
-  uint8_t op = vm_getbits(command, 9, 3);
-  
+  uint8_t op = vm_getbits(command, 54, 3);
+
   if(op) {
     fprintf(MSG_OUT, "if (");
-    print_reg(vm_getbits(command, 12, 4));
+    print_g_reg(vm_getbits(command, 51, 4));
     print_cmp_op(op);
-    print_reg_or_data(command, vm_getbits(command, 8, 1), 4);
+    print_reg_or_data(command, vm_getbits(command, 55, 1), 31);
     fprintf(MSG_OUT, ") ");
   }
 }
 
+static void print_if_version_5(command_t* command) {
+  uint8_t op = vm_getbits(command, 54, 3);
+  int set_immediate = vm_getbits(command, 60, 1);
+  
+  if(op) {
+    if (set_immediate) {
+      fprintf(MSG_OUT, "if (");
+      print_g_reg(vm_getbits(command, 31, 8));
+      print_cmp_op(op);
+      print_reg(vm_getbits(command, 23, 8));
+      fprintf(MSG_OUT, ") ");
+    } else {
+      fprintf(MSG_OUT, "if (");
+      print_g_reg(vm_getbits(command, 39, 8));
+      print_cmp_op(op);
+      print_reg_or_data(command, vm_getbits(command, 55, 1), 31);
+      fprintf(MSG_OUT, ") ");
+    }
+  }
+}
+
 static void print_special_instruction(command_t* command) {
-  uint8_t op = vm_getbits(command, 12, 4);
+  uint8_t op = vm_getbits(command, 51, 4);
   
   switch(op) {
     case 0: /*  NOP */
       fprintf(MSG_OUT, "Nop");
       break;
     case 1: /*  Goto line */
-      fprintf(MSG_OUT, "Goto %" PRIu8, vm_getbits(command, 56, 8));
+      fprintf(MSG_OUT, "Goto %" PRIu8, vm_getbits(command, 7, 8));
       break;
     case 2: /*  Break */
       fprintf(MSG_OUT, "Break");
       break;
     case 3: /*  Parental level */
       fprintf(MSG_OUT, "SetTmpPML %" PRIu8 ", Goto %" PRIu8, 
-	      vm_getbits(command, 52, 4), vm_getbits(command, 56, 8));
+	      vm_getbits(command, 11, 4), vm_getbits(command, 7, 8));
       break;
     default:
       fprintf(MSG_OUT, "WARNING: Unknown special instruction (%i)", 
-	      vm_getbits(command, 12, 4));
+	      vm_getbits(command, 51, 4));
   }
 }
 
 static void print_linksub_instruction(command_t* command) {
-  int linkop = vm_getbits(command, 59, 5);
-  int button = vm_getbits(command, 48, 6);
+  int linkop = vm_getbits(command, 4, 5);
+  int button = vm_getbits(command, 15, 6);
   
   if(linkop < sizeof(link_table)/sizeof(char *) && link_table[linkop] != NULL)
     fprintf(MSG_OUT, "%s (button %" PRIu8 ")", link_table[linkop], button);
@@ -247,7 +323,7 @@ static void print_linksub_instruction(command_t* command) {
 }
 
 static void print_link_instruction(command_t* command, int optional) {
-  uint8_t op = vm_getbits(command, 12, 4);
+  uint8_t op = vm_getbits(command, 51, 4);
   
   if(optional && op)
     fprintf(MSG_OUT, ", ");
@@ -261,19 +337,19 @@ static void print_link_instruction(command_t* command, int optional) {
       print_linksub_instruction(command);
       break;
     case 4:
-      fprintf(MSG_OUT, "LinkPGCN %" PRIu16, vm_getbits(command, 49, 15));
+      fprintf(MSG_OUT, "LinkPGCN %" PRIu16, vm_getbits(command, 14, 15));
       break;
     case 5:
       fprintf(MSG_OUT, "LinkPTT %" PRIu16 " (button %" PRIu8 ")", 
-	      vm_getbits(command, 54, 10), vm_getbits(command, 48, 6));
+	      vm_getbits(command, 9, 10), vm_getbits(command, 15, 6));
       break;
     case 6:
       fprintf(MSG_OUT, "LinkPGN %" PRIu8 " (button %" PRIu8 ")", 
-	      vm_getbits(command, 57, 7), vm_getbits(command, 48, 6));
+	      vm_getbits(command, 6, 7), vm_getbits(command, 15, 6));
       break;
     case 7:
       fprintf(MSG_OUT, "LinkCN %" PRIu8 " (button %" PRIu8 ")", 
-	      vm_getbits(command, 56, 8), vm_getbits(command, 48, 6));
+	      vm_getbits(command, 7, 8), vm_getbits(command, 15, 6));
       break;
     default:
       fprintf(MSG_OUT, "WARNING: Unknown link instruction");
@@ -281,54 +357,54 @@ static void print_link_instruction(command_t* command, int optional) {
 }
 
 static void print_jump_instruction(command_t* command) {
-  switch(vm_getbits(command, 12, 4)) {
+  switch(vm_getbits(command, 51, 4)) {
     case 1:
       fprintf(MSG_OUT, "Exit");
       break;
     case 2:
-      fprintf(MSG_OUT, "JumpTT %" PRIu8, vm_getbits(command, 41, 7));
+      fprintf(MSG_OUT, "JumpTT %" PRIu8, vm_getbits(command, 22, 7));
       break;
     case 3:
-      fprintf(MSG_OUT, "JumpVTS_TT %" PRIu8, vm_getbits(command, 41, 7));
+      fprintf(MSG_OUT, "JumpVTS_TT %" PRIu8, vm_getbits(command, 22, 7));
       break;
     case 5:
       fprintf(MSG_OUT, "JumpVTS_PTT %" PRIu8 ":%" PRIu16, 
-	      vm_getbits(command, 41, 7), vm_getbits(command, 22, 10));
+	      vm_getbits(command, 22, 7), vm_getbits(command, 41, 10));
       break;
     case 6:
-      switch(vm_getbits(command, 40, 2)) {
+      switch(vm_getbits(command, 23, 2)) {
         case 0:
           fprintf(MSG_OUT, "JumpSS FP");
           break;
         case 1:
-          fprintf(MSG_OUT, "JumpSS VMGM (menu %" PRIu8 ")", vm_getbits(command, 44, 4));
+          fprintf(MSG_OUT, "JumpSS VMGM (menu %" PRIu8 ")", vm_getbits(command, 19, 4));
           break;
         case 2:
           fprintf(MSG_OUT, "JumpSS VTSM (vts %" PRIu8 ", title %" PRIu8 
-		  ", menu %" PRIu8 ")", vm_getbits(command, 32, 8), vm_getbits(command, 24, 8), vm_getbits(command, 44, 4));
+		  ", menu %" PRIu8 ")", vm_getbits(command, 31, 8), vm_getbits(command, 39, 8), vm_getbits(command, 19, 4));
           break;
         case 3:
-          fprintf(MSG_OUT, "JumpSS VMGM (pgc %" PRIu8 ")", vm_getbits(command, 17, 15));
+          fprintf(MSG_OUT, "JumpSS VMGM (pgc %" PRIu8 ")", vm_getbits(command, 46, 15));
           break;
         }
       break;
     case 8:
-      switch(vm_getbits(command, 40, 2)) {
+      switch(vm_getbits(command, 23, 2)) {
         case 0:
           fprintf(MSG_OUT, "CallSS FP (rsm_cell %" PRIu8 ")",
-              vm_getbits(command, 32, 8));
+              vm_getbits(command, 31, 8));
           break;
         case 1:
           fprintf(MSG_OUT, "CallSS VMGM (menu %" PRIu8 
-		  ", rsm_cell %" PRIu8 ")", vm_getbits(command, 44, 4), vm_getbits(command, 32, 8));
+		  ", rsm_cell %" PRIu8 ")", vm_getbits(command, 19, 4), vm_getbits(command, 31, 8));
           break;
         case 2:
           fprintf(MSG_OUT, "CallSS VTSM (menu %" PRIu8 
-		  ", rsm_cell %" PRIu8 ")", vm_getbits(command, 44, 4), vm_getbits(command, 32, 8));
+		  ", rsm_cell %" PRIu8 ")", vm_getbits(command, 19, 4), vm_getbits(command, 31, 8));
           break;
         case 3:
           fprintf(MSG_OUT, "CallSS VMGM (pgc %" PRIu8 ", rsm_cell %" PRIu8 ")", 
-		  vm_getbits(command, 17, 15), vm_getbits(command, 32, 8));
+		  vm_getbits(command, 46, 15), vm_getbits(command, 31, 8));
           break;
       }
       break;
@@ -340,13 +416,13 @@ static void print_jump_instruction(command_t* command) {
 static void print_system_set(command_t* command) {
   int i;
   
-  switch(vm_getbits(command, 4, 4)) {
+  switch(vm_getbits(command, 59, 4)) {
     case 1: /*  Set system reg 1 &| 2 &| 3 (Audio, Subp. Angle) */
       for(i = 1; i <= 3; i++) {
-        if(vm_getbits(command, ((2+i)*8), 1)) {
+        if(vm_getbits(command, 63 - ((2+i)*8), 1)) {
           print_system_reg(i);
           fprintf(MSG_OUT, " = ");
-          print_reg_or_data_2(command, vm_getbits(command, 3, 1), 2 + i);
+          print_reg_or_data_2(command, vm_getbits(command, 60, 1), 47 - (i*8) );
           fprintf(MSG_OUT, " ");
         }
       }
@@ -354,59 +430,72 @@ static void print_system_set(command_t* command) {
     case 2: /*  Set system reg 9 & 10 (Navigation timer, Title PGC number) */
       print_system_reg(9);
       fprintf(MSG_OUT, " = ");
-      print_reg_or_data(command, vm_getbits(command, 3, 1), 2);
+      print_reg_or_data(command, vm_getbits(command, 60, 1), 47);
       fprintf(MSG_OUT, " ");
       print_system_reg(10);
-      fprintf(MSG_OUT, " = %" PRIu8, vm_getbits(command, 40, 8)); /*  ?? */
+      fprintf(MSG_OUT, " = %" PRIu8, vm_getbits(command, 23, 8)); /*  ?? */
       break;
     case 3: /*  Mode: Counter / Register + Set */
       fprintf(MSG_OUT, "SetMode ");
-      if(vm_getbits(command, 40, 1))
+      if(vm_getbits(command, 23, 1))
 	fprintf(MSG_OUT, "Counter ");
       else
 	fprintf(MSG_OUT, "Register ");
-      print_reg(vm_getbits(command, 44, 4));
+      print_reg(vm_getbits(command, 19, 4));
       print_set_op(0x1); /*  '=' */
-      print_reg_or_data(command, vm_getbits(command, 3, 1), 2);
+      print_reg_or_data(command, vm_getbits(command, 60, 1), 47);
       break;
     case 6: /*  Set system reg 8 (Highlighted button) */
       print_system_reg(8);
-      if(vm_getbits(command, 3, 1)) /*  immediate */
-        fprintf(MSG_OUT, " = 0x%x (button no %d)", vm_getbits(command, 32, 16), vm_getbits(command, 32, 6));
+      if(vm_getbits(command, 60, 1)) /*  immediate */
+        fprintf(MSG_OUT, " = 0x%x (button no %d)", vm_getbits(command, 31, 16), vm_getbits(command, 31, 6));
       else
-        fprintf(MSG_OUT, " = g[%" PRIu8 "]", vm_getbits(command, 44, 4));
+        fprintf(MSG_OUT, " = g[%" PRIu8 "]", vm_getbits(command, 19, 4));
       break;
     default:
       fprintf(MSG_OUT, "WARNING: Unknown system set instruction (%i)", 
-	      vm_getbits(command, 4, 4));
+	      vm_getbits(command, 59, 4));
   }
 }
 
 static void print_set_version_1(command_t* command) {
-  uint8_t set_op = vm_getbits(command, 4, 4);
+  uint8_t set_op = vm_getbits(command, 59, 4);
   
   if(set_op) {
-    print_reg(vm_getbits(command, 24, 8));  /* FIXME: This is different from decoder.c!!!  */
+    print_reg(vm_getbits(command, 39, 8));  /* FIXME: This is different from decoder.c!!!  */
     print_set_op(set_op);
-    print_reg_or_data(command, vm_getbits(command, 3, 1), 4);
+    print_reg_or_data(command, vm_getbits(command, 60, 1), 31);
   } else {
     fprintf(MSG_OUT, "NOP");
   }
 }
 
 static void print_set_version_2(command_t* command) {
-  uint8_t set_op = vm_getbits(command, 4, 4);
+  uint8_t set_op = vm_getbits(command, 59, 4);
   
   if(set_op) {
-    print_reg(vm_getbits(command, 12, 4));
+    print_reg(vm_getbits(command, 51, 4));
     print_set_op(set_op);
-    print_reg_or_data(command, vm_getbits(command, 3, 1), 2);
+    print_reg_or_data(command, vm_getbits(command, 60, 1), 47);
   } else {
     fprintf(MSG_OUT, "NOP");
   }
 }
 
-void vmPrint_mnemonic(vm_cmd_t *vm_command)  {
+static void print_set_version_3(command_t* command) {
+  uint8_t set_op = vm_getbits(command, 59, 4);
+  
+  if(set_op) {
+    print_reg(vm_getbits(command, 51, 4));
+    print_set_op(set_op);
+    print_reg_or_data_3(command, vm_getbits(command, 60, 1), 47);
+  } else {
+    fprintf(MSG_OUT, "NOP");
+  }
+}
+
+
+void vm_print_mnemonic(vm_cmd_t *vm_command)  {
   command_t command;
   command.instruction =( (uint64_t) vm_command->bytes[0] << 56 ) |
         ( (uint64_t) vm_command->bytes[1] << 48 ) |
@@ -418,13 +507,13 @@ void vmPrint_mnemonic(vm_cmd_t *vm_command)  {
           (uint64_t) vm_command->bytes[7] ;
   command.examined = 0; 
 
-  switch(vm_getbits(&command,0,3)) { /* three first bits */
+  switch(vm_getbits(&command,63,3)) { /* three first bits */
     case 0: /*  Special instructions */
       print_if_version_1(&command);
       print_special_instruction(&command);
       break;
     case 1: /*  Jump/Call or Link instructions */
-      if(vm_getbits(&command,3,1)) {
+      if(vm_getbits(&command,60,1)) {
         print_if_version_2(&command);
         print_jump_instruction(&command);
       } else {
@@ -449,22 +538,22 @@ void vmPrint_mnemonic(vm_cmd_t *vm_command)  {
       print_linksub_instruction(&command);
       break;
     case 5: /*  Compare -> (Set and LinkSub) instructions */
-      print_if_version_4(&command);
+      print_if_version_5(&command);
       fprintf(MSG_OUT, "{ ");
-      print_set_version_2(&command);
+      print_set_version_3(&command);
       fprintf(MSG_OUT, ", ");
       print_linksub_instruction(&command);
       fprintf(MSG_OUT, " }");
       break;
     case 6: /*  Compare -> Set, always LinkSub instructions */
-      print_if_version_4(&command);
+      print_if_version_5(&command);
       fprintf(MSG_OUT, "{ ");
-      print_set_version_2(&command);
+      print_set_version_3(&command);
       fprintf(MSG_OUT, " } ");
       print_linksub_instruction(&command);
       break;
     default:
-      fprintf(MSG_OUT, "WARNING: Unknown instruction type (%i)", vm_getbits(&command, 0, 3));
+      fprintf(MSG_OUT, "WARNING: Unknown instruction type (%i)", vm_getbits(&command, 63, 3));
   }
   /*  Check if there still are bits set that were not examined */
   
