@@ -854,7 +854,11 @@ static int set_PGN(vm_t *vm) {
       assert(1 == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgn);
 #endif
       (vm->state).PTTN_REG = (vm->state).pgN;
+    } else {
+      /* FIXME: Handle RANDOM or SHUFFLE titles. */
+      fprintf(MSG_OUT, "libdvdnav: RANDOM or SHUFFLE titles are NOT handled yet.\n");
     }
+      
   }
   
   return 0;
@@ -949,10 +953,10 @@ static link_t play_PG(vm_t *vm)
   assert((vm->state).pgN > 0);
   if((vm->state).pgN > (vm->state).pgc->nr_of_programs) {
 #ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: (vm->state).pgN (%i) == pgc->nr_of_programs + 1 (%i)\n", 
-	    (vm->state).pgN, (vm->state).pgc->nr_of_programs + 1);
+    fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i) > pgc->nr_of_programs (%i)\n", 
+	    (vm->state).pgN, (vm->state).pgc->nr_of_programs );
 #endif
-    /*assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1);*/
+    assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1); 
     return play_PGC_post(vm);
   }
   
@@ -971,8 +975,8 @@ static link_t play_Cell(vm_t *vm)
   assert((vm->state).cellN > 0);
   if((vm->state).cellN > (vm->state).pgc->nr_of_cells) {
 #ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: (vm->state).cellN (%i) == pgc->nr_of_cells + 1 (%i)\n", 
-	    (vm->state).cellN, (vm->state).pgc->nr_of_cells + 1);
+    fprintf(MSG_OUT, "libdvdnav: (vm->state).cellN (%i) > pgc->nr_of_cells (%i)\n", 
+	    (vm->state).cellN, (vm->state).pgc->nr_of_cells );
 #endif
     assert((vm->state).cellN == (vm->state).pgc->nr_of_cells + 1); 
     return play_PGC_post(vm);
@@ -1125,7 +1129,8 @@ static link_t play_PGC_post(vm_t *vm)
   fprintf(MSG_OUT, "libdvdnav: play_PGC_post:\n");
 #endif
   
-  assert((vm->state).pgc->still_time == 0); /*  FIXME $$$ */
+  /*  FIXME Implement PGC Stills. Currently only Cell stills work */
+  assert((vm->state).pgc->still_time == 0);
 
   /* eval -> updates the state and returns either 
      - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
@@ -1819,6 +1824,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.28  2002/08/29 05:33:54  jcdutton
+ * Slight changes to help debugging.
+ *
  * Revision 1.27  2002/08/29 04:01:43  jcdutton
  * Remove an assert() so that user initiated jumps to particlar menus does not seg fault if
  * the menu requested does not exist.
