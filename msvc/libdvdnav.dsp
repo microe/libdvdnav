@@ -45,7 +45,7 @@ LINK32=link.exe
 # ADD LINK32 /machine:IX86
 MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "." /I ".." /I "..\..\libdvdcss\src" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "..\..\libdvdcss\src" /I "." /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I ".." /I "../src" /I "../src/dvdread" /I "../src/vm" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo
+# ADD LIB32 /nologo /out:"Release\libdvdnav\libdvdnav.lib"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Desc=Create libdvdnav Install Files
@@ -79,7 +79,7 @@ LINK32=link.exe
 # SUBTRACT LINK32 /pdb:none /nodefaultlib
 MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "." /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I ".." /I "../src" /D "WIN32" /D "_DEBUG" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /FR"Debug/libdvdnav/" /Fp"Debug/libdvdnav/libdvdnav.pch" /YX /Fo"Debug/libdvdnav/" /Fd"Debug/libdvdnav/" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I "../src" /I "." /I ".." /I "../src/dvdread" /I "../src/vm" /D "WIN32" /D "_DEBUG" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /FR"Debug/libdvdnav/" /Fp"Debug/libdvdnav/libdvdnav.pch" /YX /Fo"Debug/libdvdnav/" /Fd"Debug/libdvdnav/" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -105,19 +105,19 @@ PostBuild_Cmds=scripts\libdvdnav_install.bat Debug
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\src\decoder.c
+SOURCE=..\src\vm\decoder.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\dvd_input.c
+SOURCE=..\src\dvdread\dvd_input.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\dvd_reader.c
+SOURCE=..\src\dvdread\dvd_reader.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\dvd_udf.c
+SOURCE=..\src\dvdread\dvd_udf.c
 # End Source File
 # Begin Source File
 
@@ -129,19 +129,23 @@ SOURCE=..\src\highlight.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\ifo_read.c
+SOURCE=..\src\dvdread\ifo_print.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\md5.c
+SOURCE=..\src\dvdread\ifo_read.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\nav_print.c
+SOURCE=..\src\dvdread\md5.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\nav_read.c
+SOURCE=..\src\dvdread\nav_print.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\dvdread\nav_read.c
 # End Source File
 # Begin Source File
 
@@ -165,59 +169,11 @@ SOURCE=..\src\settings.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\vm.c
+SOURCE=..\src\vm\vm.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\vmcmd.c
-# End Source File
-# End Group
-# Begin Group "Header Files"
-
-# PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\dvdread\bswap.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\dvd_input.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\dvd_reader.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\dvd_udf.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\ifo_print.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\ifo_read.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\ifo_types.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\nav_print.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\nav_read.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\nav_types.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dvdread\types.h
+SOURCE=..\src\vm\vmcmd.c
 # End Source File
 # End Group
 # Begin Group "DLL Defs"
