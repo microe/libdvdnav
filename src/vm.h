@@ -149,7 +149,7 @@ int vm_jump_next_pg(vm_t *vm);
 int vm_jump_prev_pg(vm_t *vm);
 int vm_jump_up(vm_t *vm);
 int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid);
-int vm_resume(vm_t *vm);
+int vm_jump_resume(vm_t *vm);
 int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd);
 
 /* getting information */

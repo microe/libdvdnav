@@ -527,18 +527,6 @@ int vm_jump_up(vm_t *vm) {
   }
   return 0;
 }
-int vm_resume(vm_t *vm) {
-  link_t link_values;
-
-  if (!(vm->state).rsm_vtsN) { /* Do we have resume info. */
-    return S_ERR;
-  }
-  link_values.command = LinkRSM;
-  if (!process_command(vm, link_values)) {
-    return S_ERR;
-  }
-  return S_OK;
-}
 
 int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
   domain_t old_domain = (vm->state).domain;
@@ -576,6 +564,16 @@ int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
   return 0;
 }
 
+int vm_jump_resume(vm_t *vm) {
+  link_t link_values = { LinkRSM, 0, 0, 0 };
+
+  if (!(vm->state).rsm_vtsN) /* Do we have resume info? */
+    return 0;
+  if (!process_command(vm, link_values))
+    return 0;
+  return 1;
+}
+
 int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd) {
   link_t link_values;
   
@@ -587,17 +585,15 @@ int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd) {
 
 
 /* getting information */
-int vm_get_current_menu(vm_t *vm, int *menuid)
-{
+
+int vm_get_current_menu(vm_t *vm, int *menuid) {
   pgcit_t* pgcit;
   int pgcn;
   pgcn = (vm->state).pgcN;
   pgcit = get_PGCIT(vm);
   *menuid = pgcit->pgci_srp[pgcn - 1].entry_id & 0xf ;
-  return S_OK;
-
+  return 1;
 }
-
 
 int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   vts_ptt_srpt_t *vts_ptt_srpt;
@@ -1594,6 +1590,7 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part) {
 static int set_FP_PGC(vm_t *vm) {  
   (vm->state).domain = FP_DOMAIN;
   (vm->state).pgc = vm->vmgi->first_play_pgc;
+  (vm->state).pgcN = vm->vmgi->vmgi_mat->first_play_pgc;
   return 1;
 }
 
@@ -1617,7 +1614,6 @@ static int set_PGCN(vm_t *vm, int pgcN) {
   }
   
   (vm->state).pgc = pgcit->pgci_srp[pgcN - 1].pgc;
-  printf("Setting PGCN = %d\n",pgcN);
   (vm->state).pgcN = pgcN;
   (vm->state).pgN = 1;
  
@@ -1746,6 +1742,7 @@ static int get_ID(vm_t *vm, int id) {
   return 0; /*  error */
 }
 
+/* FIXME: we have a pgcN member in the vm's state now, so this should be obsolete */
 static int get_PGCN(vm_t *vm) {
   pgcit_t *pgcit;
   int pgcN = 1;
@@ -1844,6 +1841,13 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.57  2003/04/21 13:24:31  mroi
+ * some code beautification:
+ * * rename vm_resume to vm_jump_resume for consistency's sake
+ * * functions in vm.c do not return dvdnav_status_t, but simple C boolean
+ *   (that is 1 or 0)
+ * * set the pgcN for the first play PGC
+ *
  * Revision 1.56  2003/04/06 16:56:22  jcdutton
  * Implement ESCAPE key jumping from TITLE to MENU and back again.
  *

@@ -359,7 +359,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   try_vm = vm_new_copy(this->vm);
   if ( (menu == DVD_MENU_Escape) && (this->vm->state.domain != VTS_DOMAIN)) {
     /* Try resume */
-    if (vm_resume(try_vm) && !try_vm->stopped) {
+    if (vm_jump_resume(try_vm) && !try_vm->stopped) {
         /* merge changes on success */
         vm_merge(this->vm, try_vm);
         vm_free_copy(try_vm);
