@@ -14,9 +14,9 @@ dnl --------------------------------------------------------------
 dnl Making releases: DVDNAV_SUB += 1; change LT_* accordingly
 dnl --------------------------------------------------------------
 DVDNAV_MAJOR=0
-DVDNAV_MINOR=1
-DVDNAV_SUB=10
-DVDNAV_PRE=""
+DVDNAV_MINOR=2
+DVDNAV_SUB=0
+DVDNAV_PRE="cvs"
 
 AC_SUBST(DVDNAV_MAJOR)
 AC_SUBST(DVDNAV_MINOR)
@@ -48,7 +48,7 @@ dnl       AGE ++;
 dnl    if (any interfaces have been _removed_ or incompatibly changed)
 dnl       AGE = 0;
 dnl }
-LT_CURRENT=4
+LT_CURRENT=5
 LT_AGE=0
 LT_REVISION=0
 
