@@ -3,7 +3,7 @@ libdvdnav (0.1.6) unstable; urgency=low
     where libdvdnav is always a bit ahead in the stream, the event forces
     the application to wait for its fifos to get empty
   * correct HIGHLIGHT reporting when a button is activated
-  * fix incompatibility with current libdvdread versions
+  * method to try-run VM operations, now used for safer chapter skipping and menu jumps
 
 libdvdnav (0.1.5) unstable; urgency=low
   * some bugfixes
