@@ -287,7 +287,9 @@ dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this,
 
 dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, int x, int y) {
   int button, cur_button;
-  
+  uint32_t best,dist;
+  int mx,my,dx,dy,d;
+
   /* FIXME: At the moment, the case of no button matchin (x,y) is
    * silently ignored, is this OK? */
   if(!this)
@@ -297,18 +299,33 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, int x, int y) {
     return S_ERR;
   }
 
+  best = 0; 
+  dist = 0x08000000; /* >> than  (720*720)+(567*567); */
+  
   /* Loop through each button */
   for(button=1; button <= this->pci.hli.hl_gi.btn_ns; button++) {
     btni_t *button_ptr = NULL;
-
     button_ptr = &(this->pci.hli.btnit[button-1]);
     if((x >= button_ptr->x_start) && (x <= button_ptr->x_end) &&
        (y >= button_ptr->y_start) && (y <= button_ptr->y_end)) {
-      /* As an efficiency measure, only re-select the button
-       * if it is different to the previously selected one. */
-      if(button != cur_button) {
-	dvdnav_button_select(this, button);
+      mx = (button_ptr->x_start + button_ptr->x_end)/2;
+	  my = (button_ptr->y_start + button_ptr->y_end)/2;
+      dx = mx - x;
+      dy = my - y;
+      d = (dx*dx) + (dy*dy);
+      /* If the mouse is within the button and the mouse is closer
+       * to the center of this button then it is the best choice. */
+      if(d < dist) {
+        dist = d; best=button;
       }
+    }
+  }
+			  
+  if (best!=0) {
+    /* As an efficiency measure, only re-select the button
+     * if it is different to the previously selected one. */
+    if(best != cur_button) {
+      dvdnav_button_select(this, best);
     }
   }
   
