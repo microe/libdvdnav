@@ -137,7 +137,7 @@ case $host in
   *-*-freebsd*)
     THREAD_LIBS="-L/usr/local/lib -pthread"
     THREAD_CFLAGS="-I/usr/local/include -D_THREAD_SAFE"
-    CFLAGS="$CFLAGS $THREAD_CFLAGS"
+    CFLAGS="$THREAD_CFLAGS $CFLAGS"
     ;;
   *)
     AC_CHECK_LIB(pthread, pthread_create,
@@ -162,8 +162,8 @@ dnl ---------------------------------------------
 dnl cflags
 dnl ---------------------------------------------
 dnl Common cflags for all platforms
-CFLAGS="$CFLAGS -O3 -Wall -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE"
-DEBUG_CFLAGS="$CFLAGS -g -DDEBUG"
+CFLAGS="-O3 -Wall -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE $CFLAGS"
+DEBUG_CFLAGS="-g -DDEBUG $CFLAGS"
 
 AC_SUBST(DEBUG_CFLAGS)
 
