@@ -227,7 +227,6 @@ AC_OUTPUT([
 Makefile 
 src/Makefile
 src/dvdnav_internal.h
-examples/Makefile
 misc/Makefile
 misc/dvdnav-config
 misc/libdvdnav.spec

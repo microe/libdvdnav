@@ -13,8 +13,6 @@ DEBFILES = debian/README.Debian debian/bug-presubj debian/changelog \
 	debian/rules debian/shlibs
 
 EXTRA_DIST = autogen.sh \
-	     automake.diff \
-	     libdvdnav.spec \
 	     $(DEBFILES) \
 	     AUTHORS \
 	     ChangeLog \
@@ -31,7 +29,6 @@ EXTRA_DIST = autogen.sh \
 	     README \
 	     TODO \
 	     depcomp \
-	     CREDITS \
 	     @DEPCOMP@
 
 debug:
