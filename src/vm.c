@@ -1054,10 +1054,15 @@ static link_t play_Cell_post(vm_t *vm)
   if(cell->cell_cmd_nr != 0) {
     link_t link_values;
     
-#ifdef STRICT
-    assert((vm->state).pgc->command_tbl != NULL);
-    assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
-#endif
+/*  These asserts are now not needed.
+ *  Some DVDs have no cell commands listed in the PGC,
+ *  but the Cell itself points to a cell command that does not exist.
+ *  For this situation, just ignore the cell command and continue.
+ *
+ *  assert((vm->state).pgc->command_tbl != NULL);
+ *  assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
+ */
+
     if ((vm->state).pgc->command_tbl != NULL &&
         (vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr) {
 #ifdef TRACE
@@ -1072,6 +1077,7 @@ static link_t play_Cell_post(vm_t *vm)
       }
     } else {
       fprintf(MSG_OUT, "libdvdnav: Invalid Cell command\n");
+      
     }
   }
   
@@ -1826,6 +1832,12 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.30  2002/08/31 10:51:01  jcdutton
+ * Handle badly written DVDs better.
+ * If a Cell has a Cell command pointer, but the PGC Cell command list does not have an
+ * entry for it, assume that the cell has no cell commands and continue instead of
+ * assert().
+ *
  * Revision 1.29  2002/08/31 02:50:27  jcdutton
  * Improve some debug messages.
  * Add some comments about dvdnav_open memory leaks.
