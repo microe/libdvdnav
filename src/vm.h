@@ -64,7 +64,7 @@ typedef struct {
 typedef struct vm_position_s {
   int16_t  button;        /* Button highlighted */
   int32_t  vts;           /* vts number to use */
-  int32_t  domain;        /* domain to use */
+  domain_t domain;        /* domain to use */
   int32_t  spu_channel;   /* spu channel to use */
   int32_t  angle_channel; /* angle channel to use */
   int32_t  audio_channel; /* audio channel to use */
