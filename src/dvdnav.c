@@ -51,7 +51,7 @@ static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
 
   memset(&this->pci,0,sizeof(this->pci));
   memset(&this->dsi,0,sizeof(this->dsi));
-  this->last_cmd_nav_lbn = 0;
+  this->last_cmd_nav_lbn = SRI_END_OF_CELL;
 
   /* Set initial values of flags */
   this->position_current.still = 0;
