@@ -238,7 +238,7 @@ void navRead_PCI(pci_t *pci, unsigned char *buffer) {
 	CHECK_VALUE(pci->hli.btnit[n].down <= pci->hli.hl_gi.btn_ns);
 	CHECK_VALUE(pci->hli.btnit[n].left <= pci->hli.hl_gi.btn_ns);
 	CHECK_VALUE(pci->hli.btnit[n].right <= pci->hli.hl_gi.btn_ns);
-	//vmcmd_verify(pci->hli.btnit[n].cmd);
+	/* vmcmd_verify(pci->hli.btnit[n].cmd); */
       } else {
 	int k;
 	CHECK_VALUE(pci->hli.btnit[n].btn_coln == 0);
@@ -252,7 +252,7 @@ void navRead_PCI(pci_t *pci, unsigned char *buffer) {
 	CHECK_VALUE(pci->hli.btnit[n].left == 0);
 	CHECK_VALUE(pci->hli.btnit[n].right == 0);
 	for (k = 0; k < 8; k++)
-	  CHECK_VALUE(pci->hli.btnit[n].cmd.bytes[k] == 0); //CHECK_ZERO?
+	  CHECK_VALUE(pci->hli.btnit[n].cmd.bytes[k] == 0); /* CHECK_ZERO? */
       }
     }
   }
