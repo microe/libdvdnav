@@ -118,16 +118,6 @@ AC_TYPE_SIZE_T
 dnl AC_CHECK_TYPES([ptrdiff_t])
 AC_C_BIGENDIAN
 
-dnl --------------------------------------------------------------
-dnl define or not WORDS_BIGENDIAN in dvdnav_internal.h
-dnl --------------------------------------------------------------
-if test x$ac_cv_c_bigendian = "xyes"; then
-  BIGENDIAN="#define WORDS_BIGENDIAN 1"
-else
-  BIGENDIAN="#undef WORDS_BIGENDIAN"
-fi
-AC_SUBST(BIGENDIAN)
-
 dnl ---------------------------------------------
 dnl threads
 dnl ---------------------------------------------
@@ -210,7 +200,6 @@ dnl ---------------------------------------------
 AC_OUTPUT([
 Makefile 
 src/Makefile
-src/dvdnav_internal.h
 misc/Makefile
 misc/dvdnav-config
 misc/libdvdnav.spec

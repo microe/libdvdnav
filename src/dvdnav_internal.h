@@ -35,8 +35,6 @@
 #include <string.h>
 #include <pthread.h>
 
-@BIGENDIAN@
-
 #include "dvd_reader.h"
 #include "ifo_read.h"
 #include "ifo_types.h"

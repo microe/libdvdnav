@@ -4,4 +4,3 @@ Makefile.in
 .deps
 *.lo
 *.la
-dvdnav_internal.h
