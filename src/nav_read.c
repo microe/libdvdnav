@@ -96,8 +96,32 @@ static uint32_t getbits(getbits_state_t *state, uint32_t number_of_bits) {
   return result;
 }
 
+/* WARNING: This function can only be used on a byte boundary.
+            No checks are made that we are in fact on a byte boundary.
+ */
+static uint16_t get16bits(getbits_state_t *state) {
+  uint16_t result;
+  state->byte_position++;
+  result = (state->byte << 8) + state->start[state->byte_position++];
+  state->byte = state->start[state->byte_position];
+  return result;
+}
+
+/* WARNING: This function can only be used on a byte boundary.
+            No checks are made that we are in fact on a byte boundary.
+ */
+static uint32_t get32bits(getbits_state_t *state) {
+  uint32_t result;
+  state->byte_position++;
+  result = (state->byte << 8) + state->start[state->byte_position++];
+  result = (result << 8) + state->start[state->byte_position++];
+  result = (result << 8) + state->start[state->byte_position++];
+  state->byte = state->start[state->byte_position];
+  return result;
+}
+
 void navRead_PCI(pci_t *pci, unsigned char *buffer) {
-  int32_t result, i, j;
+  int32_t i, j;
   getbits_state_t state;
   if (getbits_init(&state, buffer)) assert(0); /* Passed NULL pointers */
 
