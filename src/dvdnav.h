@@ -67,8 +67,8 @@ typedef int dvdnav_status_t;
  * they succeeded, otherwise DVDNAV_STATUS_ERR is returned and the error may
  * be obtained by calling dvdnav_err_to_string().
  */
-#define DVDNAV_STATUS_ERR 1
-#define DVDNAV_STATUS_OK  0
+#define DVDNAV_STATUS_ERR 0
+#define DVDNAV_STATUS_OK  1
 
 
 /*********************************************************************

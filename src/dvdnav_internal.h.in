@@ -174,11 +174,4 @@ struct dvdnav_s {
 #endif
 #define printerr(str) strncpy(this->err_str, str, MAX_ERR_LEN);
 
-/* Save my typing */
-#define S_ERR DVDNAV_STATUS_ERR
-
-#ifndef _MSC_VER
-#define S_OK  DVDNAV_STATUS_OK
-#endif /* MSC_VER */
-
 #endif /* DVDNAV_INTERNAL_H_INCLUDED */

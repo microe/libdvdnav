@@ -209,13 +209,13 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int *button) {
   
   if(!this || !button) {
     printerr("Passed a NULL pointer.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
 
   /* Simply return the appropriate value based on the SPRM */
   (*button) = this->position_current.button;
   
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
@@ -223,15 +223,15 @@ static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
 
   if(!this || !pci) {
     printerr("Passed a NULL pointer.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(this->last_cmd_nav_lbn == pci->pci_gi.nv_pck_lbn) {
     printerr("This NAV has already been left.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
 
   button = this->vm->state.HL_BTNN_REG >> 10;
@@ -251,48 +251,48 @@ dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!(button_ptr = get_current_button(this, pci)))
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
 
   dvdnav_button_select(this, pci, button_ptr->up);
   button_auto_action(this, pci);
  
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!(button_ptr = get_current_button(this, pci)))
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
 
   dvdnav_button_select(this, pci, button_ptr->down);
   button_auto_action(this, pci);
   
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!(button_ptr = get_current_button(this, pci)))
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
 
   dvdnav_button_select(this, pci, button_ptr->right);
   button_auto_action(this, pci);
   
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!(button_ptr = get_current_button(this, pci)))
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
 
   dvdnav_button_select(this, pci, button_ptr->left);
   button_auto_action(this, pci);
   
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_get_highlight_area(pci_t *nav_pci , int32_t button, int32_t mode, 
@@ -304,9 +304,9 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t *nav_pci , int32_t button, int32
 #endif
   
   if(!nav_pci->hli.hl_gi.hli_ss)
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns))
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
 
 
   button_ptr = &nav_pci->hli.btnit[button-1];
@@ -330,7 +330,7 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t *nav_pci , int32_t button, int32
                button);
 #endif
 
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
@@ -339,15 +339,15 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
 
   if(!this || !pci) {
     printerr("Passed a NULL pointer.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(this->last_cmd_nav_lbn == pci->pci_gi.nv_pck_lbn) {
     printerr("This NAV has already been left.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
 
   pthread_mutex_lock(&this->vm_lock); 
@@ -373,10 +373,10 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
       pthread_mutex_unlock(&this->vm_lock);
       /* clear error message */
       printerr("");
-      return S_OK;
+      return DVDNAV_STATUS_OK;
     }
     pthread_mutex_unlock(&this->vm_lock); 
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   
   button_ptr = get_current_button(this, pci);
@@ -393,14 +393,14 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
   }
   
   pthread_mutex_unlock(&this->vm_lock); 
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cmd_t *cmd)
 {
   if(!this || !cmd) {
     printerr("Passed a NULL pointer.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   
   pthread_mutex_lock(&this->vm_lock);
@@ -420,22 +420,22 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cm
   this->position_current.still = 0;
   this->sync_wait = 0;
   pthread_mutex_unlock(&this->vm_lock);
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }  
 
 dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int button) {
   
   if(!this || !pci) {
     printerr("Passed a NULL pointer.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(this->last_cmd_nav_lbn == pci->pci_gi.nv_pck_lbn) {
     printerr("This NAV has already been left.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
  
 #ifdef BUTTON_TESTING
@@ -444,21 +444,21 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int button) {
   
   if((button <= 0) || (button > pci->hli.hl_gi.btn_ns)) {
     printerr("Button does not exist.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   
   this->vm->state.HL_BTNN_REG = (button << 10);
   this->position_current.button = -1; /* Force Highligh change */
 
-  return S_OK;
+  return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, pci_t *pci, 
 						  int button) {
   /* A trivial function */
-  if(dvdnav_button_select(this, pci, button) != S_ERR)
+  if(dvdnav_button_select(this, pci, button) != DVDNAV_STATUS_ERR)
     return dvdnav_button_activate(this, pci);
-  return S_ERR;
+  return DVDNAV_STATUS_ERR;
 }
 
 dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int x, int y) {
@@ -468,15 +468,15 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int x, int y) {
 
   if(!this || !pci) {
     printerr("Passed a NULL pointer.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
   if(this->last_cmd_nav_lbn == pci->pci_gi.nv_pck_lbn) {
     printerr("This NAV has already been left.");
-    return S_ERR;
+    return DVDNAV_STATUS_ERR;
   }
 
   cur_button = this->vm->state.HL_BTNN_REG >> 10;
@@ -509,13 +509,13 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int x, int y) {
   if (best != 0 && best != cur_button)
     dvdnav_button_select(this, pci, best);
 
-  /* return S_OK only if we actually found a matching button */
-  return best ? S_OK : S_ERR;
+  /* return DVDNAV_STATUS_OK only if we actually found a matching button */
+  return best ? DVDNAV_STATUS_OK : DVDNAV_STATUS_ERR;
 }
 
 dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *this, pci_t *pci, int x, int y) {
   /* A trivial function */
-  if(dvdnav_mouse_select(this, pci, x,y) != S_ERR)
+  if(dvdnav_mouse_select(this, pci, x,y) != DVDNAV_STATUS_ERR)
     return dvdnav_button_activate(this, pci);
-  return S_ERR;
+  return DVDNAV_STATUS_ERR;
 }
