@@ -1,9 +1,12 @@
-bin_PROGRAMS=menus
-CFLAGS=-I../src/ 
-LDFLAGS=-L../src/
 
-menus_SOURCES=menus.c
-menus_LDADD=-ldvdnav
+CFLAGS = -I$(top_srcdir)/src/ 
+
+LDFLAGS = -L$(top_srcdir)/src/
+
+noinst_PROGRAMS = menus
+
+menus_SOURCES = menus.c
+menus_LDADD = $(top_builddir)/src/libdvdnav.la
 
 debug:
 	@$(MAKE) CFLAGS="$(DEBUG_CFLAGS)"
