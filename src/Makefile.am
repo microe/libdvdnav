@@ -1,5 +1,6 @@
 lib_LTLIBRARIES = libdvdnav.la
 
+AM_CPPFLAGS = -DDVDNAV_COMPILE
 AM_CFLAGS = @THREAD_CFLAGS@
 
 libdvdnav_la_SOURCES = decoder.c dvdnav.c vm.c vmcmd.c \
@@ -9,9 +10,9 @@ libdvdnav_la_LDFLAGS = $(DVDREAD_LIBS) $(THREAD_LIBS) \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 #	-release $(DVDNAV_MAJOR).$(DVDNAV_MINOR).$(DVDNAV_SUB)
 
-include_HEADERS = decoder.h dvdnav.h dvdnav_events.h \
-	dvdnav_internal.h vm.h vmcmd.h read_cache.h dvd_types.h \
-	remap.h
+include_HEADERS = dvdnav.h dvdnav_events.h dvd_types.h
+noinst_HEADERS = decoder.h dvdnav_internal.h vm.h vmcmd.h \
+	read_cache.h remap.h
 
 EXTRA_DIST = README.MAP FELLOWSHIP.map
 

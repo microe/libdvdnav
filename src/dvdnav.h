@@ -34,11 +34,13 @@
 extern "C" {
 #endif
 
-/* Defines the various events and dvdnav_event_t */
-#include "dvdnav_events.h"
-
-/* Various useful types */
-#include "dvd_types.h"
+#ifdef DVDNAV_COMPILE
+#  include "dvdnav_events.h"
+#  include "dvd_types.h"
+#else
+#  include <dvdnav/dvdnav_events.h>
+#  include <dvdnav/dvd_types.h>
+#endif
 
 #include <dvdread/dvd_reader.h>
 #include <dvdread/ifo_types.h> /* For vm_cmd_t */
