@@ -241,7 +241,11 @@ int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ {
     /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
   }
   else fprintf(stderr, "vm: reset\n");
-
+  if (vm->vmgi) {
+    fprintf(stderr, "DVD disk reports itself with Region mask 0x%08x. Maybe region %u.\n",
+      vm->vmgi->vmgi_mat->vmg_category,
+      (((vm->vmgi->vmgi_mat->vmg_category >> 16) ^ 0xff) & 0xff)    );
+  }
   return 0;
 }
 
@@ -1227,7 +1231,6 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* VTS_TTN_REG:data2 */
       /* get_MENU:data3 */ 
       fprintf(stderr, "dvdnav: BUG TRACKING *******************************************************************\n");
-      fprintf(stderr, "dvdnav:              If you see this message, please report these values to the dvd-devel mailing list.\n");
       fprintf(stderr, "    data1=%u data2=%u data3=%u\n", 
                 link_values.data1,
                 link_values.data2,
@@ -1569,6 +1572,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.10  2002/04/12 12:43:36  jcdutton
+ * Display DVD disk region setting.
+ * Display possible RCE region protection message.
+ *
  * Revision 1.9  2002/04/10 16:45:57  jcdutton
  * Actually fix the const this time!
  *

@@ -62,6 +62,9 @@ uint32_t vm_getbits(command_t *command, int start, int count) {
    SXXX_XXXX, where S is 1 if it is system register. */
 static uint16_t eval_reg(command_t* command, uint8_t reg) {
   if(reg & 0x80) {
+    if ((reg & 0x1f) == 20) {
+      fprintf(stderr, "Suspected RCE Region Protection!!!");
+      }
     return command->registers->SPRM[reg & 0x1f]; /*  FIXME max 24 not 32 */
   } else {
     return command->registers->GPRM[reg & 0x0f];
@@ -339,10 +342,10 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       data2 = vm_getbits(command, 44, 4);
       if(vm_getbits(command, 40, 1)) {
 	fprintf(stderr, "Detected SetGPRMMD Counter!! This is unsupported.\n");
-	command->registers->GPRM_mode[data2] = 1;
+	command->registers->GPRM_mode[data2] |= 1; /* Set bit 0 */
       } else {
 	fprintf(stderr, "Detected ResetGPRMMD Counter!! This is unsupported.\n");
-	command->registers->GPRM_mode[data2] = 0;
+	command->registers->GPRM_mode[data2] &= ~ 0x01; /* Reset bit 0 */
       }
       if(cond) {
 	command->registers->GPRM[data2] = data;
