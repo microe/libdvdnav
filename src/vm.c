@@ -33,6 +33,9 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <dvdread/ifo_types.h>
 #include <dvdread/ifo_read.h>
@@ -173,6 +176,63 @@ dvd_reader_t *vm_get_dvd_reader(vm_t *vm) {
   return vm->dvd;
 }
 
+void dvd_read_name( vm_t *this, char *devname) {
+    int fd, i;
+    off64_t off;
+    uint8_t data[DVD_VIDEO_LB_LEN];
+
+    /* Read DVD name */
+    fd=open(devname, O_RDONLY);
+    if (fd > 0) { 
+      off = lseek64( fd, 32 * (int64_t) DVD_VIDEO_LB_LEN, SEEK_SET );
+      if( off == ( 32 * (int64_t) DVD_VIDEO_LB_LEN ) ) {
+        off = read( fd, data, DVD_VIDEO_LB_LEN ); 
+        close(fd);
+        if (off == ( (int64_t) DVD_VIDEO_LB_LEN )) {
+          fprintf( stderr, "VM DVD Title: ");
+          for(i=25; i < 73; i++ ) {
+            if((data[i] == 0)) break;
+            if((data[i] > 32) && (data[i] < 127)) {
+              fprintf(stderr, "%c", data[i]);
+            } else {
+              fprintf(stderr, " ");
+            }
+          }
+          strncpy(&this->dvd_name[0], &data[25], 48);
+          /* fprintf(stderr, "TITLE:%s\n",&this->dvd_name[0]); */
+          this->dvd_name[48]=0;
+          this->dvd_name_length=strlen(&this->dvd_name[0]);
+          fprintf( stderr, "\nVM DVD Serial Number: ");
+          for(i=73; i < 89; i++ ) {
+            if((data[i] == 0)) break;
+            if((data[i] > 32) && (data[i] < 127)) {
+              fprintf(stderr, "%c", data[i]);
+            } else {
+              fprintf(stderr, " ");
+            } 
+          }
+          fprintf( stderr, "\nVM DVD Title (Alternative): ");
+          for(i=89; i < 128; i++ ) {
+            if((data[i] == 0)) break;
+            if((data[i] > 32) && (data[i] < 127)) {
+              fprintf(stderr, "%c", data[i]);
+            } else {
+              fprintf(stderr, " ");
+            }
+          }
+          fprintf( stderr, "\n");
+        } else {
+          fprintf( stderr, "libdvdread: Can't read name block. Probably not a DVD-ROM device.\n");
+        }
+      } else {
+        fprintf( stderr, "libdvdread: Can't seek to block %u\n", 32 );
+      }
+      close(fd);
+    } else {
+    fprintf(stderr,"NAME OPEN FAILED\n");
+    }
+}
+
 int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ { 
   /*  Setup State */
   memset((vm->state).registers.SPRM, 0, sizeof(uint16_t)*24);
@@ -222,6 +282,8 @@ int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ {
       fprintf(MSG_OUT, "libdvdnav: vm: faild to open/read the DVD\n");
       return -1;
     }
+    dvd_read_name(vm, dvdroot);
+    vm->map = remap_loadmap( vm->dvd_name);
 
     vm->vmgi = ifoOpenVMGI(vm->dvd);
     if(!vm->vmgi) {
@@ -1926,6 +1988,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.35  2002/09/17 11:00:22  jcdutton
+ * First patch for personalized dvd viewing. I have not tested it yet.
+ *
  * Revision 1.34  2002/09/03 07:50:45  jcdutton
  * Improve chapter selection functions.
  *

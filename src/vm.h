@@ -27,6 +27,7 @@
 #define VM_H_INCLUDED
 
 #include "decoder.h"
+#include "remap.h"
 #include <dvd_types.h>
 
 /* DOMAIN enum */
@@ -87,6 +88,9 @@ typedef struct {
   dvd_state_t   state;
   int  badness_counter;
   int32_t hop_channel;
+  char dvd_name[50];
+  int dvd_name_length;
+  remap_t *map;
 } vm_t;
 
 

@@ -40,6 +40,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+#include "remap.h"
+
 /*
  * NOTE:
  *      All NLCK_*() function are not mutex locked, this made them reusable in
@@ -784,6 +786,14 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     /* Perform the jump if necessary (this is always a 
      * VOBU boundary). */
 
+     if (this->vm->map) {
+       this->vobu.vobu_next = remap_block( this->vm->map,
+           this->vm->state.domain, this->vm->state.TTN_REG,
+           this->vm->state.pgN,
+           this->vobu.vobu_start, this->vobu.vobu_next);
+     }
+
+
     //result = DVDReadBlocks(this->file, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
     result = dvdnav_read_cache_block(this->cache, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
 
@@ -1000,6 +1010,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.36  2002/09/17 11:00:21  jcdutton
+ * First patch for personalized dvd viewing. I have not tested it yet.
+ *
  * Revision 1.35  2002/09/05 12:55:05  mroi
  * fix memleaks in dvdnav_open
  *
