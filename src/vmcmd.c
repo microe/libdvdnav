@@ -1,10 +1,15 @@
 /*
- * This program is free software; you can redistribute it and/or modify
+ * Copyright (C) 2000, 2001 Martin Norbäck, Håkan Hjort
+ * 
+ * This file is part of libdvdnav, a DVD navigation library. It is modified
+ * from a file originally part of the Ogle DVD player.
+ * 
+ * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,12 +31,10 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#ifdef _MSC_VER
-#include <timer.h> /* struct timeval */
-#endif
+#include "dvdnav_internal.h"
 
-#include "vmcmd.h"
 
+#ifdef TRACE
 
 /*  freebsd compatibility */
 #ifndef PRIu8
@@ -112,44 +115,6 @@ static const char *system_reg_abbr_table[] = {
   NULL,
 };
 
-typedef struct {
-  uint16_t SPRM[24];
-  uint16_t GPRM[16];
-  uint8_t  GPRM_mode[16];  /* Need to have some thing to indicate normal/counter mode for every
-GPRM */
-  struct timeval GPRM_time[16]; /* For counter mode */
-} registers_t;
-
-typedef struct
-{
-  uint64_t instruction;
-  uint64_t examined;
-  registers_t *registers;
-} command_t;
-
-uint32_t vm_getbits(command_t *command, int start, int count) {
-  uint64_t result = 0;
-  uint64_t bit_mask=~0;  /* I could put -1 instead */
-  uint64_t examining = 0;
-  int32_t  bits;
-  if (count == 0) return 0;
-
-  if ( ((start - count) < -1) ||
-       (count > 32) ||
-       (start > 63) ||
-       (count < 0) ||
-       (start < 0) ){
-    fprintf(stderr, "Bad call to vm_getbits. Parameter out of range\n");
-    assert(0);
-  }
-  bit_mask >>= 63 - start;
-  bits = start + 1 - count;
-  examining = ((bit_mask >> bits) << bits );
-  command->examined |= examining;
-  result = (command->instruction & bit_mask) >> bits;
-  return (uint32_t) result;
-}
-    
 static void print_system_reg(uint16_t reg) {
   if(reg < sizeof(system_reg_abbr_table) / sizeof(char *))
     fprintf(MSG_OUT, "%s (SRPM:%d)", system_reg_table[reg], reg);
@@ -187,7 +152,7 @@ static void print_set_op(uint8_t op) {
 
 static void print_reg_or_data(command_t* command, int immediate, int start) {
   if(immediate) {
-    uint32_t i = vm_getbits(command, start, 16);
+    int i = vm_getbits(command, start, 16);
     
     fprintf(MSG_OUT, "0x%x", i);
     if(isprint(i & 0xff) && isprint((i>>8) & 0xff))
@@ -206,7 +171,7 @@ static void print_reg_or_data_2(command_t* command, int immediate, int start) {
 
 static void print_reg_or_data_3(command_t* command, int immediate, int start) {
   if(immediate) {
-    uint32_t i = vm_getbits(command, start, 16);
+    int i = vm_getbits(command, start, 16);
     
     fprintf(MSG_OUT, "0x%x", i);
     if(isprint(i & 0xff) && isprint((i>>8) & 0xff))
@@ -310,8 +275,8 @@ static void print_special_instruction(command_t* command) {
 }
 
 static void print_linksub_instruction(command_t* command) {
-  uint32_t linkop = vm_getbits(command, 7, 8);
-  uint32_t button = vm_getbits(command, 15, 6);
+  int linkop = vm_getbits(command, 7, 8);
+  int button = vm_getbits(command, 15, 6);
   
   if(linkop < sizeof(link_table)/sizeof(char *) && link_table[linkop] != NULL)
     fprintf(MSG_OUT, "%s (button %" PRIu8 ")", link_table[linkop], button);
@@ -575,54 +540,4 @@ void vm_print_cmd(int row, vm_cmd_t *vm_command) {
   fprintf(MSG_OUT, "\n");
 }
 
-/*
- * $Log$
- * Revision 1.14  2003/05/05 00:25:11  tchamp
- * Changed the linkage for msvc
- *
- * Revision 1.12  2003/05/01 16:44:43  tchamp
- * ifo_dump should now build with msvc version of libdvdnav
- *
- * Revision 1.11  2003/04/28 15:17:18  jcdutton
- * Update ifodump to work with new libdvdnav cvs, instead of needing libdvdread.
- *
- * Revision 1.10  2003/04/05 16:31:53  jcdutton
- * Some minor changes and updates.
- *
- * Revision 1.9  2003/04/05 15:23:07  jcdutton
- * Minor updates
- *
- * Revision 1.8  2003/04/05 13:03:49  jcdutton
- * Small updates.
- *
- * Revision 1.7  2003/04/05 12:45:47  jcdutton
- * Use MSG_OUT instead of stdout.
- *
- * Revision 1.6  2003/04/05 09:15:43  jcdutton
- * Minor fix
- *
- * Revision 1.5  2003/04/03 11:05:20  jcdutton
- * Tidy up.
- *
- * Revision 1.4  2003/04/03 11:01:36  jcdutton
- * Change byte references to bits.
- *
- * Revision 1.3  2003/04/03 10:51:28  jcdutton
- * Change getbits start param to actually start at the right bit.
- * e.g. lowest bit in a 64 bit number bit 0 and represents value of 1
- * next bit is a 64 bit number is bit 1 and represents a value of 2
- * next bit is a 64 bit number is bit 2 and represents a value of 4
- *
- * Before, a start value of 0 would represent bit 63, and a start value of 63 would represent bit 0.
- *
- * So, I changed it to be more common sense.
- *
- * Revision 1.2  2003/04/02 13:58:19  jcdutton
- * Fix some instruction printouts.
- *
- * Revision 1.1.1.1  2002/08/28 09:48:35  jcdutton
- * Initial import into CVS.
- *
- *
- *
- */
+#endif
