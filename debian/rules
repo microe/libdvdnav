@@ -22,8 +22,8 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 endif
 
 # shared library versions, option 1
-#version=0.1.1
-#major=0
+#version=0.1.3
+#major=1
 # option 2, assuming the library is created as src/.libs/libfoo.so.2.0.5 or so
 version=`ls src/.libs/lib*.so.* | \
  awk '{if (match($$0,/[0-9]+\.[0-9]+\.[0-9]+$$/)) print substr($$0,RSTART)}'`
@@ -62,7 +62,6 @@ clean:
 	-test -r /usr/share/misc/config.guess && \
 	  cp -f /usr/share/misc/config.guess config.guess
 
-
 	dh_clean
 
 install: build
@@ -88,8 +87,7 @@ binary-arch: build install
 	mkdir -p debian/libdvdnav$(major)/usr/lib
 	mv debian/tmp/usr/lib/libdvdnav*.so.* debian/libdvdnav$(major)/usr/lib/
 
-#	dh_installdebconf	
-	dh_installdocs -A AUTHORS NEWS README TODO
+	dh_installdocs -A AUTHORS README TODO
 	dh_installexamples
 	dh_installman -plibdvdnav-dev debian/dvdnav-config.1
 	mkdir -p debian/libdvdnav$(major)/usr/share/bug/libdvdnav$(major)
