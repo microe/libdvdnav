@@ -69,8 +69,12 @@ struct read_cache_s {
 
 #define READ_CACHE_CHUNKS 10
 
+/* all cache chunks must be memory aligned to allow use of raw devices */
+#define ALIGNMENT 2048
+
 typedef struct read_cache_chunk_s {
   uint8_t     *cache_buffer;
+  uint8_t     *cache_buffer_base;  /* used in malloc and free for alignment */
   int32_t      cache_start_sector; /* -1 means cache invalid */
   size_t       cache_block_count;
   size_t       cache_malloc_size;
@@ -362,7 +366,7 @@ void dvdnav_read_cache_free(read_cache_t* self) {
   self->freeing = 1;
   for (i = 0; i < READ_CACHE_CHUNKS; i++)
     if (self->chunk[i].cache_buffer && self->chunk[i].usage_count == 0) {
-      free(self->chunk[i].cache_buffer);
+      free(self->chunk[i].cache_buffer_base);
       self->chunk[i].cache_buffer = NULL;
     }
   pthread_mutex_unlock(&self->lock);
@@ -432,8 +436,10 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
           (use == -1 || self->chunk[use].cache_malloc_size < self->chunk[i].cache_malloc_size))
         use = i;
     if (use >= 0) {
-      self->chunk[use].cache_buffer = realloc(self->chunk[use].cache_buffer,
-        block_count * DVD_VIDEO_LB_LEN);
+      self->chunk[use].cache_buffer_base = realloc(self->chunk[use].cache_buffer_base,
+        block_count * DVD_VIDEO_LB_LEN + ALIGNMENT);
+      self->chunk[use].cache_buffer =
+        (uint8_t *)(((int)self->chunk[use].cache_buffer_base & ~(ALIGNMENT - 1)) + ALIGNMENT);
       dprintf("pre_cache DVD read realloc happened\n");
       self->chunk[use].cache_malloc_size = block_count;
     } else {
@@ -448,7 +454,10 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
          * Some DVDs I have seen venture to 450 blocks.
          * This is so that fewer realloc's happen if at all.
          */ 
-	self->chunk[i].cache_buffer = malloc((block_count > 500 ? block_count : 500) * DVD_VIDEO_LB_LEN);
+	self->chunk[i].cache_buffer_base =
+	  malloc((block_count > 500 ? block_count : 500) * DVD_VIDEO_LB_LEN + ALIGNMENT);
+	self->chunk[i].cache_buffer =
+	  (uint8_t *)(((int)self->chunk[i].cache_buffer_base & ~(ALIGNMENT - 1)) + ALIGNMENT);
 	self->chunk[i].cache_malloc_size = block_count > 500 ? block_count : 500;
 	dprintf("pre_cache DVD read malloc %d blocks\n",
 	  (block_count > 500 ? block_count : 500 )); 
