@@ -319,14 +319,14 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
   if (!vm->dvd) {
     vm->dvd = DVDOpen(dvdroot);
     if(!vm->dvd) {
-      fprintf(MSG_OUT, "libdvdnav: vm: faild to open/read the DVD\n");
+      fprintf(MSG_OUT, "libdvdnav: vm: failed to open/read the DVD\n");
       return 0;
     }
     dvd_read_name(vm->dvd_name, dvdroot);
     vm->map  = remap_loadmap(vm->dvd_name);
     vm->vmgi = ifoOpenVMGI(vm->dvd);
     if(!vm->vmgi) {
-      fprintf(MSG_OUT, "libdvdnav: vm: faild to read VIDEO_TS.IFO\n");
+      fprintf(MSG_OUT, "libdvdnav: vm: failed to read VIDEO_TS.IFO\n");
       return 0;
     }
     if(!ifoRead_FP_PGC(vm->vmgi)) {
