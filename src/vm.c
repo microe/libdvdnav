@@ -438,16 +438,23 @@ int vm_prev_pg(vm_t *vm)
   return vm_top_pg(vm);
 }
 
-int vm_prev_part(vm_t *vm)
+/* Get the current title and part from the current playing position. */
+/* returns S_ERR if not in the VTS_DOMAIN */
+/* FIXME: Should we do some locking here ? */
+int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result)
 {
-  link_t link_values;
   vts_ptt_srpt_t *vts_ptt_srpt;
-  int title, part=0;
+  int title=0, part=0;
   int found = 0;
   int16_t pgcN, pgN;
 
   if((!vm) || (!vm->vtsi) )
     return S_ERR;
+
+  if(!title_result || !part_result) {
+    fprintf(MSG_OUT, "libdvdnav:vm_get_current_title_part: Passed a NULL pointer");
+    return S_ERR;
+  }
 
   if(!(vm->state.pgc) )
     return S_ERR;
@@ -458,7 +465,7 @@ int vm_prev_part(vm_t *vm)
   pgN = vm->state.pgN;
   printf("VTS_PTT_SRPT - PGC: %3i PG: %3i\n",
     pgcN, pgN);
-  for(title=0;( (title<vts_ptt_srpt->nr_of_srpts) && (found == 0) );title++) {
+  for(title=0;( (title < vts_ptt_srpt->nr_of_srpts) && (found == 0) );title++) {
     for(part=0;((part < vts_ptt_srpt->title[title].nr_of_ptts) && (found == 0));part++) {
       if ( (vts_ptt_srpt->title[title].ptt[part].pgcn == pgcN) &&
            (vts_ptt_srpt->title[title].ptt[part].pgn == pgN ) ) {
@@ -480,14 +487,36 @@ int vm_prev_part(vm_t *vm)
     fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
     return S_ERR;
   }
-  /* Make sure this is not the first chapter */
-  if(part <= 1 ) {
-    fprintf(MSG_OUT, "libdvdnav: at first chapter. prev chapter failed.\n");
+  *title_result = title;
+  *part_result = part;
+  return 1;
+}
+
+/* Jump to a particlar part of a particlar title on this vts */
+/* returns S_ERR if not in the VTS_DOMAIN */
+/* FIXME: Should we do some locking here ? */
+int vm_jump_title_part(vm_t *vm, int title, int part) {
+  link_t link_values;
+  int vtsN;
+
+  if((!vm) || (!vm->vtsi) || (!vm->vmgi) )
+    return S_ERR;
+
+  if(!(vm->state.pgc) )
+    return S_ERR;
+/*  if ( (title < 1) || (title > vm->vtsi->vts_ptt_srpt->nr_of_srpts) ||
+       (part  < 1) || (part  > vm->vtsi->vts_ptt_srpt->title[title].nr_of_ptts) ) {
     return S_ERR;
   }
-  part--;  /* Previous chapter */
-  if(set_VTS_PTT(vm,(vm->state).vtsN, title, part) == -1)
-    assert(0);
+ */
+  if( (title < 1) || (title > vm->vmgi->tt_srpt->nr_of_srpts) ) {
+    return S_ERR;
+  }
+  vtsN = vm->vmgi->tt_srpt->title[title - 1].title_set_nr;
+
+  if(set_VTS_PTT(vm, vtsN, title, part) == -1) {
+    return S_ERR;
+  }
   link_values = play_PGC_PG( vm, (vm->state).pgN ); 
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
@@ -496,68 +525,6 @@ int vm_prev_part(vm_t *vm)
   vm->hop_channel++;
   
   fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
-
-  return 1;
-}
-
-
-int vm_next_part(vm_t *vm)
-{
-  link_t link_values;
-  vts_ptt_srpt_t *vts_ptt_srpt;
-  int title, part=0;
-  int found = 0;
-  int16_t pgcN, pgN;
-
-  if((!vm) || (!vm->vtsi) )
-    return S_ERR;
-
-  if(!(vm->state.pgc) )
-    return S_ERR;
-  if (vm->state.domain != VTS_DOMAIN)
-    return S_ERR;
-  vts_ptt_srpt = vm->vtsi->vts_ptt_srpt;
-  pgcN = get_PGCN(vm);
-  pgN = vm->state.pgN;
-  printf("VTS_PTT_SRPT - PGC: %3i PG: %3i\n",
-    pgcN, pgN);
-  for(title=0;( (title<vts_ptt_srpt->nr_of_srpts) && (found == 0) );title++) {
-    for(part=0;((part < vts_ptt_srpt->title[title].nr_of_ptts) && (found == 0));part++) {
-      if ( (vts_ptt_srpt->title[title].ptt[part].pgcn == pgcN) &&
-           (vts_ptt_srpt->title[title].ptt[part].pgn == pgN ) ) {
-        found = 1;
-        break;
-      }
-    }
-    if (found != 0) break;
-  }
-  title++;
-  part++;
-  if (found == 1) {
-    fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
-    printf("VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
-             title, part,
-             vts_ptt_srpt->title[title-1].ptt[part-1].pgcn ,
-             vts_ptt_srpt->title[title-1].ptt[part-1].pgn );
-  } else {
-    fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
-  }
-  /* Make sure this is not the last chapter */
-  if(part >= vts_ptt_srpt->title[title-1].nr_of_ptts) {
-    fprintf(MSG_OUT, "libdvdnav: at last chapter. next chapter failed.\n");
-    return S_ERR;
-  }
-  part++;  /* Next chapter */
-  if(set_VTS_PTT(vm,(vm->state).vtsN, title, part) == -1)
-    assert(0);
-  link_values = play_PGC_PG( vm, (vm->state).pgN );
-  link_values = process_command(vm,link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-  assert( (vm->state).blockN == 0 );
-  vm->hop_channel++;
-
-  fprintf(MSG_OUT, "libdvdnav: next chapter done\n");
 
   return 1;
 }
@@ -1695,8 +1662,10 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int
   if(vtsN != (vm->state).vtsN)
     ifoOpenNewVTSI(vm, vm->dvd, vtsN); /*  Also sets (vm->state).vtsN */
   
-  assert(vts_ttn <= vm->vtsi->vts_ptt_srpt->nr_of_srpts);
-  assert(part <= vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].nr_of_ptts);
+  if ((vts_ttn < 1) || (vts_ttn > vm->vtsi->vts_ptt_srpt->nr_of_srpts) ||
+      (part < 1) || (part > vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].nr_of_ptts) ) {
+    return S_ERR;
+  }
   
   pgcN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgcn;
   pgN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgn;
@@ -1957,6 +1926,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.34  2002/09/03 07:50:45  jcdutton
+ * Improve chapter selection functions.
+ *
  * Revision 1.33  2002/09/02 03:20:01  jcdutton
  * Implement proper prev/next chapter/part.
  * I don't know why someone has not noticed the problem until now.

@@ -56,6 +56,7 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int *titles) {
   return S_OK;
 }
 
+/* This function should not be used. FIXME: Suggest alternative */
 dvdnav_status_t dvdnav_get_number_of_programs(dvdnav_t *this, int *programs) {
   if(!this)
    return S_ERR;
@@ -70,55 +71,34 @@ dvdnav_status_t dvdnav_get_number_of_programs(dvdnav_t *this, int *programs) {
   return S_OK;
 }
 
+dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int *title, int *part) {
+  if(!this || !this->vm)
+   return S_ERR;
+
+  if(!title || !part) {
+    printerr("Passed a NULL pointer");
+    return S_ERR;
+  }
+
+  return vm_get_current_title_part(this->vm, title, part);
+}
+
 dvdnav_status_t dvdnav_title_play(dvdnav_t *this, int title) {
-  int num_titles;
 
   if(!this) {
     return S_ERR;
   }
 
-  /* Check number of titles */
-  dvdnav_get_number_of_titles(this, &num_titles);
-  if((title > num_titles) || (title <= 0)) {
-    printerrf("Invalid title passed (%i, maximum %i)", title,
-	      num_titles);
-    return S_ERR;
-  }
-  
-  vm_start_title(this->vm, title);
-
-  return S_OK;
+  return dvdnav_part_play(this, title, 1);
 }
 
 dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int title, int part) {
-  int num_titles, num_progs;
 
   if(!this) {
     return S_ERR;
   }
 
-  /* Check number of titles */
-  dvdnav_get_number_of_titles(this, &num_titles);
-  if((title > num_titles) || (title <= 0)) {
-    printerrf("Invalid title passed (%i, maximum %i)", title,
-	      num_titles);
-    return S_ERR;
-  }
- 
-  vm_start_title(this->vm, title);
-
-
-  /* Check number of parts */
-  num_progs = this->vm->state.pgc->nr_of_programs;
-  if((part > num_progs) || (part <= 0)) {
-    printerrf("Invalid program passed (%i, maximum %i)", part,
-	      num_progs);
-    return S_ERR;
-  }
-   
-  vm_jump_prog(this->vm, part);
-  
-  return S_OK;
+  return vm_jump_title_part(this->vm, title, part);
 }
 
 dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *this, int title,

@@ -228,25 +228,6 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int part) {
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_prev_part_search(dvdnav_t *this) {
-
-  if((!this) || (!this->vm)  )
-    return S_ERR;
-  
-  vm_prev_part(this->vm);
-  /* FIXME: handle errors */
-  return S_OK;
-}
-
-dvdnav_status_t dvdnav_next_part_search(dvdnav_t *this) {
-  if((!this) || (!this->vm)  )
-    return S_ERR;
-
-  vm_next_part(this->vm);
-  /* FIXME: handle errors */
-  return S_OK;
-}
-
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
   dvd_state_t *state;
 
@@ -314,56 +295,6 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   if (vm_menu_call(this->vm, menu, 0))
     this->vm->hop_channel++;
   pthread_mutex_unlock(&this->vm_lock); 
-  return S_OK;
-}
-
-dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int *tt, int *pr) {
-int vts_ttn = 0;
-  int vts, i;
-  domain_t domain;
-  tt_srpt_t* srpt;
-  
-  if(!this)
-   return S_ERR;
-
-  if(!tt || !pr) {
-    printerr("Passed a NULL pointer");
-  }
-
-  if(tt)
-   *tt = -1;
-  if(*pr)
-   *pr = -1;
-
-  domain = this->vm->state.domain;
-  if((domain == FP_DOMAIN) || (domain == VMGM_DOMAIN)) {
-    /* Not in a title */
-    return S_OK;
-  }
-  
-  vts_ttn = this->vm->state.VTS_TTN_REG;
-  vts = this->vm->state.vtsN;
-
-  /* FIXME: pr should be found by searching the VTS_SRPT table. Not just the pgN */
-  if(pr) {
-    *pr = this->vm->state.pgN;
-  }
-
-  /* Search TT_SRPT for title */
-  if(!(vm_get_vmgi(this->vm))) {
-    printerr("Oh poo, no SRPT");
-    return S_ERR;
-  }
-  
-  srpt = vm_get_vmgi(this->vm)->tt_srpt;
-  for(i=0; i<srpt->nr_of_srpts; i++) {
-    title_info_t* info = &(srpt->title[i]);
-    if((info->title_set_nr == vts) && (info->vts_ttn == vts_ttn)) {
-      if(tt)
-       *tt = i+1;
-    }
-  }
-
   return S_OK;
 }
 

@@ -123,6 +123,7 @@ dvd_reader_t *vm_get_dvd_reader(vm_t *vm);
 /* Jumping */
 int vm_start_title(vm_t *vm, int tt);
 int vm_jump_prog(vm_t *vm, int pr);
+int vm_jump_title_part(vm_t *vm, int title, int part);
 
 /* Other calls */
 int vm_reset(vm_t *vm, char *dvdroot); /*  , register_t regs); */
@@ -137,8 +138,6 @@ int vm_go_up(vm_t *vm);
 int vm_top_pg(vm_t *vm);
 int vm_next_pg(vm_t *vm);
 int vm_prev_pg(vm_t *vm);
-int vm_next_part(vm_t *vm);
-int vm_prev_part(vm_t *vm);
 int vm_get_audio_stream(vm_t *vm, int audioN);
 int vm_get_audio_active_stream(vm_t *vm);
 int vm_get_subp_stream(vm_t *vm, int subpN, int mode);
@@ -146,6 +145,7 @@ int vm_get_subp_active_stream(vm_t *vm, int mode);
 void vm_get_angle_info(vm_t *vm, int *num_avail, int *current);
 void vm_get_audio_info(vm_t *vm, int *num_avail, int *current);
 void vm_get_subp_info(vm_t *vm, int *num_avail, int *current);
+int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result);
 
 subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN);
 audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN);
