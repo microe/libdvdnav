@@ -1,5 +1,6 @@
 libdvdnav (0.1.10)
   * filter the symbols that we export.
+  * fix LinkNextC assertion failure (fixes LotR-SEE bonus disc image gallery)
 
 libdvdnav (0.1.9)
   * libdvdnav does not depend on libdvdread any more. It has it's own version.
