@@ -345,7 +345,6 @@ read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self) {
     dvdnav_read_cache_clear(self);
     for (i = 0; i < READ_CACHE_CHUNKS; i++) {
       self->chunk[i].cache_buffer = NULL;
-      self->chunk[i].cache_block_count = 0;
       self->chunk[i].usage_count = 0;
     }
   }
@@ -381,7 +380,6 @@ void dvdnav_read_cache_clear(read_cache_t *self) {
    return;
    
   for (i = 0; i < READ_CACHE_CHUNKS; i++) {
-    self->chunk[i].cache_start_sector = -1;
     self->chunk[i].cache_valid = 0;
   }
 }
@@ -414,7 +412,8 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
   /* find a free cache chunk that best fits the required size */
   use = -1;
   for (i = 0; i < READ_CACHE_CHUNKS; i++)
-    if (self->chunk[i].usage_count == 0 && self->chunk[i].cache_malloc_size >= block_count &&
+    if (self->chunk[i].usage_count == 0 && self->chunk[i].cache_buffer &&
+        self->chunk[i].cache_malloc_size >= block_count &&
         (use == -1 || self->chunk[use].cache_malloc_size > self->chunk[i].cache_malloc_size))
       use = i;
       
