@@ -9,7 +9,7 @@ menus_SOURCES = menus.c
 menus_LDADD = $(top_builddir)/src/libdvdnav.la
 
 debug:
-	@$(MAKE) CFLAGS="$(DEBUG_CFLAGS)"
+	@$(MAKE) CFLAGS="$(CFLAGS) $(DEBUG_CFLAGS)"
 
 install-debug: debug
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
