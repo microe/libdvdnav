@@ -102,7 +102,7 @@ static void set_GPRM(registers_t* registers, uint8_t reg, uint16_t value) {
 static uint16_t eval_reg(command_t* command, uint8_t reg) {
   if(reg & 0x80) {
     if ((reg & 0x1f) == 20) {
-      fprintf(MSG_OUT, "libdvdnav: Suspected RCE Region Protection!!!");
+      fprintf(MSG_OUT, "libdvdnav: Suspected RCE Region Protection!!!\n");
     }
     return command->registers->SPRM[reg & 0x1f]; /*  FIXME max 24 not 32 */
   } else {
