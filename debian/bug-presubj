@@ -1,7 +1,12 @@
 Reporting libdvdnav bugs:
 -------------------------
 
-Please file a bug in the debian Bug Tracking System only if it is a debian
-specific bug, e.g. a packaging error. Usually I cannot fix myself bugs in
-the library and I can only forward them to developer's mailinglist at
-dvd-devel@lists.sourceforge.net. Thank you.
+The upstrean authors ask you to CC all bug reports to their
+developer's mailingslist at dvd-devel@lists.sourceforge.net.
+Usually I'm not able to fix problems in the library itself
+and will forward your bug report to them anyway.
+
+To CC them, insert the following line after "Package: libdvdnav":
+X-Debbugs-CC: dvd-devel@lists.sourceforge.net
+
+Thank you for your support.
