@@ -275,9 +275,10 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *self, int *titles);
  * Returns the number of programs within the current title.
  * 
  * \param self Pointer to dvdnav_t associated with this operation.
- * \param programs Pointer to int to receive number of programs.
+ * \param titles int to select title.
+ * \param parts Pointer to int to receive number of parts.
  */
-dvdnav_status_t dvdnav_get_number_of_programs(dvdnav_t *self, int *programs);
+dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *self, int title, int *parts);
 
 /**
  * If we are currently in a still-frame this function skips it (or attempts to).
