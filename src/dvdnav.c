@@ -1086,3 +1086,18 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
   return this->position_next.still;
 }
 
+user_ops_t dvdnav_get_restrictions(dvdnav_t* this) {
+  /* 
+   * user_ops_t is a structure of 32 bits.  We want to compute 
+   * the union of two of those bitfields so to make this quicker 
+   * than performing 32 ORs, we will access them as 32bits words.
+   */
+  uint32_t ops=0;
+  
+  ops|=*(uint32_t*)&this->pci.pci_gi.vobu_uop_ctl;
+  
+  if(this->vm && this->vm->state.pgc)
+    ops|=*(uint32_t*)&this->vm->state.pgc->prohibited_ops;
+    
+  return *(user_ops_t*)&ops;
+}

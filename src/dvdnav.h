@@ -573,6 +573,12 @@ int8_t dvdnav_get_active_audio_stream(dvdnav_t *self);
  */
 int8_t dvdnav_get_active_spu_stream(dvdnav_t *self);
 
+/* 
+ * Get the set of user operations that are currently prohibited.
+ * There are potentially new restrictions right after 
+ * DVDNAV_CHANNEL_HOP and DVDNAV_NAV_PACKET.
+ */
+user_ops_t dvdnav_get_restrictions(dvdnav_t *self);
 
 /*********************************************************************
  * multiple angles                                                   *
