@@ -393,22 +393,20 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
 #else
       navRead_DSI(nav_dsi, p+1, sizeof(dsi_t));
 #endif
+
     } 
     return 1;
   }
   return 0;
 }
-/* Some angle suff */
-//  dvdnav_get_angle_info(this, &current, &num);
-//  if(num == 1) {
-    /* This is to switch back to angle one when we
-     * finish */
-//    dvdnav_angle_change(this, 1);
-//  }
+
 /* DSI is used for most angle stuff. 
  * PCI is used for only non-seemless angle stuff
  */ 
-int dvdnav_get_vobu(dsi_t* nav_dsi, pci_t* nav_pci, int angle, dvdnav_vobu_t* vobu) {
+int dvdnav_get_vobu(dvdnav_t *self, dsi_t* nav_dsi, pci_t* nav_pci, dvdnav_vobu_t* vobu) {
+  uint32_t next;
+  int angle, num_angle;
+
   vobu->vobu_start = nav_dsi->dsi_gi.nv_pck_lbn; /* Absolute offset from start of disk */
   vobu->vobu_length = nav_dsi->dsi_gi.vobu_ea; /* Relative offset from vobu_start */
      
@@ -423,31 +421,54 @@ int dvdnav_get_vobu(dsi_t* nav_dsi, pci_t* nav_pci, int angle, dvdnav_vobu_t* vo
    * DVDs are about 6 Gigs, which is only up to 0x300000 blocks
    * Should really assert if bit 31 != 1
    */
+  
   /* Relative offset from vobu_start */
-  vobu->vobu_next = ( nav_dsi->vobu_sri.next_vobu & 0x3fffffff ); 
-      
-  if(angle != 0) {
-    /* FIXME: Angles need checking */
-    uint32_t next = nav_pci->nsml_agli.nsml_agl_dsta[angle-1];
+  vobu->vobu_next = ( nav_dsi->vobu_sri.next_vobu & 0x3fffffff );  
+  
+  /* Old code -- may still be sueful one day 
+  if(nav_dsi->vobu_sri.next_vobu != SRI_END_OF_CELL ) {
+    vobu->vobu_next = ( nav_dsi->vobu_sri.next_vobu & 0x3fffffff );
+  } else {
+    vobu->vobu_next = vobu->vobu_length;
+  } */
+  
+  dvdnav_get_angle_info(self, &angle, &num_angle);
+#if 0
+  /* FIMXE: The angle reset doesn't work for some reason for the moment */
+  
+  if((num_angle < angle) && (angle != 1)) {
+    printf("OOOOOOO angle ends!\n");
+    
+    /* This is to switch back to angle one when we
+     * finish with angles. */
+    dvdnav_angle_change(self, 1);
+  } 
+#endif
 
+  if(num_angle != 0) {
+    next = nav_pci->nsml_agli.nsml_agl_dsta[angle-1];
+    
     if(next != 0) {
-      if(next & 0x80000000) {
-        vobu->vobu_next =  - (next & 0x3fffffff);
-      } else {
-        vobu->vobu_next =  + (next & 0x3fffffff);
+      if((next & 0x3fffffff) != 0) {
+	if(next & 0x80000000) {
+	  vobu->vobu_next = - (int32_t)(next & 0x3fffffff);
+	} else {
+	  vobu->vobu_next = + (int32_t)(next & 0x3fffffff);
+	}
       }
-
+      
     } else if( nav_dsi->sml_agli.data[angle-1].address != 0 ) {
       next = nav_dsi->sml_agli.data[angle-1].address;
       vobu->vobu_length = nav_dsi->sml_pbi.ilvu_ea;
-
+      
       if((next & 0x80000000) && (next != 0x7fffffff)) {
-        vobu->vobu_next =  - (next & 0x3fffffff);
+	vobu->vobu_next =  - (int32_t)(next & 0x3fffffff);
       } else {
-        vobu->vobu_next =  + (next & 0x3fffffff);
+	vobu->vobu_next =  + (int32_t)(next & 0x3fffffff);
       }
     }
   }
+
   return 1;
 }
 /* This is the main get_next_block function which actually gets the media stream video and audio etc.
@@ -731,7 +752,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
       pthread_mutex_unlock(&this->vm_lock); 
       return S_ERR;
     }
-    dvdnav_get_vobu(&this->dsi,&this->pci, 0, &this->vobu); 
+    dvdnav_get_vobu(this, &this->dsi,&this->pci, &this->vobu); 
     this->vobu.blockN=1;
     /* FIXME: We need to update the vm state->blockN with which VOBU we are in.
      *        This is so RSM resumes to the VOBU level and not just the CELL level.
@@ -907,6 +928,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.17  2002/05/09 11:57:24  richwareham
+ * Angles now work (still a few wrinkles though -- e.g. angle does not reset to '1' when returning to menus)
+ *
  * Revision 1.16  2002/04/24 21:15:25  jcdutton
  * Quiet please!!!
  *
