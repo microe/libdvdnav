@@ -378,13 +378,15 @@ vm_t *vm_new_copy(vm_t *source) {
   /* open a new vtsi handle, because the copy might switch to another VTS */
   target->vtsi = NULL;
   vtsN = (target->state).vtsN;
-  (target->state).vtsN = 0;
-  ifoOpenNewVTSI(target, target->dvd, vtsN);
+  if (vtsN > 0) {
+    (target->state).vtsN = 0;
+    ifoOpenNewVTSI(target, target->dvd, vtsN);
   
-  /* restore pgc pointer into the new vtsi */
-  if (!set_PGCN(target, pgcN))
-    assert(0);
-  (target->state).pgN = pgN;
+    /* restore pgc pointer into the new vtsi */
+    if (!set_PGCN(target, pgcN))
+      assert(0);
+    (target->state).pgN = pgN;
+  }
   
   return target;
 }
@@ -438,14 +440,19 @@ void vm_position_get(vm_t *vm, vm_position_t *position) {
   if (((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector ==
        (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_vobu_start_sector) &&
       ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
-       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 250)) {
+       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 1024)) {
     int time;
+    int size = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
+	       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
     time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0xf0) * 36000;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0x0f) * 3600;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0xf0) * 600;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0x0f) * 60;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0xf0) * 10;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0x0f) * 1;
+    if (size / time > 30)
+      /* datarate is too high, it might be a very short, but regular cell */
+      return;
     if (time > 0xff) time = 0xff;
     position->still = time;
   }
@@ -564,7 +571,9 @@ int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd) {
 
 int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   vts_ptt_srpt_t *vts_ptt_srpt;
-  int title, part = 0, vts_ttn;
+  int title   = (vm->state).TTN_REG;
+  int part    = (vm->state).PTTN_REG;
+  int vts_ttn = (vm->state).VTS_TTN_REG;
   int found;
   int16_t pgcN, pgN;
 
@@ -593,8 +602,8 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
     fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
     fprintf(MSG_OUT, "libdvdnav: VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
              title, part,
-             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgcn ,
-             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgn );
+             vts_ptt_srpt->title[vts_ttn-1].ptt[part-1].pgcn ,
+             vts_ptt_srpt->title[vts_ttn-1].ptt[part-1].pgn );
   } else {
     fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
   }
@@ -858,7 +867,7 @@ static link_t play_PGC(vm_t *vm) {
   link_t link_values;
   
 #ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm: play_PGC:");
+  fprintf(MSG_OUT, "libdvdnav: play_PGC:");
   if((vm->state).domain != FP_DOMAIN) {
     fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
   } else {
@@ -898,7 +907,7 @@ static link_t play_PGC_PG(vm_t *vm, int pgN) {
   link_t link_values;
   
 #ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm: play_PGC:");
+  fprintf(MSG_OUT, "libdvdnav: play_PGC:");
   if((vm->state).domain != FP_DOMAIN) {
     fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
   } else {
@@ -1270,8 +1279,13 @@ static int process_command(vm_t *vm, link_t link_values) {
 	/* Link to Resume point */
 	int i;
 	
-	/*  Check and see if there is any rsm info!! */
-	assert((vm->state).rsm_vtsN);
+	/* Check and see if there is any rsm info!! */
+	if (!(vm->state).rsm_vtsN) {
+	  fprintf(MSG_OUT, "libdvdnav: trying to resume without any resume info set\n");
+	  link_values.command = Exit;
+	  break;
+	}
+	
 	(vm->state).domain = VTS_DOMAIN;
 	ifoOpenNewVTSI(vm, vm->dvd, (vm->state).rsm_vtsN);
 	set_PGCN(vm, (vm->state).rsm_pgcN);
@@ -1520,7 +1534,7 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part) {
   pgN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgn;
  
   (vm->state).TT_PGCN_REG = pgcN;
-  (vm->state).PTTN_REG    = pgN;
+  (vm->state).PTTN_REG    = part;
   (vm->state).TTN_REG     = get_TT(vm, vtsN, vts_ttn);
   assert( (vm->state.TTN_REG) != 0 );
   (vm->state).VTS_TTN_REG = vts_ttn;
@@ -1586,7 +1600,7 @@ static int set_PGN(vm_t *vm) {
       return 0; /* ?? */
     pb_ty = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1].pb_ty;
     if(pb_ty->multi_or_random_pgc_title == /* One_Sequential_PGC_Title */ 0) {
-      int dummy;
+      int dummy, part;
 #if 0
       /* TTN_REG can't be trusted to have a correct value here... */
       vts_ptt_srpt_t *ptt_srpt = vtsi->vts_ptt_srpt;
@@ -1594,8 +1608,8 @@ static int set_PGN(vm_t *vm) {
       assert(get_PGCN() == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgcn);
       assert(1 == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgn);
 #endif
-      vm_get_current_title_part(vm, &dummy, &(vm->state).pgN);
-      (vm->state).PTTN_REG = (vm->state).pgN;
+      vm_get_current_title_part(vm, &dummy, &part);
+      (vm->state).PTTN_REG = part;
     } else {
       /* FIXME: Handle RANDOM or SHUFFLE titles. */
       fprintf(MSG_OUT, "libdvdnav: RANDOM or SHUFFLE titles are NOT handled yet.\n");
@@ -1783,6 +1797,13 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.45  2003/03/14 18:47:51  mroi
+ * - fix vm copying when the vtsN has not yet been set
+ * - change still detection heuristics
+ * - small TRACE output beautification
+ * - fix handling of PTT register
+ * - stop the VM when LinkRSM is called without resume info set
+ *
  * Revision 1.44  2003/03/12 11:38:10  mroi
  * - provide the means to make copies of the VM to try certain operations on a copy and
  *   merge the changes back on success
