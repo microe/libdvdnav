@@ -1576,6 +1576,7 @@ static int get_ID(vm_t *vm, int id)
   /* Relies on state to get the correct pgcit. */
   pgcit = get_PGCIT(vm);
   assert(pgcit != NULL);
+  fprintf(stderr, "** Searching for menu (0x%x) entry PGC\n", id);
   
   /* Get menu/title */
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
@@ -1586,7 +1587,11 @@ static int get_ID(vm_t *vm, int id)
     }
   }
   fprintf(stderr, "** No such id/menu (%d) entry PGC\n", id);
-  assert(0);
+  for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
+    fprintf(stderr, "Available menus: 0x%x\n",
+                     pgcit->pgci_srp[i].entry_id);
+  }
+  assert(0); /* Use assert for now, until the error is handled. */
   return -1; /*  error */
 }
 
@@ -1763,6 +1768,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.23  2002/07/05 01:42:30  jcdutton
+ * Add more debug info for Menu language selection.
+ * Only do vm_start when we have to.
+ *
  * Revision 1.22  2002/07/04 00:38:51  jcdutton
  * Add some menu language printf's.
  *

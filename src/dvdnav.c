@@ -198,11 +198,11 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   if (this->file) DVDCloseFile(this->file);
   this->file = NULL;
     
-  if(!this->started) {
-    /* Start the VM */
-    vm_start(this->vm);
-    this->started = 1;
-  }
+  //if(!this->started) {
+  //  /* Start the VM */
+  //  vm_start(this->vm);
+  //  this->started = 1;
+  //}
 
   /* Start the read-ahead cache. */
   this->cache = dvdnav_read_cache_new(this);
@@ -282,11 +282,11 @@ dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   printf("starting vm\n");
 #endif
-  if(!this->started) {
-    /* Start the VM */
-    vm_start(this->vm);
-    this->started = 1;
-  }
+//  if(!this->started) {
+//    /* Start the VM */
+//    vm_start(this->vm);
+//    this->started = 1;
+//  }
 #ifdef LOG_DEBUG
   printf("unlocking\n");
 #endif
@@ -942,6 +942,10 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.24  2002/07/05 01:42:30  jcdutton
+ * Add more debug info for Menu language selection.
+ * Only do vm_start when we have to.
+ *
  * Revision 1.23  2002/07/02 22:57:09  jcdutton
  * Rename some of the functions in vm.c to help readability.
  * Hopefully fix __FUNCTION__ problem. Use __func_ as recommended in C99.
