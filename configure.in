@@ -94,7 +94,7 @@ dnl
 case $host in
   *-*-freebsd*)
     THREAD_LIBS="-pthread"
-    CFLAGS="$CFLAGS -I/usr/local/include -L/usr/local/lib -D_THREAD_SAFE"
+    THREAD_CFLAGS="$CFLAGS -I/usr/local/include -L/usr/local/lib -D_THREAD_SAFE"
     CPPFLAGS="$CPPFLAGS -I/usr/local/include -L/usr/local/lib"
     ;;
   *)
@@ -104,6 +104,7 @@ case $host in
     ;;
 esac
 AC_SUBST(THREAD_LIBS)
+AC_SUBST(THREAD_CFLAGS)
 
 dnl
 dnl dynamic linker
@@ -154,5 +155,7 @@ dnl
 AC_OUTPUT([
 Makefile 
 src/Makefile
+misc/Makefile
+misc/dvdnav-config
 libdvdnav.spec
 ])
