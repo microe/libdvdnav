@@ -60,11 +60,9 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int32_t *titles) {
     printerr("Passed a NULL pointer.");
     return DVDNAV_STATUS_ERR;
   }
-
   if(!this->started) {
-    /* Start the VM */
-    vm_start(this->vm);
-    this->started = 1;
+    printerr("Virtual DVD machine not started.");
+    return DVDNAV_STATUS_ERR;
   }
 
   (*titles) = vm_get_vmgi(this->vm)->tt_srpt->nr_of_srpts;
