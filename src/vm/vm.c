@@ -450,7 +450,7 @@ void vm_position_get(vm_t *vm, vm_position_t *position) {
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0x0f) * 60;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second >> 4  ) * 10;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0x0f) * 1;
-    if (size / time > 30)
+    if (!time || size / time > 30)
       /* datarate is too high, it might be a very short, but regular cell */
       return;
     if (time > 0xff) time = 0xff;
