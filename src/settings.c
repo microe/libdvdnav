@@ -29,7 +29,7 @@
 
 /* Characteristics/setting API calls */
 
-dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int *region) {
+dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int32_t *region) {
   if(!this || !region) {
     printerr("Passed a NULL this pointer.");
     return DVDNAV_STATUS_ERR;
@@ -39,7 +39,7 @@ dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int *region) {
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *this, int mask) {
+dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *this, int32_t mask) {
   if(!this) {
     printerr("Passed a NULL this pointer.");
     return DVDNAV_STATUS_ERR;
@@ -51,7 +51,7 @@ dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *this, int mask) {
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *this, int use_readahead) {
+dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *this, int32_t use_readahead) {
   if(!this) {
     printerr("Passed a NULL this pointer.");
     return DVDNAV_STATUS_ERR;
@@ -61,7 +61,7 @@ dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *this, int use_readahead) {
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *this, int *flag) {
+dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *this, int32_t *flag) {
   if(!this || !flag) {
     printerr("Passed a NULL this pointer.");
     return DVDNAV_STATUS_ERR;
@@ -100,7 +100,7 @@ dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *this, char *code) {
   return set_language_register(this, code, 18);
 }
 
-dvdnav_status_t dvdnav_set_PGC_positioning_flag(dvdnav_t *this, int pgc) {
+dvdnav_status_t dvdnav_set_PGC_positioning_flag(dvdnav_t *this, int32_t pgc) {
   if(!this) {
     printerr("Passed a NULL this pointer.");
     return DVDNAV_STATUS_ERR;
@@ -110,7 +110,7 @@ dvdnav_status_t dvdnav_set_PGC_positioning_flag(dvdnav_t *this, int pgc) {
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_get_PGC_positioning_flag(dvdnav_t *this, int *flag) {
+dvdnav_status_t dvdnav_get_PGC_positioning_flag(dvdnav_t *this, int32_t *flag) {
   if(!this || !flag) {
     printerr("Passed a NULL this pointer.");
     return DVDNAV_STATUS_ERR;
