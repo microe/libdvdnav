@@ -1172,7 +1172,7 @@ static int process_command(vm_t *vm, link_t link_values) {
     
 #ifdef TRACE
     fprintf(MSG_OUT, "libdvdnav: Before printout starts:\n");
-    vmPrint_LINK(link_values);
+    vm_print_link(link_values);
     fprintf(MSG_OUT, "libdvdnav: Link values %i %i %i %i\n", link_values.command, 
 	    link_values.data1, link_values.data2, link_values.data3);
     vm_print_current_domain_state(vm);
@@ -1818,6 +1818,9 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.53  2003/04/05 13:11:13  jcdutton
+ * Minor changes.
+ *
  * Revision 1.52  2003/04/03 12:48:30  mroi
  * merge James changes from xine-lib cvs
  *

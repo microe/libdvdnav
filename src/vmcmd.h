@@ -30,8 +30,8 @@
 #include "dvdnav_internal.h"
 
 #ifdef TRACE
-void vmPrint_mnemonic(vm_cmd_t *command);
-void vmPrint_CMD(int row, vm_cmd_t *command);
+void vm_print_mnemonic(vm_cmd_t *command);
+void vm_print_cmd(int row, vm_cmd_t *command);
 #endif
 
 #endif /* VMCMD_H_INCLUDED */

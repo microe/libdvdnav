@@ -175,7 +175,7 @@ static void nav_print_BTNIT(btni_t *btni_table, int btngr_ns, int btn_ns) {
           fprintf(MSG_OUT, "libdvdnav: %02x ", btni->cmd.bytes[k]);
         }
         fprintf(MSG_OUT, "| ");
-        vmPrint_mnemonic(&btni->cmd);
+        vm_print_mnemonic(&btni->cmd);
         fprintf(MSG_OUT, "\n");
       }
     }

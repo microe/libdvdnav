@@ -115,21 +115,6 @@ static const char *system_reg_abbr_table[] = {
   NULL,
 };
 
-typedef struct {
-  uint16_t SPRM[24];
-  uint16_t GPRM[16];
-  uint8_t  GPRM_mode[16];  /* Need to have some thing to indicate normal/counter mode for every
-GPRM */
-  struct timeval GPRM_time[16]; /* For counter mode */
-} registers_t;
-
-typedef struct
-{
-  uint64_t instruction;
-  uint64_t examined;
-  registers_t *registers;
-} command_t;
-
 uint32_t vm_getbits(command_t *command, int start, int count) {
   uint64_t result = 0;
   uint64_t bit_mask=0xffffffffffffffff;  /* I could put -1 instead */
@@ -564,7 +549,7 @@ void vm_print_mnemonic(vm_cmd_t *vm_command)  {
   }
 }
 
-void vmPrint_CMD(int row, vm_cmd_t *vm_command) {
+void vm_print_cmd(int row, vm_cmd_t *vm_command) {
   int i;
 
   fprintf(MSG_OUT, "(%03d) ", row + 1);
@@ -572,7 +557,7 @@ void vmPrint_CMD(int row, vm_cmd_t *vm_command) {
     fprintf(MSG_OUT, "%02x ", vm_command->bytes[i]);
   fprintf(MSG_OUT, "| ");
 
-  vmPrint_mnemonic(vm_command);
+  vm_print_mnemonic(vm_command);
   fprintf(MSG_OUT, "\n");
 }
 

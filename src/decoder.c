@@ -34,30 +34,6 @@
 #include <assert.h>
 #include "dvdnav_internal.h"
 
-uint32_t vm_getbits(command_t *command, int start, int count) {
-  uint64_t result = 0;
-  uint64_t bit_mask=0xffffffffffffffff;  /* I could put -1 instead */
-  uint64_t examining = 0;
-  int32_t  bits;
-
-  if (count == 0) return 0;
-
-  if ( ((start - count) < -1) ||
-       (count > 32) ||
-       (start > 63) ||
-       (count < 0) ||
-       (start < 0) ) {
-    fprintf(MSG_OUT, "libdvdnav: Bad call to vm_getbits. Parameter out of range\n");
-    assert(0);
-  }
-  bit_mask >>= 63 - start;
-  bits = start + 1 - count;
-  examining = ((bit_mask >> bits) << bits );
-  command->examined |= examining;
-  result = (command->instruction & bit_mask) >> bits;
-  return (uint32_t) result;
-}
-
 static uint16_t get_GPRM(registers_t* registers, uint8_t reg) {
   if (registers->GPRM_mode[reg] & 0x01) {
     struct timeval current_time, time_offset;
@@ -580,10 +556,10 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
 #ifdef TRACE
   /*  DEBUG */
   fprintf(MSG_OUT, "libdvdnav: Registers before transaction\n");
-  vmPrint_registers( registers );
+  vm_print_registers( registers );
   fprintf(MSG_OUT, "libdvdnav: Full list of commands to execute\n");
   for(i = 0; i < num_commands; i++)
-    vmPrint_CMD(i, &commands[i]);
+    vm_print_cmd(i, &commands[i]);
   fprintf(MSG_OUT, "libdvdnav: --------------------------------------------\n");
   fprintf(MSG_OUT, "libdvdnav: Single stepping commands\n");
 #endif
@@ -593,7 +569,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
     int32_t line;
     
 #ifdef TRACE
-    vmPrint_CMD(i, &commands[i]);
+    vm_print_cmd(i, &commands[i]);
 #endif
 
     line = eval_command(&commands[i].bytes[0], registers, return_values);
@@ -601,7 +577,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
     if (line < 0) { /*  Link command */
 #ifdef TRACE
       fprintf(MSG_OUT, "libdvdnav: Registers after transaction\n");
-      vmPrint_registers( registers );
+      vm_print_registers( registers );
       fprintf(MSG_OUT, "libdvdnav: eval: Doing Link/Jump/Call\n"); 
 #endif
       return 1;
@@ -618,7 +594,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   memset(return_values, 0, sizeof(link_t));
 #ifdef TRACE
   fprintf(MSG_OUT, "libdvdnav: Registers after transaction\n");
-  vmPrint_registers( registers );
+  vm_print_registers( registers );
 #endif
   return 0;
 }
@@ -691,7 +667,7 @@ static char *linkcmd2str(link_cmd_t cmd) {
   return "*** (bug)";
 }
 
-void vmPrint_LINK(link_t value) {
+void vm_print_link(link_t value) {
   char *cmd = linkcmd2str(value.command);
     
   switch(value.command) {
@@ -747,7 +723,7 @@ void vmPrint_LINK(link_t value) {
   }
  }
 
-void vmPrint_registers( registers_t *registers ) {
+void vm_print_registers( registers_t *registers ) {
   int32_t i;
   fprintf(MSG_OUT, "libdvdnav:    #   ");
   for(i = 0; i < 24; i++)
