@@ -126,8 +126,6 @@ struct dvdnav_s {
   /* General data */
   char        path[MAX_PATH_LEN]; /* Path to DVD device/dir */
   dvd_file_t *file;               /* Currently opened file */
-  int         open_vtsN;          /* The domain and number of the... */
-  int         open_domain;        /* ..currently opened VOB */
  
   /* Position data */
   vm_position_t position_next;
