@@ -541,7 +541,7 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result)
   part++;
   if (found == 1) {
     fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
-    printf("VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
+    fprintf(MSG_OUT, "libdvdnav: VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
              title, part,
              vts_ptt_srpt->title[title-1].ptt[part-1].pgcn ,
              vts_ptt_srpt->title[title-1].ptt[part-1].pgn );
@@ -1988,6 +1988,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.36  2002/09/22 11:53:32  mroi
+ * small output beautification
+ *
  * Revision 1.35  2002/09/17 11:00:22  jcdutton
  * First patch for personalized dvd viewing. I have not tested it yet.
  *
