@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2000 Rich Wareham <richwareham@users.sourceforge.net>
+ *               2001-2004 the dvdnav project
  *
  * This file is part of libdvdnav, a DVD navigation library.
  *
@@ -181,7 +182,7 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
       self->chunk[use].cache_buffer_base = realloc(self->chunk[use].cache_buffer_base,
         block_count * DVD_VIDEO_LB_LEN + ALIGNMENT);
       self->chunk[use].cache_buffer =
-        (uint8_t *)(((uintptr_t)self->chunk[use].cache_buffer_base & ~(ALIGNMENT - 1)) + ALIGNMENT);
+        (uint8_t *)(((uintptr_t)self->chunk[use].cache_buffer_base & ~((uintptr_t)(ALIGNMENT - 1))) + ALIGNMENT);
       dprintf("pre_cache DVD read realloc happened\n");
       self->chunk[use].cache_malloc_size = block_count;
     } else {
@@ -199,7 +200,7 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
 	self->chunk[i].cache_buffer_base =
 	  malloc((block_count > 500 ? block_count : 500) * DVD_VIDEO_LB_LEN + ALIGNMENT);
 	self->chunk[i].cache_buffer =
-	  (uint8_t *)(((uintptr_t)self->chunk[i].cache_buffer_base & ~(ALIGNMENT - 1)) + ALIGNMENT);
+	  (uint8_t *)(((uintptr_t)self->chunk[i].cache_buffer_base & ~((uintptr_t)(ALIGNMENT - 1))) + ALIGNMENT);
 	self->chunk[i].cache_malloc_size = block_count > 500 ? block_count : 500;
 	dprintf("pre_cache DVD read malloc %d blocks\n",
 	  (block_count > 500 ? block_count : 500 ));

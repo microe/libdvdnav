@@ -1034,7 +1034,7 @@ ssize_t DVDReadBytes( dvd_file_t *dvd_file, void *data, size_t byte_size )
       ( ( ( seek_byte + byte_size ) % DVD_VIDEO_LB_LEN ) ? 1 : 0 );
     
     secbuf_base = (unsigned char *) malloc( numsec * DVD_VIDEO_LB_LEN + 2048 );
-    secbuf = (unsigned char *)(((uintptr_t)secbuf_base & ~2047) + 2048);
+    secbuf = (unsigned char *)(((uintptr_t)secbuf_base & ~((uintptr_t)2047)) + 2048);
     if( !secbuf_base ) {
 	fprintf( stderr, "libdvdread: Can't allocate memory " 
 		 "for file read!\n" );
@@ -1088,7 +1088,7 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 	    ssize_t bytes_read;
 	    size_t file_size = dvd_file->filesize * DVD_VIDEO_LB_LEN;
 	    char *buffer_base = malloc( file_size + 2048 );
-	    char *buffer = (unsigned char *)(((uintptr_t)buffer_base & ~2047) + 2048);
+	    char *buffer = (unsigned char *)(((uintptr_t)buffer_base & ~((uintptr_t)2047)) + 2048);
 	    
 	    if( buffer_base == NULL ) {
 		fprintf( stderr, "libdvdread: DVDDiscId, failed to "
@@ -1097,8 +1097,8 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 	    }
 	    bytes_read = DVDReadBytes( dvd_file, buffer, file_size );
 	    if( bytes_read != file_size ) {
-		fprintf( stderr, "libdvdread: DVDDiscId read returned %d bytes"
-			 ", wanted %d\n", bytes_read, file_size );
+		fprintf( stderr, "libdvdread: DVDDiscId read returned %zd bytes"
+			 ", wanted %zd\n", bytes_read, file_size );
 		DVDCloseFile( dvd_file );
 		free( buffer_base );
 		return -1;
@@ -1133,7 +1133,7 @@ int DVDISOVolumeInfo( dvd_reader_t *dvd,
   }
   
   buffer_base = malloc( DVD_VIDEO_LB_LEN + 2048 );
-  buffer = (unsigned char *)(((uintptr_t)buffer_base & ~2047) + 2048);
+  buffer = (unsigned char *)(((uintptr_t)buffer_base & ~((uintptr_t)2047)) + 2048);
 
   if( buffer_base == NULL ) {
     fprintf( stderr, "libdvdread: DVDISOVolumeInfo, failed to "
