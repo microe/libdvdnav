@@ -72,6 +72,22 @@ btni_t *__get_current_button(dvdnav_t *this) {
   return &(this->pci.hli.btnit[button-1]);
 }
 
+dvdnav_status_t dvdnav_button_auto_action(dvdnav_t *this) {
+  btni_t *button_ptr;
+  
+  if(!this)
+   return S_ERR;
+
+  if((button_ptr = __get_current_button(this)) == NULL) {
+    return S_ERR;
+  }
+  if (button_ptr->auto_action_mode == 1) {
+    return S_OK;
+  }
+  return S_ERR;
+}
+
+
 dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this) {
   btni_t *button_ptr;
   
@@ -83,7 +99,10 @@ dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this) {
   }
 
   dvdnav_button_select(this, button_ptr->up);
-  
+  if (dvdnav_button_auto_action(this) ) {
+    dvdnav_button_activate(this);
+  }
+ 
   return S_OK;
 }
 
@@ -98,6 +117,9 @@ dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this) {
   }
 
   dvdnav_button_select(this, button_ptr->down);
+  if (dvdnav_button_auto_action(this) ) {
+    dvdnav_button_activate(this);
+  }
   
   return S_OK;
 }
@@ -114,6 +136,9 @@ dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this) {
   }
 
   dvdnav_button_select(this, button_ptr->right);
+  if (dvdnav_button_auto_action(this) ) {
+    dvdnav_button_activate(this);
+  }
   
   return S_OK;
 }
@@ -129,6 +154,9 @@ dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this) {
   }
 
   dvdnav_button_select(this, button_ptr->left);
+  if (dvdnav_button_auto_action(this) ) {
+    dvdnav_button_activate(this);
+  }
   
   return S_OK;
 }
