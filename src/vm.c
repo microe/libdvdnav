@@ -1188,11 +1188,11 @@ static link_t process_command(vm_t *vm, link_t link_values)
     case LinkTailPGC:
       /* Link to Tail??? Program Chain */
       /* BUTTON number:data1 */
-      fprintf(stderr, "libdvdnav: FIXME: LinkTailPGC. What is LinkTailPGC?\n");
+      /* fprintf(stderr, "libdvdnav: FIXME: LinkTailPGC. What is LinkTailPGC?\n"); */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PGC_post(vm);
-      break;
+    break;
       
     case LinkRSM:
       {
@@ -1300,7 +1300,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
       if(get_VTS_PTT(vm,(vm->state).vtsN, link_values.data1, link_values.data2) == -1)
 	assert(0);
-      link_values = play_PG(vm);
+      link_values = play_PGC(vm);
       break;
       
     case JumpSS_FP:
@@ -1535,8 +1535,6 @@ static int get_ID(vm_t *vm, int id)
   return -1; /*  error */
 }
 
-
-
 static int get_PGC(vm_t *vm, int pgcN)
 {
   /* FIXME: Keep this up to date with the ogle people */
@@ -1679,6 +1677,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.17  2002/05/30 15:56:41  richwareham
+ * Fixed (what appears to be) an error in JumpVTS_PTT implementation, it didn't call play_PGC after jumping.
+ *
  * Revision 1.16  2002/04/24 21:15:25  jcdutton
  * Quiet please!!!
  *

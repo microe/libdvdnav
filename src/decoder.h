@@ -32,7 +32,7 @@
 #include <dvdread/ifo_types.h> /*  vm_cmd_t */
 
 /* Uncomment for tracing */
-/* #define TRACE */
+/* #define TRACE  */
 
 typedef enum {
   LinkNoLink  = 0,

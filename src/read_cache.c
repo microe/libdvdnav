@@ -31,9 +31,17 @@
 /* Read-ahead cache structure. */
 #if _MULTITHREAD_
 struct read_cache_s {
+
+  /* Bounds on read ahead buffer */
+  off_t      low_bound;
+  off_t      high_bound;
+
+  /* Where we are currently 'reading' from */
+  
   /* Bit of strange cross-linking going on here :) -- Gotta love C :) */
   dvdnav_t    *dvd_self;
 };
+
 #else
 struct read_cache_s {
   /* Read-ahead cache. */
