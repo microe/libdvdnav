@@ -4,6 +4,8 @@ libdvdnav (0.1.6) unstable; urgency=low
     the application to wait for its fifos to get empty
   * correct HIGHLIGHT reporting when a button is activated
   * method to try-run VM operations, now used for safer chapter skipping and menu jumps
+  * fixed detection of current PTT to not assume a 1:1 mapping between PTTs and PGs
+  * releasing stills when jumping to menu fixes some state inconsistencies
 
 libdvdnav (0.1.5) unstable; urgency=low
   * some bugfixes
