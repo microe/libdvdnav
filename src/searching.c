@@ -405,7 +405,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
 
   pthread_mutex_lock(&this->vm_lock);
   state = &(this->vm->state);
-  if(!state->pgc) {
+  if(!state->pgc || this->vm->stopped) {
     printerr("No current PGC.");
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
