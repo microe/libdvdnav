@@ -1,4 +1,4 @@
-SUBDIRS = src examples misc m4
+SUBDIRS = src examples doc misc m4
 
 EXTRA_DIST = debian/README.Debian debian/changelog debian/control debian/copyright debian/dirs \
 	debian/libdvdnav1.files debian/rules libdvdnav.spec @DEPCOMP@

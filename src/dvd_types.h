@@ -28,6 +28,12 @@
 #include <inttypes.h>
 
 /**
+ * \file dvd_types.h
+ *
+ * Various useful structs and enums for DVDs.
+ */
+
+/**
  * DVD Domain
  */
 typedef enum {
@@ -279,12 +285,15 @@ typedef struct {
   int more_to_come;
 } DVDVideoAttributes_t;
 
+/**
+ * Atructure containing info on highlight areas.
+ */
 typedef struct {
-  uint32_t palette;  /* The CLUT entries for the highlight palette
+  uint32_t palette;  /*!< The CLUT entries for the highlight palette
                         (4-bits per entry -> 4 entries) */
-  uint16_t sx,sy,ex,ey; /* The start/end x,y positions */
-  uint32_t pts;         /* Highlight PTS to match with SPU */
-  uint32_t buttonN;     /* Button number for the SPU decoder. */
+  uint16_t sx,sy,ex,ey; /*!< The start/end x,y positions */
+  uint32_t pts;         /*!< Highlight PTS to match with SPU */
+  uint32_t buttonN;     /*!< Button number for the SPU decoder. */
 } dvdnav_highlight_area_t;
 
 

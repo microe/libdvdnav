@@ -411,7 +411,7 @@ int dvdnav_get_vobu(dvdnav_t *self, dsi_t* nav_dsi, pci_t* nav_pci, dvdnav_vobu_
   vobu->vobu_start = nav_dsi->dsi_gi.nv_pck_lbn; /* Absolute offset from start of disk */
   vobu->vobu_length = nav_dsi->dsi_gi.vobu_ea; /* Relative offset from vobu_start */
      
-  /**
+  /*
    * If we're not at the end of this cell, we can determine the next
    * VOBU to display using the VOBU_SRI information section of the
    * DSI.  Using this value correctly follows the current angle,
@@ -931,6 +931,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.21  2002/06/06 15:03:09  richwareham
+ * Biiiiiiig change to let doxygen generate some docs for the library. Note that I'm in no way sure that the autoconf stuff plays nice.
+ *
  * Revision 1.20  2002/06/04 13:35:16  richwareham
  * Removed more C++ style comments
  *
