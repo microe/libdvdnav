@@ -262,7 +262,9 @@ int vm_start(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+#ifdef TRACE
   fprintf(stderr, "vm_start: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
   assert( (vm->state).blockN == 0 );
 
 
@@ -310,7 +312,9 @@ int vm_start_title(vm_t *vm, int tt) {
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+#ifdef TRACE
   fprintf(stderr, "vm_start_title: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
   assert( (vm->state).blockN == 0 );
 
   return 0; /* ?? */
@@ -326,7 +330,9 @@ int vm_jump_prog(vm_t *vm, int pr) {
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+#ifdef TRACE
   fprintf(stderr, "vm_jump_prog: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
   assert( (vm->state).blockN == 0 );
   
   return 0; /* ?? */
@@ -340,7 +346,9 @@ int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd)
     link_values = process_command(vm, link_values);
     assert(link_values.command == PlayThis);
     (vm->state).blockN = link_values.data1;
+#ifdef TRACE
     fprintf(stderr, "vm_eval_cmd: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
     assert( (vm->state).blockN == 0 );
     return 1; /*  Something changed, Jump */
   } else {
@@ -355,7 +363,9 @@ int vm_get_next_cell(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+#ifdef TRACE
   fprintf(stderr, "vm_get_next_cell: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
   assert( (vm->state).blockN == 0 );
   
   return 0; /*  ?? */
@@ -368,7 +378,9 @@ int vm_top_pg(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+#ifdef TRACE
   fprintf(stderr, "vm_top_pg: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
   assert( (vm->state).blockN == 0 );
   
   return 1; /*  Jump */
@@ -385,7 +397,9 @@ int vm_go_up(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+#ifdef TRACE
   fprintf(stderr, "vm_go_up: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
   assert( (vm->state).blockN == 0 );
   
   return 1; /*  Jump */
@@ -456,7 +470,9 @@ int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block)
       link_values = process_command(vm, link_values);
       assert(link_values.command == PlayThis);
       (vm->state).blockN = link_values.data1;
+#ifdef TRACE
       fprintf(stderr, "vm_menu_call: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
       assert( (vm->state).blockN == 0 );
       return 1; /*  Jump */
     } else {
@@ -500,12 +516,16 @@ int vm_resume(vm_t *vm)
     link_values = process_command(vm, link_values);
     assert(link_values.command == PlayThis);
     (vm->state).blockN = link_values.data1;
+#ifdef TRACE
     fprintf(stderr, "vm_resume1: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
     assert( (vm->state).blockN == 0 );
   } else { 
     (vm->state).cellN = (vm->state).rsm_cellN;
     (vm->state).blockN = (vm->state).rsm_blockN;
+#ifdef TRACE
     fprintf(stderr, "vm_resume2: blockN set to 0x%x\n", (vm->state).blockN);
+#endif
     /* (vm->state).pgN = ?? does this gets the righ value in play_Cell, no! */
     if(set_PGN(vm)) {
       /* Were at or past the end of the PGC, should not happen for a RSM */
@@ -524,7 +544,9 @@ int vm_resume(vm_t *vm)
 int vm_get_audio_stream(vm_t *vm, int audioN)
 {
   int streamN = -1;
-  fprintf(stderr,"dvdnav:vm.c:get_audio_stream audioN=%d\n",audioN); 
+#ifdef TRACE
+  fprintf(stderr,"dvdnav:vm.c:get_audio_stream audioN=%d\n",audioN);
+#endif
   if((vm->state).domain == VTSM_DOMAIN 
      || (vm->state).domain == VMGM_DOMAIN
      || (vm->state).domain == FP_DOMAIN) {
@@ -817,11 +839,14 @@ static link_t play_PGC(vm_t *vm)
 {    
   link_t link_values;
   
+#ifdef TRACE
   fprintf(stderr, "vm: play_PGC:");
-  if((vm->state).domain != FP_DOMAIN)
+  if((vm->state).domain != FP_DOMAIN) {
     fprintf(stderr, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
-  else
+  } else {
     fprintf(stderr, " first_play_pgc\n");
+  }
+#endif
 
   /*  This must be set before the pre-commands are executed because they */
   /*  might contain a CallSS that will save resume state */
@@ -840,7 +865,9 @@ static link_t play_PGC(vm_t *vm)
       /*  link_values contains the 'jump' return value */
       return link_values;
     } else {
+#ifdef TRACE
       fprintf(stderr, "PGC pre commands didn't do a Jump, Link or Call\n");
+#endif
     }
   }
   return play_PG(vm);
@@ -849,12 +876,16 @@ static link_t play_PGC(vm_t *vm)
 
 static link_t play_PG(vm_t *vm)
 {
+#ifdef TRACE
   fprintf(stderr, "play_PG: (vm->state).pgN (%i)\n", (vm->state).pgN);
+#endif
   
   assert((vm->state).pgN > 0);
   if((vm->state).pgN > (vm->state).pgc->nr_of_programs) {
+#ifdef TRACE
     fprintf(stderr, "(vm->state).pgN (%i) == pgc->nr_of_programs + 1 (%i)\n", 
 	    (vm->state).pgN, (vm->state).pgc->nr_of_programs + 1);
+#endif
     //assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1);
     return play_PGC_post(vm);
   }
@@ -867,12 +898,16 @@ static link_t play_PG(vm_t *vm)
 
 static link_t play_Cell(vm_t *vm)
 {
+#ifdef TRACE
   fprintf(stderr, "play_Cell: (vm->state).cellN (%i)\n", (vm->state).cellN);
+#endif
   
   assert((vm->state).cellN > 0);
   if((vm->state).cellN > (vm->state).pgc->nr_of_cells) {
+#ifdef TRACE
     fprintf(stderr, "(vm->state).cellN (%i) == pgc->nr_of_cells + 1 (%i)\n", 
 	    (vm->state).cellN, (vm->state).pgc->nr_of_cells + 1);
+#endif
     assert((vm->state).cellN == (vm->state).pgc->nr_of_cells + 1); 
     return play_PGC_post(vm);
   }
@@ -928,7 +963,9 @@ static link_t play_Cell_post(vm_t *vm)
 {
   cell_playback_t *cell;
   
+#ifdef TRACE
   fprintf(stderr, "play_Cell_post: (vm->state).cellN (%i)\n", (vm->state).cellN);
+#endif
   
   cell = &(vm->state).pgc->cell_playback[(vm->state).cellN - 1];
   
@@ -940,7 +977,9 @@ static link_t play_Cell_post(vm_t *vm)
     
     assert((vm->state).pgc->command_tbl != NULL);
     assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
+#ifdef TRACE
     fprintf(stderr, "Cell command pressent, executing\n");
+#endif
     if(vmEval_CMD(&(vm->state).pgc->command_tbl->cell_cmds[cell->cell_cmd_nr - 1], 1,
 		  &(vm->state).registers, &link_values)) {
       return link_values;
@@ -986,7 +1025,9 @@ static link_t play_Cell_post(vm_t *vm)
   
   /* Figure out the correct pgN for the new cell */ 
   if(set_PGN(vm)) {
+#ifdef TRACE
     fprintf(stderr, "last cell in this PGC\n");
+#endif
     return play_PGC_post(vm);
   }
 
@@ -998,7 +1039,9 @@ static link_t play_PGC_post(vm_t *vm)
 {
   link_t link_values;
 
+#ifdef TRACE
   fprintf(stderr, "play_PGC_post:\n");
+#endif
   
   assert((vm->state).pgc->still_time == 0); /*  FIXME $$$ */
 
@@ -1031,6 +1074,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
   if (vm->badness_counter > 1) fprintf(stderr, "**** process_command re-entered %d*****\n",vm->badness_counter);
   while(link_values.command != PlayThis) {
     
+#ifdef TRACE
     vmPrint_LINK(link_values);
     
     fprintf(stderr, "Link values %i %i %i %i\n", link_values.command, 
@@ -1038,6 +1082,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
      
     fprintf(stderr, "Before:");
     vm_print_current_domain_state(vm);
+#endif
     
     switch(link_values.command) {
     case LinkNoLink:
@@ -1285,12 +1330,14 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* ifoOpenNewVTSI:data1 */
       /* VTS_TTN_REG:data2 */
       /* get_MENU:data3 */ 
+#ifdef TRACE
       fprintf(stderr, "dvdnav: BUG TRACKING *******************************************************************\n");
       fprintf(stderr, "    data1=%u data2=%u data3=%u\n", 
                 link_values.data1,
                 link_values.data2,
                 link_values.data3);
       fprintf(stderr, "dvdnav: *******************************************************************\n");
+#endif
 
       if(link_values.data1 !=0) {
 	assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
@@ -1365,8 +1412,11 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert(0);
       break;
     }
+
+#ifdef TRACE
   fprintf(stderr, "After:");
   vm_print_current_domain_state(vm);
+#endif
     
   }
   vm->badness_counter--;
@@ -1539,7 +1589,9 @@ int vm_get_video_aspect(vm_t *vm)
   } else if((vm->state).domain == VMGM_DOMAIN) {
     aspect = vm->vmgi->vmgi_mat->vmgm_video_attr.display_aspect_ratio;
   }
+#ifdef TRACE
   fprintf(stderr, "dvdnav:get_video_aspect:aspect=%d\n",aspect);
+#endif
   assert(aspect == 0 || aspect == 3);
   (vm->state).registers.SPRM[14] &= ~(0x3 << 10);
   (vm->state).registers.SPRM[14] |= aspect << 10;
@@ -1627,6 +1679,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.16  2002/04/24 21:15:25  jcdutton
+ * Quiet please!!!
+ *
  * Revision 1.15  2002/04/23 13:18:31  jcdutton
  * Insert some assert commands to hopefully catch a DVD which will give us information on what to do if these values are != 0.
  *

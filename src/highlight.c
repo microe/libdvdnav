@@ -164,7 +164,9 @@ dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this) {
 dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32_t mode, 
                                            dvdnav_highlight_area_t* highlight) {
   btni_t *button_ptr;
+#ifdef BUTTON_TESTING
   fprintf(stderr,"Button get_highlight_area %i\n", button);
+#endif
 
   /* Set the highlight SPRM if the passed button was valid*/
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns)) {
@@ -185,13 +187,13 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
   }
   highlight->pts = nav_pci->hli.hl_gi.hli_s_ptm;
   highlight->buttonN = button;
-//#ifdef BUTTON_TESTING
+#ifdef BUTTON_TESTING
   fprintf(stderr,"highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
                button_ptr->x_start, button_ptr->y_start,
                button_ptr->x_end, button_ptr->y_end,
                1,
                button);
-//#endif
+#endif
 
   return S_OK;
 }
@@ -218,7 +220,9 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
   button_ptr = __get_current_button(this);
   /* Finally, make the VM execute the appropriate code and
    * scedule a jump */
+#ifdef BUTTON_TESTING
   fprintf(stderr, "libdvdnav: Evaluating Button Activation commands.\n");
+#endif
   if(vm_eval_cmd(this->vm, &(button_ptr->cmd)) == 1) {
     /* Command caused a jump */
     this->vm->hop_channel++;
@@ -236,7 +240,9 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
    return S_ERR;
   }
  
-  fprintf(stderr,"Button select %i\n", button); 
+#ifdef BUTTON_TESTING
+  fprintf(stderr,"libdvdnav: Button select %i\n", button); 
+#endif
   
   /* Set the highlight SPRM if the passed button was valid*/
   if((button <= 0) || (button > this->pci.hli.hl_gi.btn_ns)) {

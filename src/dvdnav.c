@@ -25,6 +25,10 @@
 #include "config.h"
 #endif
 
+/*
+#define LOG_DEBUG
+*/
+
 #include <pthread.h>
 #include <dvdnav.h>
 #include "dvdnav_internal.h"
@@ -211,10 +215,14 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
     printerr("Passed a NULL pointer");
     return S_ERR;
   }
+#ifdef LOG_DEBUG
   fprintf(stderr,"dvdnav:close:called\n");
+#endif
   if (this->file) {
     DVDCloseFile(this->file);
+#ifdef LOG_DEBUG
     fprintf(stderr,"dvdnav:close:file closing\n");
+#endif
     this->file = NULL;
   }
 
@@ -224,7 +232,9 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
   }
   if (this->file) {
     DVDCloseFile(this->file);
+#ifdef LOG_DEBUG
     fprintf(stderr,"dvdnav:close2:file closing\n");
+#endif
     this->file = NULL;
   }
   pthread_mutex_destroy(&this->vm_lock);
@@ -237,28 +247,40 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
 dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
   dvdnav_status_t result;
 
+#ifdef LOG_DEBUG
   printf("dvdnav:reset:called\n");
+#endif
   if(!this) {
     printerr("Passed a NULL pointer");
     return S_ERR;
   }
+#ifdef LOG_DEBUG
   printf("getting lock\n");
+#endif
   pthread_mutex_lock(&this->vm_lock); 
+#ifdef LOG_DEBUG
   printf("reseting vm\n");
+#endif
   if(vm_reset(this->vm, NULL) == -1) {
     printerr("Error restarting the VM");
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
+#ifdef LOG_DEBUG
   printf("clearing dvdnav\n");
+#endif
   result=dvdnav_clear(this);
+#ifdef LOG_DEBUG
   printf("starting vm\n");
+#endif
   if(!this->started) {
     /* Start the VM */
     vm_start(this->vm);
     this->started = 1;
   }
+#ifdef LOG_DEBUG
   printf("unlocking\n");
+#endif
   pthread_mutex_unlock(&this->vm_lock); 
   return result;
 }
@@ -495,11 +517,15 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 
   if(this->spu_clut_changed) {
     (*event) = DVDNAV_SPU_CLUT_CHANGE;
+#ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE\n");
+#endif
     (*len) = sizeof(dvdnav_still_event_t);
     memcpy(buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
     this->spu_clut_changed = 0;
+#ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE returning S_OK\n");
+#endif
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
@@ -507,12 +533,16 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   if(this->position_current.spu_channel != this->position_next.spu_channel) {
     dvdnav_stream_change_event_t stream_change;
     (*event) = DVDNAV_SPU_STREAM_CHANGE;
+#ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE\n");
+#endif
     (*len) = sizeof(dvdnav_stream_change_event_t);
     stream_change.physical = vm_get_subp_active_stream( this->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
     this->position_current.spu_channel = this->position_next.spu_channel;
+#ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+#endif
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
@@ -520,12 +550,16 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   if(this->position_current.audio_channel != this->position_next.audio_channel) {
     dvdnav_stream_change_event_t stream_change;
     (*event) = DVDNAV_AUDIO_STREAM_CHANGE;
+#ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE\n");
+#endif
     (*len) = sizeof(dvdnav_stream_change_event_t);
     stream_change.physical= vm_get_audio_active_stream( this->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
     this->position_current.audio_channel = this->position_next.audio_channel;
+#ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+#endif
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
@@ -640,7 +674,9 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 
     if(this->vobu.vobu_next == SRI_END_OF_CELL) {
       /* End of Cell from NAV DSI info */
+#ifdef LOG_DEBUG
       fprintf(stderr, "Still set to %x\n", this->position_next.still);
+#endif
       this->position_current.still = this->position_next.still;
 
       if( this->position_current.still == 0 || this->skip_still ) {
@@ -871,6 +907,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.16  2002/04/24 21:15:25  jcdutton
+ * Quiet please!!!
+ *
  * Revision 1.15  2002/04/24 00:47:46  jcdutton
  * Some more cleanups.
  * Improve button passing.

@@ -556,6 +556,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
       break;
     default: /* Unknown command */
       fprintf(stderr, "WARNING: Unknown Command=%x\n", vm_getbits(&command, 0, 3));
+      assert(0);
   }
   /*  Check if there are bits not yet examined */
 
@@ -603,8 +604,8 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
 #ifdef TRACE
       fprintf(stderr, "libdvdnav: Registers after transaction\n");
       vmPrint_registers( registers );
-#endif
       fprintf(stderr, "eval: Doing Link/Jump/Call\n"); 
+#endif
       return 1;
     }
     
