@@ -1,3 +1,6 @@
+  * starting DVD playback at specific title/part positions with
+    dvdnav_{title,part}_play() works again
+
 libdvdnav (0.1.10)
   * filter the symbols that we export.
   * fix LinkNextC assertion failure (fixes LotR-SEE bonus disc image gallery)
