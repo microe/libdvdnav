@@ -7,3 +7,5 @@
    1 - do some sensible sanity checking
    2 - be more careful, when operations are prohibited (like not seeking/jumping in the presence of stills or cell commands)
    3 - fully respect user prohibitions
+* cleanup public API and fix libtool versioning
+* RELEASE! (maybe it's time for libdvdnav 0.5?)
