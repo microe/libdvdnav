@@ -13,7 +13,8 @@ lib_LTLIBRARIES = libdvdnav.la
 
 libdvdnav_la_SOURCES = dvdnav.c \
 	read_cache.c navigation.c highlight.c \
-	searching.c settings.c remap.c
+	searching.c settings.c remap.c \
+	dvdnav_internal.h read_cache.h remap.h
 
 libdvdnav_la_LIBADD = $(THREAD_LIBS) \
 	$(top_builddir)/src/dvdread/libdvdread.la \
@@ -25,5 +26,3 @@ libdvdnav_la_LDFLAGS = \
 #	-release $(DVDNAV_MAJOR).$(DVDNAV_MINOR).$(DVDNAV_SUB)
 
 include_HEADERS = dvdnav.h dvdnav_events.h dvd_types.h
-
-noinst_HEADERS = dvdnav_internal.h read_cache.h remap.h
