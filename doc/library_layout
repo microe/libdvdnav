@@ -25,13 +25,13 @@ highlight.c		DVD menu highlight handling
 settings.c		libdvdnav customizing
 remap.[ch]		user defined reorganization of VOBU playback order
 
-DVD virtual machine
+DVD virtual machine (subdirectory vm)
 -------------------
 
 vm.[ch]			the logic surrounding the DVD VM
 decoder.[ch]		decodes and executes DVD VM commands
 
-DVD reading
+DVD reading (subdirectory dvdread, a modified copy of libdvdread)
 -----------
 
 dvd_reader.c		reading data from DVD sources
