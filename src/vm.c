@@ -581,7 +581,6 @@ int vm_get_current_menu(vm_t *vm, int *menuid)
   pgcn = (vm->state).pgcN;
   pgcit = get_PGCIT(vm);
   *menuid = pgcit->pgci_srp[pgcn - 1].entry_id & 0xf ;
-  printf("PGCN = %d, MENU_ID = %d\n", pgcn, *menuid);
   return S_OK;
 
 }
@@ -1832,6 +1831,9 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.55  2003/04/06 12:47:32  jcdutton
+ * Remove an unneeded printf.
+ *
  * Revision 1.54  2003/04/06 10:59:28  jcdutton
  * Return details about menu number in dvdnav_current_title_info()
  * If title = 0, we are in menu, and part gives us what menu number.
