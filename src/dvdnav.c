@@ -710,7 +710,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     (*len) = sizeof(dvdnav_still_event_t);
     still_event->length = this->position_current.still;
     pthread_mutex_unlock(&this->vm_lock); 
-    return DVDNAV_STATUS_ERR;
+    return DVDNAV_STATUS_OK;
   }
 
   /* Have we reached the end of a VOBU? */
