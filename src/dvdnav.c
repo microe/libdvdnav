@@ -575,10 +575,19 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     memcpy(buf, &(stream_change), sizeof( dvdnav_spu_stream_change_event_t));
     this->position_current.spu_channel = this->position_next.spu_channel;
 #ifdef LOG_DEBUG
-    fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+    fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id_wide=%d\n",stream_change.physical_wide);
+    fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id_letterbox=%d\n",stream_change.physical_letterbox);
+    fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id_pan_scan=%d\n",stream_change.physical_pan_scan);
 #endif
     pthread_mutex_unlock(&this->vm_lock); 
-    return S_OK;
+    if (stream_change.physical_wide != -1 &&
+        stream_change.physical_letterbox != -1 &&
+        stream_change.physical_pan_scan != -1) {
+#ifdef LOG_DEBUG
+      fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE returning S_OK\n");
+#endif
+      return S_OK;
+    }
   }
   
   if(this->position_current.audio_channel != this->position_next.audio_channel) {
@@ -954,6 +963,11 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.26  2002/07/06 16:24:54  mroi
+ * * fix debug messages
+ * * send spu stream change event only, when there are new streams
+ *   (should fix problems with Terminator disk 2)
+ *
  * Revision 1.25  2002/07/05 14:18:54  mroi
  * report all spu types (widescreen, letterbox and pan&scan), not widescreen
  * only and report the stream's scale permissions to detect pan&scan material
