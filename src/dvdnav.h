@@ -303,8 +303,9 @@ dvdnav_status_t dvdnav_time_play(dvdnav_t *self, int title,
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *self, DVDMenuID_t menu);
 
 /*
- * Return the title number and part currently being played or
- * -1 if in a menu.
+ * Return the title number and part currently being played.
+ * A title of 0 indicates, we are in a menu. In this case, part
+ * is set to the current menu's ID.
  */
 dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int *title,
 					  int *part);
