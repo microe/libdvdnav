@@ -110,22 +110,24 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int *title, int *part)
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
-  if (this->vm->state.domain != VTS_DOMAIN) {
-    if ( (this->vm->state.domain == VTSM_DOMAIN)
-        || (this->vm->state.domain == VMGM_DOMAIN) ) {
-      /* Get current Menu ID: into *part. */
-      vm_get_current_menu(this->vm, part);
+  if ( (this->vm->state.domain == VTSM_DOMAIN)
+      || (this->vm->state.domain == VMGM_DOMAIN) ) {
+    /* Get current Menu ID: into *part. */
+    vm_get_current_menu(this->vm, part);
+    if (part > -1) {
+      title = 0;
       pthread_mutex_unlock(&this->vm_lock);
       return S_OK;
     }
-    printerr("Not in VTS domain.");
-    pthread_mutex_unlock(&this->vm_lock);
-    return S_ERR;
   }
-  retval = vm_get_current_title_part(this->vm, title, part);
+  if (this->vm->state.domain == VTS_DOMAIN) {
+    retval = vm_get_current_title_part(this->vm, title, part);
+    pthread_mutex_unlock(&this->vm_lock);
+    return retval ? S_OK : S_ERR;
+  }
+  printerr("Not in a title or menu.");
   pthread_mutex_unlock(&this->vm_lock);
-  
-  return retval ? S_OK : S_ERR;
+  return S_ERR;
 }
 
 dvdnav_status_t dvdnav_title_play(dvdnav_t *this, int title) {
