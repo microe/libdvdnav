@@ -194,7 +194,7 @@ dvdnav_status_t dvdnav_stop(dvdnav_t *this) {
   }
   
   pthread_mutex_lock(&this->vm_lock);
-  vm_stop(this->vm);
+  this->vm->stopped = 1;
   pthread_mutex_unlock(&this->vm_lock);
   return S_OK;
 }
