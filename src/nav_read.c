@@ -69,6 +69,11 @@ static uint32_t getbits(getbits_state_t *state, uint32_t number_of_bits) {
       byte = byte >> (8 - number_of_bits);
       result = byte;
       state->bit_position += number_of_bits; /* Here it is impossible for bit_position > 8 */
+      if (state->bit_position == 8) {
+        state->bit_position = 0;
+        state->byte_position++;
+        state->byte = state->start[state->byte_position];
+      }
       number_of_bits = 0;
     }
   }
