@@ -412,7 +412,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: HOP_CHANNEL\n");
 #endif
-    if (this->position_next.hop_channel > HOP_SEEK) {
+    if (this->position_next.hop_channel - this->position_current.hop_channel >= HOP_SEEK) {
       int num_angles = 0, current;
       
       /* we seeked -> check for multiple angles */
@@ -957,6 +957,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.41  2003/02/24 18:19:27  mroi
+ * fix seek detection
+ *
  * Revision 1.40  2003/02/20 15:32:15  mroi
  * big libdvdnav cleanup, quoting the ChangeLog:
  *   * some bugfixes
