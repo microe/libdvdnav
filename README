@@ -46,10 +46,11 @@ Sources for documentation on libdvdnav are:
   this one is well-commented and therefore a good starting point
 * the public header dvdnav.h documents the API
 * the public header dvdnav_events.h documents the dvdnav events
+* doc/library_layout contains some info on the internal working of libdvdnav
 
 Sources for documentation on DVD terminology, structure and surrounding concepts:
 * doc/dvd_structures briefly explains DVD terms and organization
 * a more detailed description of DVD structures is available at
-  http://members.aol.com/mpucoder/DVD/
-* the ifo_types.h and nav_types.h headers of are also interesting if you
+  http://www.mpucoder.com/dvd/
+* the ifo_types.h and nav_types.h headers are also interesting if you
   are already used to the sometimes cryptical abbreviations
