@@ -1,5 +1,6 @@
-usr/bin/dvdnav-config
-usr/include/*
-usr/lib/lib*.a
+usr/lib/libdvdnav.a
 usr/lib/libdvdnav.la
 usr/lib/libdvdnav.so
+usr/bin/dvdnav-config
+usr/include/dvdnav/*.h
+usr/share/aclocal/dvdnav.m4
