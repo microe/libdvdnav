@@ -1,9 +1,12 @@
+libdvdnav (0.0.1-1) unstable; urgency=low
+
+  * Repackaged using dh-make.
+
+ -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Sun,  7 Apr 2002 16:29:35 +0200
+
 libdvdnav (0.0.1) unstable; urgency=low
 
   * Initial release.
 
  -- root <root@hermes.cam.ac.uk>  Tue, 12 Mar 2002 19:41:13 +0000
 
-Local variables:
-mode: debian-changelog
-End:

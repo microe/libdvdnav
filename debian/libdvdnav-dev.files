@@ -1,0 +1,5 @@
+usr/bin/dvdnav-config
+usr/include/*
+usr/lib/lib*.a
+usr/lib/libdvdnav.la
+usr/lib/libdvdnav.so

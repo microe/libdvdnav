@@ -1,4 +1,12 @@
-This package was written by root root@hermes.cam.ac.uk on Tue, 12 Mar 2002 19:41:13 +0000.
+This package was debianized by Philipp Matthias Hahn <pmhahn@titan.lahn.de> on
+Sun,  7 Apr 2002 16:20:35 +0200.
 
-Copyright: GPL (see /usr/share/common-licenses/GPL)
+It was downloaded from http://dvd.sf.net/
 
+Upstream Author: Daniel Caujolle-Bert <segfault@club-internet.fr>
+
+Copyright:
+
+Libdvdnav is licensed under terms of the GNU General Public License.
+A copy of the GPL may be found in /usr/share/common-licenses/GPL
+on any Debian/GNU system.

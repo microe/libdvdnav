@@ -1,20 +1,27 @@
 Source: libdvdnav
 Section: devel
 Priority: optional
-Maintainer: root <root@hermes.cam.ac.uk>
-Standards-Version: 3.2.1
+Maintainer: Philipp Hahn <pmhahn@titan.lahn.de>
+Standards-Version: 3.5.6
+Build-Depends: debhelper (>> 3.0.0), libdvdread2-dev
 
-Package: libdvdnav1-dev
+Package: libdvdnav-dev
+Section: devel
 Architecture: any
-Depends: libdvdnav1, libc6-dev
-Provides: libdvdnav-dev
-Conflicts: libdvdnav-dev
-Description: Missing
- Missing
+Depends: libdvdnav1 (= ${Source-Version}), libdvdread2-dev
+Description: The DVD navigation library, development package
+ This is the DVD navigation library, which provides an interface
+ to the advanced features of DVDs, like menues, navigation, etc.
+ .
+ This package contains the header files and static library needed to
+ compile applications that use libdvdnav1.
 
 Package: libdvdnav1
+Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}
-Description: Missing
- Missing
-
+Description: The DVD navigation library
+ This is the DVD navigation library, which provides an interface
+ to the advanced features of DVDs, like menues, navigation, etc.
+ .
+ This package contains the libdvdnav1 runtime library.
