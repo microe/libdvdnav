@@ -34,6 +34,7 @@
 #include <assert.h>
 #include "vmcmd.h"
 #include "decoder.h"
+#include "dvdnav_internal.h"
 
 uint32_t vm_getbits(command_t *command, int start, int count) {
   uint64_t result = 0;
@@ -47,7 +48,7 @@ uint32_t vm_getbits(command_t *command, int start, int count) {
        (start > 63) ||
        (count < 0) ||
        (start < 0) ){
-    fprintf(stderr, "Bad call to vm_getbits. Parameter out of range\n");
+    fprintf(MSG_OUT, "libdvdnav: Bad call to vm_getbits. Parameter out of range\n");
     assert(0);
   }
   bit_mask >>= start;
@@ -63,7 +64,7 @@ static uint16_t get_GPRM(registers_t* registers, uint8_t reg) {
     struct timeval current_time, time_offset;
     uint16_t result;
     /* Counter mode */
-    /* fprintf(stderr, "Getting counter %d\n",reg);*/
+    /* fprintf(MSG_OUT, "libdvdnav: Getting counter %d\n",reg);*/
     gettimeofday(&current_time, NULL);
     time_offset.tv_sec = current_time.tv_sec - registers->GPRM_time[reg].tv_sec;
     time_offset.tv_usec = current_time.tv_usec - registers->GPRM_time[reg].tv_usec;
@@ -86,7 +87,7 @@ static void set_GPRM(registers_t* registers, uint8_t reg, uint16_t value) {
   if (registers->GPRM_mode[reg] & 0x01) {
     struct timeval current_time;
     /* Counter mode */
-    /* fprintf(stderr, "Setting counter %d\n",reg); */
+    /* fprintf(MSG_OUT, "libdvdnav: Setting counter %d\n",reg); */
     gettimeofday(&current_time, NULL);
     registers->GPRM_time[reg] = current_time;
     registers->GPRM_time[reg].tv_sec -= value;
@@ -99,7 +100,7 @@ static void set_GPRM(registers_t* registers, uint8_t reg, uint16_t value) {
 static uint16_t eval_reg(command_t* command, uint8_t reg) {
   if(reg & 0x80) {
     if ((reg & 0x1f) == 20) {
-      fprintf(stderr, "Suspected RCE Region Protection!!!");
+      fprintf(MSG_OUT, "libdvdnav: Suspected RCE Region Protection!!!");
       }
     return command->registers->SPRM[reg & 0x1f]; /*  FIXME max 24 not 32 */
   } else {
@@ -149,7 +150,7 @@ static int32_t eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
     case 7:
       return data1 <  data2;
   }
-  fprintf(stderr,"eval_compare: Invalid comparison code\n");
+  fprintf(MSG_OUT, "libdvdnav: eval_compare: Invalid comparison code\n");
   return 0;
 }
 
@@ -503,7 +504,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
       cond = eval_if_version_1(&command);
       res = eval_special_instruction(&command, cond);
       if(res == -1) {
-	fprintf(stderr, "Unknown Instruction!\n");
+	fprintf(MSG_OUT, "libdvdnav: Unknown Instruction!\n");
 	assert(0);
       }
       break;
@@ -555,15 +556,15 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
 	res = -1;
       break;
     default: /* Unknown command */
-      fprintf(stderr, "WARNING: Unknown Command=%x\n", vm_getbits(&command, 0, 3));
+      fprintf(MSG_OUT, "libdvdnav: WARNING: Unknown Command=%x\n", vm_getbits(&command, 0, 3));
       assert(0);
   }
   /*  Check if there are bits not yet examined */
 
   if(command.instruction & ~ command.examined) {
-    fprintf(stderr, " libdvdnav: decoder.c: [WARNING, unknown bits:");
-    fprintf(stderr, " %08llx", (command.instruction & ~ command.examined) );
-    fprintf(stderr, "]");
+    fprintf(MSG_OUT, "libdvdnav: decoder.c: [WARNING, unknown bits:");
+    fprintf(MSG_OUT, " %08llx", (command.instruction & ~ command.examined) );
+    fprintf(MSG_OUT, "]\n");
   }
 
   return res;
@@ -578,33 +579,29 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   
 #ifdef TRACE
   /*  DEBUG */
-  fprintf(stderr, "libdvdnav: Registers before transaction\n");
+  fprintf(MSG_OUT, "libdvdnav: Registers before transaction\n");
   vmPrint_registers( registers );
-  if(1) {
-    int32_t i;
-    fprintf(stderr, "libdvdnav: Full list of commands to execute\n");
-    for(i = 0; i < num_commands; i++)
-      vmPrint_CMD(i, &commands[i]);
-    fprintf(stderr, "--------------------------------------------\n");
-  } /*  end DEBUG */
-  if (1) {
-    fprintf(stderr, "libdvdnav: Single stepping commands\n");
-  }
+  int32_t i;
+  fprintf(MSG_OUT, "libdvdnav: Full list of commands to execute\n");
+  for(i = 0; i < num_commands; i++)
+    vmPrint_CMD(i, &commands[i]);
+  fprintf(MSG_OUT, "libdvdnav: --------------------------------------------\n");
+  fprintf(MSG_OUT, "libdvdnav: Single stepping commands\n");
 #endif
   
   while(i < num_commands && total < 100000) {
     int32_t line;
     
 #ifdef TRACE
-    if(1) vmPrint_CMD(i, &commands[i]);
+    vmPrint_CMD(i, &commands[i]);
 #endif
     line = eval_command(&commands[i].bytes[0], registers, return_values);
     
     if (line < 0) { /*  Link command */
 #ifdef TRACE
-      fprintf(stderr, "libdvdnav: Registers after transaction\n");
+      fprintf(MSG_OUT, "libdvdnav: Registers after transaction\n");
       vmPrint_registers( registers );
-      fprintf(stderr, "eval: Doing Link/Jump/Call\n"); 
+      fprintf(MSG_OUT, "libdvdnav: eval: Doing Link/Jump/Call\n"); 
 #endif
       return 1;
     }
@@ -619,7 +616,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   
   memset(return_values, 0, sizeof(link_t));
 #ifdef TRACE
-  fprintf(stderr, "libdvdnav: Registers after transaction\n");
+  fprintf(MSG_OUT, "libdvdnav: Registers after transaction\n");
   vmPrint_registers( registers );
 #endif
   return 0;
@@ -708,61 +705,61 @@ void vmPrint_LINK(link_t value) {
   case LinkGoUpPGC:
   case LinkTailPGC:
   case LinkRSM:
-    fprintf(stderr, "%s (button %d)\n", cmd, value.data1);
+    fprintf(MSG_OUT, "libdvdnav: %s (button %d)\n", cmd, value.data1);
     break;
   case LinkPGCN:
   case JumpTT:
   case JumpVTS_TT:
   case JumpSS_VMGM_MENU: /*  == 2 -> Title Menu */
   case JumpSS_VMGM_PGC:
-    fprintf(stderr, "%s %d\n", cmd, value.data1);
+    fprintf(MSG_OUT, "libdvdnav: %s %d\n", cmd, value.data1);
     break;
   case LinkPTTN:
   case LinkPGN:
   case LinkCN:
-    fprintf(stderr, "%s %d (button %d)\n", cmd, value.data1, value.data2);
+    fprintf(MSG_OUT, "libdvdnav: %s %d (button %d)\n", cmd, value.data1, value.data2);
     break;
   case Exit:
   case JumpSS_FP:
   case PlayThis: /*  Humm.. should we have this at all.. */
-    fprintf(stderr, "%s\n", cmd);
+    fprintf(MSG_OUT, "libdvdnav: %s\n", cmd);
     break;
   case JumpVTS_PTT:
-    fprintf(stderr, "%s %d:%d\n", cmd, value.data1, value.data2);
+    fprintf(MSG_OUT, "libdvdnav: %s %d:%d\n", cmd, value.data1, value.data2);
     break;
   case JumpSS_VTSM:
-    fprintf(stderr, "%s vts %d title %d menu %d\n", 
+    fprintf(MSG_OUT, "libdvdnav: %s vts %d title %d menu %d\n", 
 	    cmd, value.data1, value.data2, value.data3);
     break;
   case CallSS_FP:
-    fprintf(stderr, "%s resume cell %d\n", cmd, value.data1);
+    fprintf(MSG_OUT, "libdvdnav: %s resume cell %d\n", cmd, value.data1);
     break;
   case CallSS_VMGM_MENU: /*  == 2 -> Title Menu */
   case CallSS_VTSM:
-    fprintf(stderr, "%s %d resume cell %d\n", cmd, value.data1, value.data2);
+    fprintf(MSG_OUT, "libdvdnav: %s %d resume cell %d\n", cmd, value.data1, value.data2);
     break;
   case CallSS_VMGM_PGC:
-    fprintf(stderr, "%s %d resume cell %d\n", cmd, value.data1, value.data2);
+    fprintf(MSG_OUT, "libdvdnav: %s %d resume cell %d\n", cmd, value.data1, value.data2);
     break;
   }
  }
 
 void vmPrint_registers( registers_t *registers ) {
   int32_t i;
-  fprintf(stderr, "   #   ");
+  fprintf(MSG_OUT, "libdvdnav:    #   ");
   for(i = 0; i < 24; i++)
-    fprintf(stderr, " %2d |", i);
-  fprintf(stderr, "\nSRPMS: ");
+    fprintf(MSG_OUT, " %2d |", i);
+  fprintf(MSG_OUT, "\nlibdvdnav: SRPMS: ");
   for(i = 0; i < 24; i++)
-    fprintf(stderr, "%04x|", registers->SPRM[i]);
-  fprintf(stderr, "\nGRPMS: ");
+    fprintf(MSG_OUT, "%04x|", registers->SPRM[i]);
+  fprintf(MSG_OUT, "\nlibdvdnav: GRPMS: ");
   for(i = 0; i < 16; i++)
-    fprintf(stderr, "%04x|", get_GPRM(registers, i) );
-  fprintf(stderr, "\nGmode: ");
+    fprintf(MSG_OUT, "%04x|", get_GPRM(registers, i) );
+  fprintf(MSG_OUT, "\nlibdvdnav: Gmode: ");
   for(i = 0; i < 16; i++)
-    fprintf(stderr, "%04x|", registers->GPRM_mode[i]);
-  fprintf(stderr, "\nGtime: ");
+    fprintf(MSG_OUT, "%04x|", registers->GPRM_mode[i]);
+  fprintf(MSG_OUT, "\nlibdvdnav: Gtime: ");
   for(i = 0; i < 16; i++)
-    fprintf(stderr, "%04lx|", registers->GPRM_time[i].tv_sec & 0xffff);
-  fprintf(stderr, "\n");
+    fprintf(MSG_OUT, "%04lx|", registers->GPRM_time[i].tv_sec & 0xffff);
+  fprintf(MSG_OUT, "\n");
 }

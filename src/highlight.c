@@ -34,7 +34,6 @@
 #include "dvdnav_internal.h"
 
 #include "vm.h"
-#
 #include <dvdread/nav_types.h>
 
 #ifdef BUTTON_TESTING
@@ -57,7 +56,7 @@ btni_t *__get_current_button(dvdnav_t *this) {
   int button = 0;
 
   if(dvdnav_get_current_highlight(this, &button) != S_OK) {
-    printerrf("Unable to get information on current highlight.");
+    printerr("Unable to get information on current highlight.");
     return NULL;
   }
 #ifdef BUTTON_TESTING
@@ -160,12 +159,12 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
                                            dvdnav_highlight_area_t* highlight) {
   btni_t *button_ptr;
 #ifdef BUTTON_TESTING
-  fprintf(stderr,"Button get_highlight_area %i\n", button);
+  fprintf(MSG_OUT, "libdvdnav: Button get_highlight_area %i\n", button);
 #endif
 
   /* Set the highlight SPRM if the passed button was valid*/
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns)) {
-    fprintf(stderr,"Unable to select button number %i as it doesn't exist\n",
+    fprintf(MSG_OUT, "libdvdnav: Unable to select button number %i as it doesn't exist\n",
               button);
     return S_ERR;
   }
@@ -183,7 +182,7 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
   highlight->pts = nav_pci->hli.hl_gi.hli_s_ptm;
   highlight->buttonN = button;
 #ifdef BUTTON_TESTING
-  fprintf(stderr,"highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
+  fprintf(MSG_OUT, "libdvdnav: highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
                button_ptr->x_start, button_ptr->y_start,
                button_ptr->x_end, button_ptr->y_end,
                1,
@@ -235,7 +234,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
   /* Finally, make the VM execute the appropriate code and
    * scedule a jump */
 #ifdef BUTTON_TESTING
-  fprintf(stderr, "libdvdnav: Evaluating Button Activation commands.\n");
+  fprintf(MSG_OUT, "libdvdnav: Evaluating Button Activation commands.\n");
 #endif
   if(vm_eval_cmd(this->vm, &(button_ptr->cmd)) == 1) {
     /* Command caused a jump */
@@ -255,7 +254,7 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
   }
  
 #ifdef BUTTON_TESTING
-  fprintf(stderr,"libdvdnav: Button select %i\n", button); 
+  fprintf(MSG_OUT, "libdvdnav: Button select %i\n", button); 
 #endif
   
   /* Set the highlight SPRM if the passed button was valid*/

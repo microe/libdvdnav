@@ -59,6 +59,9 @@
 #define DVD_VIDEO_LB_LEN 2048
 #endif
 
+/* where should libdvdnav write its messages (stdout/stderr) */
+#define MSG_OUT stderr
+
 typedef struct read_cache_s read_cache_t;
 
 /*

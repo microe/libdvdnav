@@ -47,7 +47,7 @@ dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto
   /* FIXME:Need to handle seeking outside current cell. */
   vobu_admap_t *admap = NULL;
   *vobu = -1;
-  fprintf(stderr,"Seeking to target %u ...\n",
+  fprintf(MSG_OUT, "libdvdnav: Seeking to target %u ...\n",
               seekto_block);
 
   /* Search through the VOBU_ADMAP for the nearest VOBU
@@ -64,7 +64,7 @@ dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto
       admap = this->vm->vtsi->vts_vobu_admap;
       break;
     default:
-      fprintf(stderr,"Error: Unknown domain for seeking seek.\n");
+      fprintf(MSG_OUT, "libdvdnav: Error: Unknown domain for seeking seek.\n");
   }
   if(admap) {
     int32_t address = 0;
@@ -77,7 +77,7 @@ dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto
     while((!found) && ((address<<2) < admap->last_byte)) {
       next_vobu = admap->vobu_start_sectors[address];
 
-      /* printf("Found block %u\n", next_vobu); */
+      /* fprintf(MSG_OUT, "libdvdnav: Found block %u\n", next_vobu); */
 
       if(vobu_start <= seekto_block &&
           next_vobu > seekto_block) {
@@ -92,11 +92,11 @@ dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto
       *vobu = vobu_start;
       return S_OK;
     } else {
-      fprintf(stderr,"Could not locate block\n");
+      fprintf(MSG_OUT, "libdvdnav: Could not locate block\n");
       return S_ERR;
     }
   }
-  fprintf(stderr,"admap not located\n");
+  fprintf(MSG_OUT, "libdvdnav: admap not located\n");
   return S_ERR;
 }
 
@@ -128,8 +128,8 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
 
   pthread_mutex_lock(&this->vm_lock);
   result = dvdnav_get_position(this, &target, &length);
-  fprintf(stderr,"FIXME: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
-  fprintf(stderr,"FIXME: Before cellN=%u blockN=%u\n" ,
+  fprintf(MSG_OUT, "libdvdnav: FIXME: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
+  fprintf(MSG_OUT, "libdvdnav: FIXME: Before cellN=%u blockN=%u\n" ,
       state->cellN,
       state->blockN);
   if(!result) {
@@ -188,7 +188,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   if(fnd_cell_nr <= last_cell_nr) {
     int32_t vobu, start;
     dvdnav_status_t status;
-    fprintf(stderr,"Seeking to cell %i from choice of %i to %i\n",
+    fprintf(MSG_OUT, "libdvdnav: Seeking to cell %i from choice of %i to %i\n",
 	   fnd_cell_nr, first_cell_nr, last_cell_nr);
     status = dvdnav_scan_admap(this, state->domain, target, &vobu);
     /* 
@@ -197,24 +197,24 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
      * A new clut has to be sent.
      */
     start =(state->pgc->cell_playback[state->cellN - 1].first_sector); 
-    fprintf(stderr,"FIXME: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
+    fprintf(MSG_OUT, "libdvdnav: FIXME: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
       state->cellN,
       state->blockN,
       target,
       vobu,
       start);
     state->blockN = vobu - start; 
-    fprintf(stderr,"FIXME: After vobu=%x start=%x blockN=%x\n" ,
+    fprintf(MSG_OUT, "libdvdnav: FIXME: After vobu=%x start=%x blockN=%x\n" ,
       vobu,
       start,
       state->blockN);
     pthread_mutex_unlock(&this->vm_lock);
     return target;
   } else {
-    fprintf(stderr, "Error when seeking, asked to seek outside program\n");
+    fprintf(MSG_OUT, "libdvdnav: Error when seeking, asked to seek outside program\n");
   }
 
-  fprintf(stderr,"FIXME: Implement seeking to location %u\n", target); 
+  fprintf(MSG_OUT, "libdvdnav: FIXME: Implement seeking to location %u\n", target); 
 
   pthread_mutex_unlock(&this->vm_lock);
   return -1;
@@ -240,13 +240,13 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
 
   /* Make sure this is not the first chapter */
   if(state->pgN <= 1 ) {
-    fprintf(stderr,"dvdnav: at first chapter. prev chapter failed.\n");
+    fprintf(MSG_OUT, "libdvdnav: at first chapter. prev chapter failed.\n");
     return S_ERR;
   }
-  fprintf(stderr,"dvdnav: previous chapter\n");
+  fprintf(MSG_OUT, "libdvdnav: previous chapter\n");
   vm_jump_prog(this->vm, state->pgN - 1);
   this->vm->hop_channel++;
-  fprintf(stderr,"dvdnav: previous chapter done\n");
+  fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
 
   return S_OK;
 }
@@ -256,7 +256,7 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
   if((!this) || (!this->vm) )
     return S_ERR;
     
-  fprintf(stderr,"dvdnav: top chapter. NOP.\n");
+  fprintf(MSG_OUT, "libdvdnav: top chapter. NOP.\n");
   
   return S_OK;
 }
@@ -273,13 +273,13 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 
   /* Make sure this is not the last chapter */
   if(state->pgN >= state->pgc->nr_of_programs) {
-    fprintf(stderr,"dvdnav: at last chapter. next chapter failed.\n");
+    fprintf(MSG_OUT, "libdvdnav: at last chapter. next chapter failed.\n");
     return S_ERR;
   }
-  fprintf(stderr,"dvdnav: next chapter\n");
+  fprintf(MSG_OUT, "libdvdnav: next chapter\n");
   vm_jump_prog(this->vm, state->pgN + 1);
   this->vm->hop_channel++;
-  fprintf(stderr,"dvdnav: next chapter done\n");
+  fprintf(MSG_OUT, "libdvdnav: next chapter done\n");
 
   return S_OK;
 }
@@ -398,7 +398,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int* pos,
 
   *pos= cur_sector - first_cell->first_sector;
   *len= last_cell->last_sector - first_cell->first_sector;
-  /* printf("dvdnav:searching:current pos=%u length=%u\n",*pos,*len); */
+  /* fprintf(MSG_OUT, "libdvdnav: searching:current pos=%u length=%u\n",*pos,*len); */
 
 
   return S_OK;
