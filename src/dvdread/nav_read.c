@@ -77,7 +77,7 @@ static uint32_t getbits(getbits_state_t *state, uint32_t number_of_bits) {
       number_of_bits = 0;
     }
   }
-  if ((state->bit_position) == 0)
+  if ((state->bit_position) == 0) {
     while (number_of_bits > 7) {
       result = (result << 8) + state->byte;
       state->byte_position++;
@@ -92,6 +92,7 @@ static uint32_t getbits(getbits_state_t *state, uint32_t number_of_bits) {
       result = (result << number_of_bits) + byte;
       number_of_bits = 0;
     }
+  }
 
   return result;
 }
