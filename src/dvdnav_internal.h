@@ -104,6 +104,13 @@ typedef struct {
 } ATTRIBUTE_PACKED spu_status_t;
 #endif
 
+typedef struct dvdnav_vobu_s {
+  int32_t vobu_start; /* Logical Absolute. MAX needed is 0x300000 */
+  int32_t vobu_length; /* Relative offset */
+  int32_t blockN; /* Relative offset */
+  int32_t vobu_next; /* Relative offset */
+} dvdnav_vobu_t;  
+   
 /* The main DVDNAV type */
 
 struct dvdnav_s {
@@ -114,10 +121,9 @@ struct dvdnav_s {
   int open_domain;                /* ..currently opened VOB */
  
   /* Position data */
-  uint32_t vobu_start;
-  uint32_t vobu_length;
-  uint32_t blockN;
-  uint32_t next_vobu;
+  vm_position_t position_next;
+  vm_position_t position_current;
+  dvdnav_vobu_t vobu;  
   cell_playback_t *cell;
   uint32_t jmp_blockN;
   uint32_t jmp_vobu_start;
@@ -168,8 +174,8 @@ void dvdnav_do_post_jump(dvdnav_t *self);
 
 /** USEFUL MACROS **/
 
-#define printerrf(format, args...) snprintf(self->err_str, MAX_ERR_LEN, format, ## args);
-#define printerr(str) strncpy(self->err_str, str, MAX_ERR_LEN);
+#define printerrf(format, args...) snprintf(this->err_str, MAX_ERR_LEN, format, ## args);
+#define printerr(str) strncpy(this->err_str, str, MAX_ERR_LEN);
 /* Save my typing */
 
 #define S_ERR DVDNAV_STATUS_ERR

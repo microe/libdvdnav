@@ -45,6 +45,8 @@
 #define DVDNAV_HIGHLIGHT    9 /* Change highlight region */
 #define DVDNAV_SPU_CLUT_CHANGE 10 /* SPU CLUT */
 #define DVDNAV_SEEK_DONE    11 /* Seek done, subtitles should be reset */
+#define DVDNAV_HOP_CHANNEL  12 /* Sent when non-seemless stream change has happed */
+                               /* E.g. Menu button pressed causing change in menu */
 
 /*** EVENT TYPES ***/
 

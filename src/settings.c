@@ -32,8 +32,8 @@
 
 /* Characteristics/setting API calls */
 
-dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *self, int *region) {
-  if(!self)
+dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int *region) {
+  if(!this)
    return S_ERR;
 
   if(!region) {
@@ -41,41 +41,41 @@ dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *self, int *region) {
     return S_ERR;
   }
 
-  if(!self->vm) {
+  if(!this->vm) {
     printerr("VM not yet initialised");
     return S_ERR;
   }
 
-  (*region) = self->vm->state.registers.SPRM[20];
+  (*region) = this->vm->state.registers.SPRM[20];
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *self, int mask) {
-  if(!self)
+dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *this, int mask) {
+  if(!this)
    return S_ERR;
 
-  if(!self->vm) {
+  if(!this->vm) {
     printerr("VM not yet initialised");
     return S_ERR;
   }
 
-  self->vm->state.registers.SPRM[20] = (mask & 0xff);
+  this->vm->state.registers.SPRM[20] = (mask & 0xff);
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *self, int use_readahead) {
-  if(!self)
+dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *this, int use_readahead) {
+  if(!this)
    return S_ERR;
 
-  self->use_read_ahead = use_readahead;
+  this->use_read_ahead = use_readahead;
 
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *self, int* flag) {
-  if(!self)
+dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *this, int* flag) {
+  if(!this)
    return S_ERR;
 
   if(!flag) {
@@ -83,7 +83,7 @@ dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *self, int* flag) {
     return S_ERR;
   }
 
-  (*flag) = self->use_read_ahead;
+  (*flag) = this->use_read_ahead;
   return S_OK;
 }
 

@@ -28,6 +28,7 @@
 /*
 #define BUTTON_TESTING
 */
+#include <assert.h>
 
 #include <dvdnav.h>
 #include "dvdnav_internal.h"
@@ -42,142 +43,182 @@
 
 /* Highlighting API calls */
 
-dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *self, int* button) {
-  if(!self)
+dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int* button) {
+  if(!this)
    return S_ERR;
 
   /* Simply return the appropriate value based on the SPRM */
-  (*button) = (self->vm->state.HL_BTNN_REG) >> 10;
+  (*button) = (this->vm->state.HL_BTNN_REG) >> 10;
   
   return S_OK;
 }
 
-btni_t *__get_current_button(dvdnav_t *self) {
+pci_t* dvdnav_get_current_nav_pci(dvdnav_t *this) {
+  if (!this ) assert(0);
+  return &this->pci;
+}
+
+btni_t *__get_current_button(dvdnav_t *this) {
   int button = 0;
 
-  if(dvdnav_get_current_highlight(self, &button) != S_OK) {
+  if(dvdnav_get_current_highlight(this, &button) != S_OK) {
     printerrf("Unable to get information on current highlight.");
     return NULL;
   }
 #ifdef BUTTON_TESTING
-  navPrint_PCI(&(self->pci));
+  navPrint_PCI(&(this->pci));
 #endif
   
-  return &(self->pci.hli.btnit[button-1]);
+  return &(this->pci.hli.btnit[button-1]);
 }
 
-dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *self) {
+dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this) {
   btni_t *button_ptr;
   
-  if(!self)
+  if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(self)) == NULL) {
+  if((button_ptr = __get_current_button(this)) == NULL) {
     return S_ERR;
   }
 
-  dvdnav_button_select(self, button_ptr->up);
+  dvdnav_button_select(this, button_ptr->up);
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *self) {
+dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this) {
   btni_t *button_ptr;
   
-  if(!self)
+  if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(self)) == NULL) {
+  if((button_ptr = __get_current_button(this)) == NULL) {
     return S_ERR;
   }
 
-  dvdnav_button_select(self, button_ptr->down);
+  dvdnav_button_select(this, button_ptr->down);
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_right_button_select(dvdnav_t *self) {
+dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this) {
   btni_t *button_ptr;
   
-  if(!self)
+  if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(self)) == NULL) {
+  if((button_ptr = __get_current_button(this)) == NULL) {
     printerr("Error fetching information on current button.");
     return S_ERR;
   }
 
-  dvdnav_button_select(self, button_ptr->right);
+  dvdnav_button_select(this, button_ptr->right);
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_left_button_select(dvdnav_t *self) {
+dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this) {
   btni_t *button_ptr;
   
-  if(!self)
+  if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(self)) == NULL) {
+  if((button_ptr = __get_current_button(this)) == NULL) {
     return S_ERR;
   }
 
-  dvdnav_button_select(self, button_ptr->left);
+  dvdnav_button_select(this, button_ptr->left);
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_button_activate(dvdnav_t *self) {
+dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32_t mode, 
+                                           dvdnav_highlight_area_t* highlight) {
+  btni_t *button_ptr;
+  fprintf(stderr,"Button get_highlight_area %i\n", button);
+
+  /* Set the highlight SPRM if the passed button was valid*/
+  if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns)) {
+    fprintf(stderr,"Unable to select button number %i as it doesn't exist",
+              button);
+    return S_ERR;
+  }
+  button_ptr = &nav_pci->hli.btnit[button-1];
+
+  highlight->sx = button_ptr->x_start;
+  highlight->sy = button_ptr->y_start;
+  highlight->ex = button_ptr->x_end;
+  highlight->ey = button_ptr->y_end;
+  if(button_ptr->btn_coln != 0) {
+    highlight->palette = nav_pci->hli.btn_colit.btn_coli[button_ptr->btn_coln-1][mode];
+  } else {
+    highlight->palette = 0;
+  }
+  highlight->pts = nav_pci->hli.hl_gi.hli_s_ptm;
+  highlight->buttonN = button;
+//#ifdef BUTTON_TESTING
+  fprintf(stderr,"highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
+               button_ptr->x_start, button_ptr->y_start,
+               button_ptr->x_end, button_ptr->y_end,
+               1,
+               button);
+//#endif
+
+  return S_OK;
+}
+
+dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
   int button;
   btni_t *button_ptr;
   
-  if(!self) 
+  if(!this) 
    return S_ERR;
-  pthread_mutex_lock(&self->vm_lock); 
+  pthread_mutex_lock(&this->vm_lock); 
 
   /* Precisely the same as selecting a button except we want
    * a different palette */
-  if(dvdnav_get_current_highlight(self, &button) != S_OK) {
-    pthread_mutex_unlock(&self->vm_lock); 
+  if(dvdnav_get_current_highlight(this, &button) != S_OK) {
+    pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
-  if(dvdnav_button_select(self, button) != S_OK) {
-    pthread_mutex_unlock(&self->vm_lock); 
+  if(dvdnav_button_select(this, button) != S_OK) {
+    pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
   
   /* Now get the current button's info */
-  if((button_ptr = __get_current_button(self)) == NULL) {
+  if((button_ptr = __get_current_button(this)) == NULL) {
     printerr("Error fetching information on current button.");
-    pthread_mutex_unlock(&self->vm_lock); 
+    pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
 
   /* And set the palette */
   if(button_ptr->btn_coln != 0) {
-    self->hli_clut = 
-     self->pci.hli.btn_colit.btn_coli[button_ptr->btn_coln-1][1];
+    this->hli_clut = 
+     this->pci.hli.btn_colit.btn_coli[button_ptr->btn_coln-1][1];
   } else {
-    self->hli_clut = 0;
+    this->hli_clut = 0;
   }
 
   /* Finally, make the VM execute the appropriate code and
    * scedule a jump */
   fprintf(stderr, "libdvdnav: Evaluating Button Activation commands.\n");
-  if(vm_eval_cmd(self->vm, &(button_ptr->cmd)) == 1) {
+  if(vm_eval_cmd(this->vm, &(button_ptr->cmd)) == 1) {
     /* Cammand caused a jump */
-    dvdnav_do_post_jump(self);
+    dvdnav_do_post_jump(this);
   }
-  
-  pthread_mutex_unlock(&self->vm_lock); 
+  this->vm->hop_channel++; 
+  pthread_mutex_unlock(&this->vm_lock); 
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_button_select(dvdnav_t *self, int button) {
+dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
   btni_t *button_ptr;
   
-  if(!self) {
-   printerrf("Unable to select button number %i as self state bad",
+  if(!this) {
+   printerrf("Unable to select button number %i as this state bad",
 	      button);
    return S_ERR;
   }
@@ -185,34 +226,34 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *self, int button) {
   fprintf(stderr,"Button select %i\n", button); 
   
   /* Set the highlight SPRM if the passed button was valid*/
-  if((button <= 0) || (button > self->pci.hli.hl_gi.btn_ns)) {
+  if((button <= 0) || (button > this->pci.hli.hl_gi.btn_ns)) {
     printerrf("Unable to select button number %i as it doesn't exist",
 	      button);
     return S_ERR;
   }
-  self->vm->state.HL_BTNN_REG = (button << 10);
+  this->vm->state.HL_BTNN_REG = (button << 10);
 
   /* Now get the current button's info */
-  if((button_ptr = __get_current_button(self)) == NULL) {
+  if((button_ptr = __get_current_button(this)) == NULL) {
     printerr("Error fetching information on current button.");
     return S_ERR;
   }
 
-  self->hli_bbox[0] = button_ptr->x_start;
-  self->hli_bbox[1] = button_ptr->y_start;
-  self->hli_bbox[2] = button_ptr->x_end;
-  self->hli_bbox[3] = button_ptr->y_end;
-  self->hli_state = 1; /* Selected */
+  this->hli_bbox[0] = button_ptr->x_start;
+  this->hli_bbox[1] = button_ptr->y_start;
+  this->hli_bbox[2] = button_ptr->x_end;
+  this->hli_bbox[3] = button_ptr->y_end;
+  this->hli_state = 1; /* Selected */
 
   if(button_ptr->btn_coln != 0) {
-    self->hli_clut = 
-     self->pci.hli.btn_colit.btn_coli[button_ptr->btn_coln-1][0];
+    this->hli_clut = 
+     this->pci.hli.btn_colit.btn_coli[button_ptr->btn_coln-1][0];
   } else {
-    self->hli_clut = 0;
+    this->hli_clut = 0;
   }
-  self->hli_pts = self->pci.hli.hl_gi.hli_s_ptm;
-  self->hli_buttonN = button;
-  self->highlight_changed = 1;
+  this->hli_pts = this->pci.hli.hl_gi.hli_s_ptm;
+  this->hli_buttonN = button;
+//  this->position_current.button = -1; /* Force Highligh change */
 #ifdef BUTTON_TESTING
   fprintf(stderr,"highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
 	       button_ptr->x_start, button_ptr->y_start,
@@ -224,40 +265,40 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *self, int button) {
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *self, 
+dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, 
 						  int button) {
   /* A trivial function */
-  if(dvdnav_button_select(self, button) != S_ERR) {
-    return dvdnav_button_activate(self);
+  if(dvdnav_button_select(this, button) != S_ERR) {
+    return dvdnav_button_activate(this);
   }
   
   /* Should never get here without an error */
   return S_ERR;
 }
 
-dvdnav_status_t dvdnav_mouse_select(dvdnav_t *self, int x, int y) {
+dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, int x, int y) {
   int button, cur_button;
   
   /* FIXME: At the moment, the case of no button matchin (x,y) is
    * silently ignored, is this OK? */
-  if(!self)
+  if(!this)
    return S_ERR;
 
-  if(dvdnav_get_current_highlight(self, &cur_button) != S_OK) {
+  if(dvdnav_get_current_highlight(this, &cur_button) != S_OK) {
     return S_ERR;
   }
 
   /* Loop through each button */
-  for(button=1; button <= self->pci.hli.hl_gi.btn_ns; button++) {
+  for(button=1; button <= this->pci.hli.hl_gi.btn_ns; button++) {
     btni_t *button_ptr = NULL;
 
-    button_ptr = &(self->pci.hli.btnit[button-1]);
+    button_ptr = &(this->pci.hli.btnit[button-1]);
     if((x >= button_ptr->x_start) && (x <= button_ptr->x_end) &&
        (y >= button_ptr->y_start) && (y <= button_ptr->y_end)) {
       /* As an efficiency measure, only re-select the button
        * if it is different to the previously selected one. */
       if(button != cur_button) {
-	dvdnav_button_select(self, button);
+	dvdnav_button_select(this, button);
       }
     }
   }
@@ -265,10 +306,10 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *self, int x, int y) {
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *self, int x, int y) {
+dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *this, int x, int y) {
   /* A trivial function */
-  if(dvdnav_mouse_select(self, x,y) != S_ERR) {
-    return dvdnav_button_activate(self);
+  if(dvdnav_mouse_select(this, x,y) != S_ERR) {
+    return dvdnav_button_activate(this);
   }
   
   /* Should never get here without an error */

@@ -40,6 +40,7 @@
 #include "decoder.h"
 #include "vmcmd.h"
 #include "vm.h"
+#include "dvdnav_internal.h"
 
 /* Local prototypes */
 
@@ -266,6 +267,39 @@ int vm_start(vm_t *vm)
   return 0; /* ?? */
 }
 
+int vm_position_get(vm_t *vm, vm_position_t *position) {
+  position->button = (vm->state).HL_BTNN_REG >> 10;
+  position->spu_channel = (vm->state).SPST_REG;
+  position->audio_channel = (vm->state).AST_REG;
+  position->angle_channel = (vm->state).AGL_REG;
+  position->hop_channel = vm->hop_channel; /* Increases by one on each hop */
+  position->vts = (vm->state).vtsN; 
+  position->domain = (vm->state).domain; 
+  position->cell = (vm->state).cellN;
+  position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
+  position->vobu_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
+  position->vobu_next = (vm->state).blockN;
+  position->vobu_next = 0; /* Just for now */
+  return 1;
+}
+
+int vm_position_print(vm_t *vm, vm_position_t *position) {
+  fprintf(stderr, "But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x still=%x start=%x next=%d\n",
+  position->button,
+  position->spu_channel,
+  position->audio_channel,
+  position->angle_channel,
+  position->hop_channel,
+  position->vts,
+  position->domain,
+  position->cell,
+  position->still,
+  position->vobu_start,
+  position->vobu_next);
+  return 1;
+}
+
+  
 int vm_start_title(vm_t *vm, int tt) {
   link_t link_values;
 
@@ -802,7 +836,7 @@ static link_t play_PG(vm_t *vm)
   if((vm->state).pgN > (vm->state).pgc->nr_of_programs) {
     fprintf(stderr, "(vm->state).pgN (%i) == pgc->nr_of_programs + 1 (%i)\n", 
 	    (vm->state).pgN, (vm->state).pgc->nr_of_programs + 1);
-    assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1);
+    //assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1);
     return play_PGC_post(vm);
   }
   
@@ -1574,6 +1608,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.12  2002/04/22 22:00:48  jcdutton
+ * Start of rewrite of libdvdnav. Still need to re-implement seeking.
+ *
  * Revision 1.11  2002/04/12 20:06:41  jcdutton
  * Implement General Register Counters or GPRM counters.
  * Navigation timers are not supported yet. SPRM[9] and SPRM[10].

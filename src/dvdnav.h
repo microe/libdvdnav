@@ -306,6 +306,9 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
  *   button -- Pointer to the value to fill in.
  */
 dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *self, int* button);
+pci_t* dvdnav_get_current_nav_pci(dvdnav_t *self);
+dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32_t mode,
+                                           dvdnav_highlight_area_t* highlight);
 
 /**
  * Move button highlight around (e.g. with arrow keys)
@@ -455,6 +458,8 @@ dvdnav_status_t dvdnav_angle_change(dvdnav_t *self, int angle);
 dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
 				     int *number_of_angles);
 
+dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *self, int* current_angle,
+				     int *number_of_angles);
 /**
  * Converts a *logical* subpicture stream id into country code 
  * (returns 0xffff if no such stream).

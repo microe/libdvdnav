@@ -5,11 +5,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <assert.h>
 
 #define CALL(x) if(x != DVDNAV_STATUS_OK) { \
   fprintf(stderr, "Error calling '%s' (%s)\n", \
           #x, dvdnav_err_to_string(dvdnav)); \
-  exit(0); \
+  assert(0); \
 }
 
 dvdnav_t *dvdnav;
@@ -136,7 +137,7 @@ int main(int argc, char **argv) {
     if(result == DVDNAV_STATUS_ERR) {
       fprintf(stderr, "Error getting next block (%s)\n",
 	      dvdnav_err_to_string(dvdnav));
-      exit(1);
+      assert(0);
     }
 
     switch(event) {
@@ -154,7 +155,7 @@ int main(int argc, char **argv) {
 	output_fd = open(filename, O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG);
 	if(output_fd == -1) {
 	  printf("Error opening output\n");
-	  exit(1);
+	  assert(0);
 	}
       }
       

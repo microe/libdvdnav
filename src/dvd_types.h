@@ -279,5 +279,13 @@ typedef struct {
   int more_to_come;
 } DVDVideoAttributes_t;
 
+typedef struct {
+  uint32_t palette;  /* The CLUT entries for the highlight palette
+                        (4-bits per entry -> 4 entries) */
+  uint16_t sx,sy,ex,ey; /* The start/end x,y positions */
+  uint32_t pts;         /* Highlight PTS to match with SPU */
+  uint32_t buttonN;     /* Button number for the SPU decoder. */
+} dvdnav_highlight_area_t;
+
 
 #endif /* DVD_H_INCLUDED */

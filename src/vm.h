@@ -61,12 +61,30 @@ typedef struct {
   int rsm_cellN;
 } dvd_state_t;
 
+typedef struct vm_position_s {
+  int16_t button; /* Button highlighted */
+  uint32_t clut;  /* CLUT to use, not needed in this struct */
+  int32_t vts;    /* vts number to use */
+  int32_t domain; /* domain to use */
+  int32_t spu_channel; /* spu channel to use */
+  int32_t angle_channel; /* angle channel to use */
+  int32_t audio_channel; /* audio channel to use */
+  int32_t hop_channel; /* channel hopping. E.g menu button pressed */
+  int32_t title; /* title number */
+  int32_t chapter; /* chapter number */
+  int32_t cell; /* cell number */
+  int32_t still; /* is cell still */
+  int32_t vobu_start; /* block number of start of current VOBU in use */
+  int32_t vobu_next; /* block number within VOBU in use */
+} vm_position_t;
+
 typedef struct {
   dvd_reader_t *dvd;
   ifo_handle_t *vmgi;
   ifo_handle_t *vtsi;
   dvd_state_t   state;
   int  badness_counter;
+  int32_t hop_channel;
 } vm_t;
 
 
@@ -107,6 +125,8 @@ int vm_jump_prog(vm_t *vm, int pr);
 /* Other calls */
 int vm_reset(vm_t *vm, char *dvdroot); /*  , register_t regs); */
 int vm_start(vm_t *vm);
+int vm_position_get(vm_t *vm, vm_position_t *position);
+int vm_position_print(vm_t *vm, vm_position_t *position);
 int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd);
 int vm_get_next_cell(vm_t *vm);
 int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block);
