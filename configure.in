@@ -23,7 +23,7 @@ AC_SUBST(RELEASE)
 
 dnl this is only for pre-1.0 releases (ie with unstable interface)
 LT_RELEASE=$DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB
-LT_CURRENT=0
+LT_CURRENT=1
 LT_REVISION=0
 LT_AGE=0
 
