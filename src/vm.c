@@ -527,6 +527,18 @@ int vm_jump_up(vm_t *vm) {
   }
   return 0;
 }
+int vm_resume(vm_t *vm) {
+  link_t link_values;
+
+  if (!(vm->state).rsm_vtsN) { /* Do we have resume info. */
+    return S_ERR;
+  }
+  link_values.command = LinkRSM;
+  if (!process_command(vm, link_values)) {
+    return S_ERR;
+  }
+  return S_OK;
+}
 
 int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
   domain_t old_domain = (vm->state).domain;
@@ -539,6 +551,7 @@ int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
   case VMGM_DOMAIN:
     switch(menuid) {
     case DVD_MENU_Title:
+    case DVD_MENU_Escape:
       (vm->state).domain = VMGM_DOMAIN;
       break;
     case DVD_MENU_Root:
@@ -1831,6 +1844,9 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.56  2003/04/06 16:56:22  jcdutton
+ * Implement ESCAPE key jumping from TITLE to MENU and back again.
+ *
  * Revision 1.55  2003/04/06 12:47:32  jcdutton
  * Remove an unneeded printf.
  *

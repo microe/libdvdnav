@@ -48,6 +48,7 @@ typedef enum {
  * DVD Menu
  */
 typedef enum {
+  DVD_MENU_Escape     = 0, /**< TBD */
   DVD_MENU_Title      = 2, /**< TBD */
   DVD_MENU_Root       = 3, /**< TBD */
   DVD_MENU_Subpicture = 4, /**< TBD */
