@@ -187,7 +187,7 @@ static void print_if_version_1(command_t* command) {
   
   if(op) {
     fprintf(MSG_OUT, "if (");
-    print_reg(vm_getbits(command,39,8));
+    print_g_reg(vm_getbits(command,39,8));
     print_cmp_op(op);
     print_reg_or_data(command, vm_getbits(command, 55,1), 31);
     fprintf(MSG_OUT, ") ");
@@ -211,7 +211,7 @@ static void print_if_version_3(command_t* command) {
   
   if(op) {
     fprintf(MSG_OUT, "if (");
-    print_reg(vm_getbits(command, 43, 4));
+    print_g_reg(vm_getbits(command, 43, 4));
     print_cmp_op(op);
     print_reg_or_data(command, vm_getbits(command, 55, 1), 15);
     fprintf(MSG_OUT, ") ");
@@ -275,7 +275,7 @@ static void print_special_instruction(command_t* command) {
 }
 
 static void print_linksub_instruction(command_t* command) {
-  int linkop = vm_getbits(command, 4, 5);
+  int linkop = vm_getbits(command, 7, 8);
   int button = vm_getbits(command, 15, 6);
   
   if(linkop < sizeof(link_table)/sizeof(char *) && link_table[linkop] != NULL)
@@ -343,7 +343,7 @@ static void print_jump_instruction(command_t* command) {
           break;
         case 2:
           fprintf(MSG_OUT, "JumpSS VTSM (vts %" PRIu8 ", title %" PRIu8 
-		  ", menu %" PRIu8 ")", vm_getbits(command, 31, 8), vm_getbits(command, 39, 8), vm_getbits(command, 19, 4));
+		  ", menu %" PRIu8 ")", vm_getbits(command, 30, 7), vm_getbits(command, 38, 7), vm_getbits(command, 19, 4));
           break;
         case 3:
           fprintf(MSG_OUT, "JumpSS VMGM (pgc %" PRIu8 ")", vm_getbits(command, 46, 15));
@@ -377,11 +377,13 @@ static void print_jump_instruction(command_t* command) {
 
 static void print_system_set(command_t* command) {
   int i;
+/* FIXME: What about SPRM11 ? Karaoke */
+/*        Surely there must be some system set command for that ? */
   
   switch(vm_getbits(command, 59, 4)) {
     case 1: /*  Set system reg 1 &| 2 &| 3 (Audio, Subp. Angle) */
       for(i = 1; i <= 3; i++) {
-        if(vm_getbits(command, 63 - ((2+i)*8), 1)) {
+        if(vm_getbits(command, 47 - (i*8), 1)) {
           print_system_reg(i);
           fprintf(MSG_OUT, " = ");
           print_reg_or_data_2(command, vm_getbits(command, 60, 1), 47 - (i*8) );
@@ -395,7 +397,7 @@ static void print_system_set(command_t* command) {
       print_reg_or_data(command, vm_getbits(command, 60, 1), 47);
       fprintf(MSG_OUT, " ");
       print_system_reg(10);
-      fprintf(MSG_OUT, " = %" PRIu8, vm_getbits(command, 23, 8)); /*  ?? */
+      fprintf(MSG_OUT, " = %" PRIu16, vm_getbits(command, 30, 15)); /*  ?? */
       break;
     case 3: /*  Mode: Counter / Register + Set */
       fprintf(MSG_OUT, "SetMode ");
@@ -403,7 +405,7 @@ static void print_system_set(command_t* command) {
 	fprintf(MSG_OUT, "Counter ");
       else
 	fprintf(MSG_OUT, "Register ");
-      print_reg(vm_getbits(command, 19, 4));
+      print_g_reg(vm_getbits(command, 19, 4));
       print_set_op(0x1); /*  '=' */
       print_reg_or_data(command, vm_getbits(command, 60, 1), 47);
       break;
@@ -424,7 +426,7 @@ static void print_set_version_1(command_t* command) {
   uint8_t set_op = vm_getbits(command, 59, 4);
   
   if(set_op) {
-    print_reg(vm_getbits(command, 39, 8));  /* FIXME: This is different from decoder.c!!!  */
+    print_g_reg(vm_getbits(command, 35, 4));
     print_set_op(set_op);
     print_reg_or_data(command, vm_getbits(command, 60, 1), 31);
   } else {
@@ -436,7 +438,7 @@ static void print_set_version_2(command_t* command) {
   uint8_t set_op = vm_getbits(command, 59, 4);
   
   if(set_op) {
-    print_reg(vm_getbits(command, 51, 4));
+    print_g_reg(vm_getbits(command, 51, 4));
     print_set_op(set_op);
     print_reg_or_data(command, vm_getbits(command, 60, 1), 47);
   } else {
@@ -448,7 +450,7 @@ static void print_set_version_3(command_t* command) {
   uint8_t set_op = vm_getbits(command, 59, 4);
   
   if(set_op) {
-    print_reg(vm_getbits(command, 51, 4));
+    print_g_reg(vm_getbits(command, 51, 4));
     print_set_op(set_op);
     print_reg_or_data_3(command, vm_getbits(command, 60, 1), 47);
   } else {
