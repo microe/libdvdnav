@@ -430,7 +430,7 @@ void vm_position_get(vm_t *vm, vm_position_t *position) {
   position->block = (vm->state).blockN;
 
   /* handle PGC stills at PGC end */
-  if ((vm->state).cellN == (vm->state).pgc->nr_of_cells && (vm->state).pgc->still_time)
+  if ((vm->state).cellN == (vm->state).pgc->nr_of_cells)
     position->still += (vm->state).pgc->still_time;
   /* still already determined */
   if (position->still)
@@ -986,9 +986,6 @@ static link_t play_PGC_post(vm_t *vm) {
   fprintf(MSG_OUT, "libdvdnav: play_PGC_post:\n");
 #endif
   
-  /* FIXME: Implement PGC Stills. Currently only Cell stills work */
-  assert((vm->state).pgc->still_time == 0);
-
   /* eval -> updates the state and returns either 
      - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
      - just go to next PGC
@@ -1652,13 +1649,6 @@ static int set_PGN(vm_t *vm) {
     pb_ty = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1].pb_ty;
     if(pb_ty->multi_or_random_pgc_title == /* One_Sequential_PGC_Title */ 0) {
       int dummy, part;
-#if 0
-      /* TTN_REG can't be trusted to have a correct value here... */
-      vts_ptt_srpt_t *ptt_srpt = vtsi->vts_ptt_srpt;
-      assert((vm->state).VTS_TTN_REG <= ptt_srpt->nr_of_srpts);
-      assert(get_PGCN() == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgcn);
-      assert(1 == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgn);
-#endif
       vm_get_current_title_part(vm, &dummy, &part);
       (vm->state).PTTN_REG = part;
     } else {

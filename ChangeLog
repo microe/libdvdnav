@@ -3,6 +3,7 @@ libdvdnav (0.1.10)
   * fix LinkNextC assertion failure (fixes LotR-SEE bonus disc image gallery)
   * detect zero stilltime still cells inside PGCs, not only at the end
     (fixes "Red Dragon" RC2 scene selection)
+  * PGC stills seem to work, assertion removed
 
 libdvdnav (0.1.9)
   * libdvdnav does not depend on libdvdread any more. It has it's own version.
