@@ -402,7 +402,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
 
   vm_position_get(this->vm, &this->position_next);
   
-#ifdef TRACE
+#ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: POS-NEXT ");
   vm_position_print(this->vm, &this->position_next);
   fprintf(MSG_OUT, "libdvdnav: POS-CUR  ");
@@ -980,6 +980,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.44  2003/03/14 18:49:28  mroi
+ * less overwhelming TRACE info
+ *
  * Revision 1.43  2003/03/12 11:38:51  mroi
  * stop the VM here
  *
