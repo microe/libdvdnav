@@ -32,7 +32,7 @@
 /* EXPERIMENTAL: Setting the following to 1 will use an experimental multi-threaded
  *               read-ahead cache. 
  */
-#define _MULTITHREAD_ 0
+#define _MULTITHREAD_ 1
 
 /* Constructor/destructors */
 read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self);
