@@ -261,6 +261,7 @@ int main(int argc, char **argv) {
 #endif
   }
   
+  /* destroy dvdnav handle */
   if (dvdnav_close(dvdnav) != DVDNAV_STATUS_OK) {
     printf("Error on dvdnav_close: %s\n", dvdnav_err_to_string(dvdnav));
     return 5;
