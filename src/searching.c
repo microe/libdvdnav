@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2000 Rich Wareham <richwareham@users.sourceforge.net>
  * 
  * This file is part of libdvdnav, a DVD navigation library.
@@ -183,7 +183,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     if (target >= length) {
       target -= length;
     } else {
-      /* convert the target sector from PG-relative to absolute physical sector */
+      /* convert the target sector from Cell-relative to absolute physical sector */
       target += cell->first_sector;
       found = 1;
       break;
