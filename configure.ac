@@ -232,5 +232,6 @@ misc/dvdnav-config
 misc/libdvdnav.spec
 m4/Makefile
 doc/Makefile
+examples/Makefile
 ], [echo '/* !! DO NO EDIT THIS FILE, it is automatically generated */' > src/dvdnav_internal.h.tmp && cat src/dvdnav_internal.h >> src/dvdnav_internal.h.tmp && mv -f src/dvdnav_internal.h.tmp src/dvdnav_internal.h],
 )
