@@ -30,7 +30,7 @@
 #include "dvdnav_internal.h"
 
 #include "vm.h"
-#include "nav_types.h"
+#include <dvdread/nav_types.h>
 
 /*
 #define BUTTON_TESTING
