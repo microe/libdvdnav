@@ -471,6 +471,9 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
       }
     }
     this->position_current.hop_channel = this->position_next.hop_channel;
+    /* update VOBU info */
+    this->vobu.vobu_start  = this->position_next.cell_start + this->position_next.block;
+    this->vobu.vobu_next   = 0;
     /* Make blockN == vobu_length to do expected_nav */
     this->vobu.vobu_length = 0;
     this->vobu.blockN      = 0;
@@ -1018,6 +1021,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.48  2003/03/31 13:48:36  mroi
+ * update position on HOP_CHANNEL, do not rely on a following CELL_CHANGE
+ *
  * Revision 1.47  2003/03/26 14:37:22  mroi
  * I should get a brain and learn how to handle BCD...
  * also fixing a possible mis-jump with angled cells
