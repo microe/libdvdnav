@@ -376,7 +376,7 @@ dvdnav_status_t dvdnav_stop(dvdnav_t *self);
 dvdnav_status_t dvdnav_go_up(dvdnav_t *self);
 
 /**
- * Stop playing the current title and jump to the specified menu.
+ * Stop playing the current position and jump to the specified menu.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param menu Which menu to call (see DVDMenuID_t).
@@ -407,7 +407,7 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int *title,
  */
 
 /**
- * Stop playing the current title and start playback of the title
+ * Stop playing the current position and start playback of the title
  * from the specified timecode.
  *
  * \par Note:
@@ -420,7 +420,12 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *self,
 				   unsigned long int time);
 
 /**
- * Stop playing the current title and start playback of the title
+ * Stop playing the current position and start playback from the last
+ * VOBU boundary before the given sector. The sector number is not
+ * meant to be an absolute physical DVD sector, but a relative sector
+ * in the current program. This function cannot leave the current
+ * program and will fail, if asked to do so.
+ * 
  * from the specified sector offset.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
@@ -431,7 +436,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
 				     unsigned long int offset, int origin);
 
 /**
- * Stop playing the current title and start playback of the title
+ * Stop playing the current position and start playback of the current title
  * from the specified part (chapter).
  *
  * \param self Pointer to dvdnav_t associated with this operation.
@@ -440,24 +445,24 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
 dvdnav_status_t dvdnav_part_search(dvdnav_t *self, int part);
 
 /**
- * Stop playing the current title and start playback of the title
- * from the previous program (if it exists).
+ * Stop playing the current position and start playback at the
+ * previous program (if it exists).
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  */
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *self);
 
 /**
- * Stop playing the current title and start playback of the title
- * from the first program.
+ * Stop playing the current position and start playback at the
+ * first program.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  */
 dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *self);
 
 /**
- * Stop playing the current title and start playback of the title
- * from the next program (if it exists).
+ * Stop playing the current position and start playback at the
+ * next program (if it exists).
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  */
@@ -465,11 +470,11 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *self);
 
 /**
  * Return the current position (in blocks) within the current
- * part and the length (in blocks) of said part.
+ * program and the length (in blocks) of current program.
  * 
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param pos Pointer to unsigned int to get the current position.
- * \param len Pointer to unsinged int to hold the length of the current part.
+ * \param len Pointer to unsinged int to hold the length of the current program.
  */
 dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int *pos,
 				    unsigned int *len);
@@ -478,6 +483,10 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int *pos,
  * Return the current position (in blocks) within the current
  * title and the length (in blocks) of said title.
  * 
+ * \par Note:
+ * Current implementation is wrong and likely to behave unpredictably.
+ * Use is discouraged.
+ *
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param pos Pointer to unsigned int to get the current position.
  * \param len Pointer to unsinged int to hold the length of the current title.
