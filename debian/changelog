@@ -1,10 +1,13 @@
-libdvdnav (0.1.0-1) unstable; urgency=low
+libdvdnav (0.1.0-1.1) unstable; urgency=low
 
   * Prepared for first 'real' release.
   * Bug fixes
   * Changes to allow apps to 'roll-their-own' dvdnav_get_next_block functions.
+  * NMU in order to get xine-dvdnav running again
+    - changed package name to libdvdnav0
+      (see patch from Jamie Wilkinson for a better solution)
 
- -- Rich Wareham <richwareham@users.sourceforge.net>  Mon, 29 Apr 2002 08:39:42 +0000
+ -- Siggi Langauf <siggi@debian.org>  Mon, 20 May 2002 15:57:40 +0200
  
 libdvdnav (0.0.1-1) unstable; urgency=low
 
