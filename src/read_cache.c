@@ -28,6 +28,12 @@
 #include "dvdnav.h"
 #include "read_cache.h"
 #include <pthread.h>
+#include <sys/time.h>
+#include <time.h>
+
+/*
+#define DVDNAV_PROFILE
+*/
 
 /* Read-ahead cache structure. */
 #if 0
@@ -346,9 +352,24 @@ void dvdnav_read_cache_clear(read_cache_t *self) {
   self->cache_valid = 0;
 }
 
+#ifdef DVDNAV_PROFILE
+//#ifdef ARCH_X86
+__inline__ unsigned long long int dvdnav_rdtsc()
+{
+  unsigned long long int x;
+  __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+  return x;
+}
+//#endif
+#endif
+
 /* This function is called just after reading the NAV packet. */
 void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count) {
   int result;
+#ifdef DVDNAV_PROFILE
+  struct timeval tv1, tv2, tv3;
+  unsigned long long p1, p2, p3;
+#endif
  
   if(!self)
    return;
@@ -358,19 +379,34 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
     self->cache_start_sector = -1;
     return;
   }
-  
+  /* We start with a sensible figure for the first malloc of 500 blocks.
+   * Some DVDs I have seen venture to 450 blocks.
+   * This is so that fewer realloc's happen if at all.
+   */ 
   if (self->cache_buffer) {
     if( block_count > self->cache_malloc_size) {
       self->cache_buffer = realloc(self->cache_buffer, block_count * DVD_VIDEO_LB_LEN);
+      dprintf("libdvdnav:read_cache:pre_cache DVD read realloc happened\n"); 
       self->cache_malloc_size = block_count;
     } 
   } else {
-    self->cache_buffer = malloc(block_count * DVD_VIDEO_LB_LEN);
-    self->cache_malloc_size = block_count;
+    self->cache_buffer = malloc((block_count > 500 ? block_count : 500 )* DVD_VIDEO_LB_LEN);
+    self->cache_malloc_size = (block_count > 500 ? block_count : 500 );
+    dprintf("libdvdnav:read_cache:pre_cache DVD read malloc %d\n", (block_count > 500 ? block_count : 500 )); 
   }
   self->cache_start_sector = sector;
   self->cache_block_count = block_count;
+#ifdef DVDNAV_PROFILE
+  gettimeofday(&tv1, NULL);
+  p1 = dvdnav_rdtsc();
+#endif
   result = DVDReadBlocks( self->dvd_self->file, sector, block_count, self->cache_buffer);
+#ifdef DVDNAV_PROFILE
+  p2 = dvdnav_rdtsc();
+  gettimeofday(&tv2, NULL);
+  timersub(&tv2, &tv1, &tv3);
+  dprintf("libdvdnav:read_cache:pre_cache DVD read %ld us, profile = %lld, block_count = %d\n", tv3.tv_usec, p2-p1, block_count); 
+#endif
   self->cache_valid = 1;
 }
 
