@@ -35,6 +35,8 @@
 #include "dvdnav_internal.h"
 
 
+#ifdef TRACE
+
 /*  freebsd compatibility */
 #ifndef PRIu8
 #define PRIu8 "d"
@@ -486,4 +488,4 @@ void vmPrint_CMD(int row, vm_cmd_t *vm_command) {
   fprintf(MSG_OUT, "\n");
 }
 
-
+#endif

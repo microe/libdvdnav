@@ -106,13 +106,13 @@ struct read_cache_s {
 
 #ifdef __GNUC__
 # if READ_CACHE_TRACE
-#  define dprintf(fmt, args...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , ## arg
+#  define dprintf(fmt, args...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , ## args)
 # else
 #  define dprintf(fmt, args...) /* Nowt */
 # endif
 #else
 # if READ_CACHE_TRACE
-#  define dprintf(fmt, ...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , __VA_ARGS_
+#  define dprintf(fmt, ...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , __VA_ARGS__)
 # else
 #  define dprintf(fmt, ...) /* Nowt */
 # endif
@@ -284,7 +284,7 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
   pthread_mutex_unlock(&self->cache_lock);
 }
 
-/* This function will do the cache read once implemented */
+/* This function will do the cache read */
 int dvdnav_read_cache_block( read_cache_t *self, int sector, size_t block_count, uint8_t **buf) {
   int result, diff;
 

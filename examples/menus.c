@@ -146,10 +146,6 @@ int main(int argc, char **argv) {
 	}
        }
       break;
-     case DVDNAV_SEEK_DONE:
-       {
-       }
-      break;
      case DVDNAV_NAV_PACKET:
        {
 	pci_t *pci;

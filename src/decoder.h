@@ -30,9 +30,7 @@
 
 #include <dvdread/ifo_types.h> /*  vm_cmd_t */
 
-/* Uncomment for tracing */
-#define TRACE
-
+/* link command types */
 typedef enum {
   LinkNoLink  = 0,
 
@@ -76,6 +74,7 @@ typedef enum {
   PlayThis
 } link_cmd_t;
 
+/* a link's data set */
 typedef struct {
   link_cmd_t command;
   uint16_t   data1;
@@ -83,6 +82,7 @@ typedef struct {
   uint16_t   data3;
 } link_t;
 
+/* the VM registers */
 typedef struct {
   uint16_t SPRM[24];
   uint16_t GPRM[16];
@@ -90,18 +90,28 @@ typedef struct {
   struct timeval GPRM_time[16]; /* For counter mode */
 } registers_t;
 
-typedef struct
-{
+/* a VM command data set */
+typedef struct {
   uint64_t instruction;
   uint64_t examined;
   registers_t *registers;
 } command_t;
 
+/* the big VM function, executing the given commands and writing
+ * the link where to continue, the return value indicates if a jump
+ * has been performed */
 int vmEval_CMD(vm_cmd_t commands[], int num_commands, 
 	       registers_t *registers, link_t *return_values);
 
-void vmPrint_LINK(link_t value);
-void vmPrint_registers( registers_t *registers );
+/* extracts some bits from the command */
 uint32_t vm_getbits(command_t* command, int start, int count);
+
+#ifdef TRACE
+/* for debugging: prints a link in readable form */
+void vmPrint_LINK(link_t value);
+
+/* for debugging: dumps VM registers */
+void vmPrint_registers( registers_t *registers );
+#endif
 
 #endif /* DECODER_H_INCLUDED */

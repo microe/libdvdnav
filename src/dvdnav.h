@@ -56,9 +56,6 @@ typedef int dvdnav_status_t;
 #define DVDNAV_STATUS_ERR 0
 #define DVDNAV_STATUS_OK  1
 
-/**
- * NOTE: */
-
 /** 
  * \defgroup init Initialisation & housekeeping functions 
  * These functions allow you to open a DVD device and associate it
@@ -84,7 +81,7 @@ typedef int dvdnav_status_t;
  * \param dest Pointer to a dvdnav_t pointer to fill in.
  * \param path Any libdvdread acceptable path
  */
-dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path); 
+dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path); 
 
 /**
  * Closes a dvdnav_t previously opened with dvdnav_open(), freeing any 
@@ -109,7 +106,7 @@ dvdnav_status_t dvdnav_reset(dvdnav_t *self);
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param path Pointer to char* to fill in.
  */
-dvdnav_status_t dvdnav_path(dvdnav_t *self, char** path);
+dvdnav_status_t dvdnav_path(dvdnav_t *self, const char** path);
 
 /**
  * Returns a human-readable string describing the last error.
@@ -117,7 +114,7 @@ dvdnav_status_t dvdnav_path(dvdnav_t *self, char** path);
  * \param self Pointer to dvdnav_t associated with this operation.
  * \returns A pointer to said string.
  */
-char* dvdnav_err_to_string(dvdnav_t *self);
+const char* dvdnav_err_to_string(dvdnav_t *self);
 
 /** \@} */
 
@@ -156,8 +153,7 @@ dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *self, int mask);
 
 /**
  * Specify whether read-ahead caching should be used. You may not want this if your
- * decoding engine does its own buffering or if you don't like the fact that this is
- * implemented in a multithreaded manner.
+ * decoding engine does its own buffering.
  * 
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param use_readahead 0 - no, 1 - yes
@@ -214,7 +210,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
  * I such a case (cache hit) this function will return a different pointer than
  * the one handed in, pointing directly into the relevant block in the cache.
  * Those pointer must _never_ be freed but instead returned to the library via
- + dvdnav_free_cache_block.
+ * dvdnav_free_cache_block().
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param buf Buffer (at least 2048 octets) to fill with next block/event structure.
@@ -226,7 +222,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *self, unsigned char **buf,
 					    int *event, int *len);
 
 /**
- * All buffers which came from the internal cache (when dvdnav_get_next_cache_block
+ * All buffers which came from the internal cache (when dvdnav_get_next_cache_block()
  * returned a buffer different from the one handed in) have to be freed with this
  * function. Although handing in other buffers not from the cache doesn't cause any harm.
  *
@@ -252,6 +248,17 @@ uint8_t dvdnav_get_video_aspect(dvdnav_t *self);
  * \returns Video scaling permissions, bit0 - deny letterboxing, bit1 - deny pan&scan
  */
 uint8_t dvdnav_get_video_scale_permission(dvdnav_t *self);
+
+/**
+ * Return a string describing the title. This is an ID string encoded on the
+ * disc byt the author. In many cases this is a descriptive string such as
+ * `<tt>THE_MATRIX</tt>' but sometimes is sigularly uninformative such as
+ * `<tt>PDVD-011421</tt>'.
+ * 
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param title_str Pointer to C-style string to receive a string describing the title. 
+ */
+dvdnav_status_t dvdnav_get_title_string(dvdnav_t *self, const char **title_str);
 
 /**
  * @}
@@ -290,6 +297,13 @@ dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *self, int title, int *parts
 dvdnav_status_t dvdnav_still_skip(dvdnav_t *self);
 
 /**
+ * Returns the still time status from the next cell
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ */
+uint32_t dvdnav_get_next_still_flag(dvdnav_t *self);
+
+/**
  * Plays a specified title of the DVD.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
@@ -298,8 +312,7 @@ dvdnav_status_t dvdnav_still_skip(dvdnav_t *self);
 dvdnav_status_t dvdnav_title_play(dvdnav_t *self, int title);
 
 /**
- * Plays the specifiec title, starting from the specified
- * part (chapter).
+ * Plays the specifiec title, starting from the specified part.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param title 1..99 -- Title number to play.
@@ -320,7 +333,7 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *self, int title, int part);
  * \param parts_to_play 1..999 -- Number of parts to play.
  */
 dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *self, int title,
-					  int part, int parts_to_play);
+					   int part, int parts_to_play);
 
 /**
  * Play the specified title starting from the specified time
@@ -333,7 +346,7 @@ dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *self, int title,
  * \param time Timecode to start from (hours, minutes, seconds + frames).
  */
 dvdnav_status_t dvdnav_time_play(dvdnav_t *self, int title,
-				unsigned long int time);
+				 unsigned long int time);
 
 /**
  * Stops playing the current title (causes a STOP action in
@@ -352,6 +365,27 @@ dvdnav_status_t dvdnav_stop(dvdnav_t *self);
  * \param self Pointer to dvdnav_t associated with this operation.
  */
 dvdnav_status_t dvdnav_go_up(dvdnav_t *self);
+
+/**
+ * Stop playing the current title and jump to the specified menu.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param menu Which menu to call (see DVDMenuID_t).
+ *
+ * \sa DVDMenuID_t (from <tt>libdvdread</tt>)
+ */
+dvdnav_status_t dvdnav_menu_call(dvdnav_t *self, DVDMenuID_t menu);
+
+/**
+ * Return the title number and part currently being played or
+ * -1 if in a menu.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param title Pointer to into which will receive the current title number.
+ * \param part Pointer to into which will receive the current part number.
+ */
+dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int *title,
+			     		  int *part);
 
 /**
  * @}
@@ -374,7 +408,7 @@ dvdnav_status_t dvdnav_go_up(dvdnav_t *self);
  * \param time Timecode to start from.
  */
 dvdnav_status_t dvdnav_time_search(dvdnav_t *self, 
-				  unsigned long int time);
+				   unsigned long int time);
 
 /**
  * Stop playing the current title and start playback of the title
@@ -385,7 +419,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *self,
  * \param origin Start from here, start or end.
  */
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *self, 
-				  unsigned long int offset, int origin);
+				     unsigned long int offset, int origin);
 
 /**
  * Stop playing the current title and start playback of the title
@@ -421,38 +455,6 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *self);
 dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *self);
 
 /**
- * Stop playing the current title and jump to the specified menu.
- *
- * \param self Pointer to dvdnav_t associated with this operation.
- * \param menu Which menu to call (see DVDMenuID_t).
- *
- * \sa DVDMenuID_t (from <tt>libdvdread</tt>)
- */
-dvdnav_status_t dvdnav_menu_call(dvdnav_t *self, DVDMenuID_t menu);
-
-/**
- * Return the title number and chapter currently being played or
- * -1 if in a menu.
- *
- * \param self Pointer to dvdnav_t associated with this operation.
- * \param title Pointer to into which will receive the current title number.
- * \param part Pointer to into which will receive the current part number.
- */
-dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int *title,
-			     		  int *part);
-
-/**
- * Return a string describing the title. This is an ID string encoded on the
- * disc byt the author. In many cases this is a descriptive string such as
- * `<tt>THE_MATRIX</tt>' but sometimes is sigularly uninformative such as
- * `<tt>PDVD-011421</tt>'.
- * 
- * \param self Pointer to dvdnav_t associated with this operation.
- * \param title_str Pointer to C-style string to receive a string describing the title. 
- */
-dvdnav_status_t dvdnav_get_title_string(dvdnav_t *self, char **title_str);
-
-/**
  * Return the current position (in blocks) within the current
  * part and the length (in blocks) of said part.
  * 
@@ -460,7 +462,7 @@ dvdnav_status_t dvdnav_get_title_string(dvdnav_t *self, char **title_str);
  * \param pos Pointer to unsigned int to get the current position.
  * \param len Pointer to unsinged int to hold the length of the current part.
  */
-dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int* pos,
+dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int *pos,
 				    unsigned int *len);
 
 /**
@@ -472,7 +474,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int* pos,
  * \param len Pointer to unsinged int to hold the length of the current title.
  */
 dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
-					     unsigned int* pos,
+					     unsigned int *pos,
 					     unsigned int *len);
 
 /**
@@ -481,6 +483,14 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
 
 /**
  * \defgroup highlight Highlights
+ *
+ * Most functions related to highlights take a NAV PCI packet as a parameter.
+ * While you can get the such a packet from libdvdnav, for players with internal
+ * FIFOs, this will result in errors, because due to the FIFO length, libdvdnav will
+ * be ahead in the stream compared to what the user is seeing on screen.
+ * Therefore, player applications who have a NAV packet available, which is
+ * better in sync with the actual playback should always pass this one to these
+ * functions.
  *
  * @{
  */
@@ -527,7 +537,7 @@ dsi_t* dvdnav_get_current_nav_dsi(dvdnav_t *self);
  * \sa dvdnav_highlight_area_t
  */
 dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32_t mode,
-                                           dvdnav_highlight_area_t* highlight);
+					  dvdnav_highlight_area_t* highlight);
 
 /**
  * Move button highlight around as suggested by function name (e.g. with arrow keys).
@@ -535,18 +545,22 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
  * \param self Pointer to dvdnav_t associated with this operation.
  */
 dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *self, pci_t *pci);
+
 /**
  * Move button highlight around as suggested by function name (e.g. with arrow keys).
  * 
  * \param self Pointer to dvdnav_t associated with this operation.
  */
+
 dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *self, pci_t *pci);
+
 /**
  * Move button highlight around as suggested by function name (e.g. with arrow keys).
  * 
  * \param self Pointer to dvdnav_t associated with this operation.
  */
 dvdnav_status_t dvdnav_right_button_select(dvdnav_t *self, pci_t *pci);
+
 /**
  * Move button highlight around as suggested by function name (e.g. with arrow keys).
  * 
@@ -664,7 +678,7 @@ dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *self,
  * \param audio 0..7 -- Stream number.
  */
 dvdnav_status_t dvdnav_physical_audio_stream_change(dvdnav_t *self,
-						   int audio);
+						    int audio);
 
 /**
  * Set a specific logical audio stream.
@@ -673,7 +687,7 @@ dvdnav_status_t dvdnav_physical_audio_stream_change(dvdnav_t *self,
  * \param audio 0..7 -- Stream number.
  */
 dvdnav_status_t dvdnav_logical_audio_stream_change(dvdnav_t *self,
-		       				  int audio);
+						   int audio);
 
 /**
  * Set the int pointed to to the current PHYSICAL audio
@@ -735,7 +749,7 @@ dvdnav_status_t dvdnav_get_physical_spu_stream(dvdnav_t *self,
  * \param display Pointer which will receive value.
  */
 dvdnav_status_t dvdnav_get_logical_spu_stream(dvdnav_t *self,
-		       			     int* stream, int* disply);
+					      int* stream, int* disply);
 
 /**
  * Converts a *logical* audio stream id into country code 
@@ -770,6 +784,13 @@ int8_t dvdnav_get_audio_logical_stream(dvdnav_t *self, uint8_t audio_num);
  * \param subp_num Stream number
  */
 int8_t dvdnav_get_spu_logical_stream(dvdnav_t *self, uint8_t subp_num);
+
+/**
+ * Get active audio stream.
+ * 
+ * \param self Pointer to dvdnav_t associated with this operation.
+ */
+int8_t dvdnav_get_active_audio_stream(dvdnav_t *self);
 
 /**
  * Get active spu stream.
@@ -815,20 +836,7 @@ dvdnav_status_t dvdnav_angle_change(dvdnav_t *self, int angle);
  * \param number_of_angles Pointer to int which will get the number of angles.
  */
 dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
-				     int *number_of_angles);
-
-/**
- * FIXME: WTF does this do? -- High qulaity documentation huh?
- */
-dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *self, int* current_angle,
-				     int *number_of_angles);
-
-/**
- * Returns the still time status from the next cell
- *
- * \param self Pointer to dvdnav_t associated with this operation.
- */
-uint32_t dvdnav_get_next_still_flag(dvdnav_t *self);
+				      int *number_of_angles);
 
 /**
  * @}
@@ -849,18 +857,21 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *self);
  * \returns -1 on failure, 1 if condition is true, 0 if condition is false
  */
 int8_t dvdnav_is_domain_fp(dvdnav_t *self);
+
 /**
  * Are we in the Video management Menu domain. (Menu) 
  * \param self Pointer to dvdnav_t associated with this operation.
  * \returns -1 on failure, 1 if condition is true, 0 if condition is false
  */
 int8_t dvdnav_is_domain_vmgm(dvdnav_t *self);
+
 /**
  * Are we in the Video Title Menu domain (Menu) 
  * \param self Pointer to dvdnav_t associated with this operation.
  * \returns -1 on failure, 1 if condition is true, 0 if condition is false
  */
 int8_t dvdnav_is_domain_vtsm(dvdnav_t *self);
+
 /**
  * Are we in the Video Title domain (playing movie)?
  * \param self Pointer to dvdnav_t associated with this operation.

@@ -29,7 +29,9 @@
 #include <dvdread/ifo_types.h> /*  Only for vm_cmd_t  */
 #include "decoder.h"
 
+#ifdef TRACE
 void vmPrint_mnemonic(vm_cmd_t *command);
 void vmPrint_CMD(int row, vm_cmd_t *command);
+#endif
 
 #endif /* VMCMD_H_INCLUDED */

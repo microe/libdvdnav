@@ -45,52 +45,50 @@
 #include "vm.h"
 #include "dvdnav_internal.h"
 
-
+/*
 #define STRICT
-
+*/
 
 /* Local prototypes */
 
-static void saveRSMinfo(vm_t *vm,int cellN, int blockN);
+/* get_XYZ returns a value.
+ * set_XYZ sets state using passed parameters.
+ *         returns success/failure.
+ */
+
+/* Play */
 static link_t play_PGC(vm_t *vm);
 static link_t play_PGC_PG(vm_t *vm, int pgN);
 static link_t play_PGC_post(vm_t *vm);
 static link_t play_PG(vm_t *vm);
 static link_t play_Cell(vm_t *vm);
 static link_t play_Cell_post(vm_t *vm);
-static link_t process_command(vm_t *vm,link_t link_values);
 
-static void ifoOpenNewVTSI(vm_t *vm,dvd_reader_t *dvd, int vtsN);
+/* Process link - returns 1 if a hop has been performed */
+static int process_command(vm_t *vm,link_t link_values);
+
+/* Set */
+static int  set_TT(vm_t *vm, int tt);
+static int  set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn);
+static int  set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part);
+static int  set_FP_PGC(vm_t *vm);
+static int  set_MENU(vm_t *vm, int menu);
+static int  set_PGCN(vm_t *vm, int pgcN);
+static int  set_PGN(vm_t *vm); /* Set PGN based on (vm->state).CellN */
+static void set_RSMinfo(vm_t *vm, int cellN, int blockN);
+
+/* Get */
+static int get_TT(vm_t *vm, int vtsN, int vts_ttn);
+static int get_ID(vm_t *vm, int id);
+static int get_PGCN(vm_t *vm);
+
+static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang);
 static pgcit_t* get_PGCIT(vm_t *vm);
 
-/* get_XYZ returns a value.
- * ser_XYZ sets state using passed parameters.
- *         returns success/failure.
- */
 
-/* Can only be called when in VTS_DOMAIN */
-static int set_FP_PGC(vm_t *vm); /*  FP */
-static int set_TT(vm_t *vm,int tt);
-static int set_VTS_TT(vm_t *vm,int vtsN, int vts_ttn);
-static int set_VTS_PTT(vm_t *vm,int vtsN, int vts_ttn, int part);
+/* Helper functions */
 
-static int set_MENU(vm_t *vm,int menu); /*  VTSM & VMGM */
-
-/* Called in any domain */
-static int get_TT(vm_t *vm, int vtsN, int vts_ttn);
-static int get_ID(vm_t *vm,int id);
-static int get_PGCN(vm_t *vm);
-static int set_PGN(vm_t *vm); /* Set PGN based on (vm->state).CellN */
-static int set_PGC(vm_t *vm,int pgcN);
-
-/* Initialisation */
-
-vm_t* vm_new_vm() {
-  vm_t *vm = (vm_t*)calloc(sizeof(vm_t), sizeof(char));
-
-  return vm;
-}
-
+#ifdef TRACE
 static void vm_print_current_domain_state(vm_t *vm) {
   switch((vm->state).domain) {
     case VTS_DOMAIN:
@@ -123,62 +121,15 @@ static void vm_print_current_domain_state(vm_t *vm) {
                    (vm->state).TTN_REG,
                    (vm->state).TT_PGCN_REG);
 }
+#endif
 
-void vm_stop(vm_t *vm) {
-  if(!vm)
-   return;
-
-  if(vm->vmgi) {
-    ifoClose(vm->vmgi);
-    vm->vmgi=NULL;
-  }
-
-  if(vm->vtsi) {
-    ifoClose(vm->vtsi);
-    vm->vmgi=NULL;
-  }
-  
-  if(vm->dvd) {
-    DVDClose(vm->dvd);
-    vm->dvd=NULL;
-  }
-}
-
-void vm_free_vm(vm_t *vm) {
-  if(vm) {
-    vm_stop(vm);
-    free(vm);
-  }
-}
-
-/* IFO Access */
-
-ifo_handle_t *vm_get_vmgi(vm_t *vm) {
-  if(!vm)
-   return NULL;
-  
-  return vm->vmgi;
-}
-
-ifo_handle_t *vm_get_vtsi(vm_t *vm) {
-  if(!vm)
-   return NULL;
-  
-  return vm->vtsi;
-}
-
-/* Reader Access */
-
-dvd_reader_t *vm_get_dvd_reader(vm_t *vm) {
-  if(!vm)
-   return NULL;
-  
-  return vm->dvd;
-}
-
-void dvd_read_name( vm_t *this, char *devname) {
+void dvd_read_name( vm_t *this, const char *devname) {
     int fd, i;
+#ifndef __FreeBSD__
     off64_t off;
+#else
+    off_t off;
+#endif
     uint8_t data[DVD_VIDEO_LB_LEN];
 
     /* Read DVD name */
@@ -189,1767 +140,49 @@ void dvd_read_name( vm_t *this, char *devname) {
         off = read( fd, data, DVD_VIDEO_LB_LEN ); 
         close(fd);
         if (off == ( (int64_t) DVD_VIDEO_LB_LEN )) {
-          fprintf( stderr, "VM DVD Title: ");
+          fprintf(MSG_OUT, "libdvdnav: DVD Title: ");
           for(i=25; i < 73; i++ ) {
             if((data[i] == 0)) break;
             if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(stderr, "%c", data[i]);
+              fprintf(MSG_OUT, "%c", data[i]);
             } else {
-              fprintf(stderr, " ");
+              fprintf(MSG_OUT, " ");
             }
           }
           strncpy(&this->dvd_name[0], &data[25], 48);
-          /* fprintf(stderr, "TITLE:%s\n",&this->dvd_name[0]); */
           this->dvd_name[48]=0;
-          this->dvd_name_length=strlen(&this->dvd_name[0]);
-          fprintf( stderr, "\nVM DVD Serial Number: ");
+          fprintf(MSG_OUT, "\nlibdvdnav: DVD Serial Number: ");
           for(i=73; i < 89; i++ ) {
             if((data[i] == 0)) break;
             if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(stderr, "%c", data[i]);
+              fprintf(MSG_OUT, "%c", data[i]);
             } else {
-              fprintf(stderr, " ");
+              fprintf(MSG_OUT, " ");
             } 
           }
-          fprintf( stderr, "\nVM DVD Title (Alternative): ");
+          fprintf(MSG_OUT, "\nlibdvdnav: DVD Title (Alternative): ");
           for(i=89; i < 128; i++ ) {
             if((data[i] == 0)) break;
             if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(stderr, "%c", data[i]);
+              fprintf(MSG_OUT, "%c", data[i]);
             } else {
-              fprintf(stderr, " ");
+              fprintf(MSG_OUT, " ");
             }
           }
-          fprintf( stderr, "\n");
+          fprintf(MSG_OUT, "\n");
         } else {
-          fprintf( stderr, "libdvdread: Can't read name block. Probably not a DVD-ROM device.\n");
+          fprintf(MSG_OUT, "libdvdnav: Can't read name block. Probably not a DVD-ROM device.\n");
         }
       } else {
-        fprintf( stderr, "libdvdread: Can't seek to block %u\n", 32 );
+        fprintf(MSG_OUT, "libdvdnav: Can't seek to block %u\n", 32 );
       }
       close(fd);
     } else {
-    fprintf(stderr,"NAME OPEN FAILED\n");
-    }
-}
-
-int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ { 
-  /*  Setup State */
-  memset((vm->state).registers.SPRM, 0, sizeof(uint16_t)*24);
-  memset((vm->state).registers.GPRM, 0, sizeof((vm->state).registers.GPRM));
-  memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
-  memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
-  memset((vm->state).registers.GPRM_time, 0, sizeof((vm->state).registers.GPRM_time));
-  (vm->state).registers.SPRM[0] = ('e'<<8)|'n'; /*  Player Menu Languange code */
-  (vm->state).AST_REG = 15; /*  15 why? */
-  (vm->state).SPST_REG = 62; /*  62 why? */
-  (vm->state).AGL_REG = 1;
-  (vm->state).TTN_REG = 1;
-  (vm->state).VTS_TTN_REG = 1;
-  /* (vm->state).TT_PGCN_REG = 0 */
-  (vm->state).PTTN_REG = 1;
-  (vm->state).HL_BTNN_REG = 1 << 10;
-
-  (vm->state).PTL_REG = 15; /*  Parental Level */
-  (vm->state).registers.SPRM[12] = ('U'<<8)|'S'; /*  Parental Management Country Code */
-  (vm->state).registers.SPRM[16] = ('e'<<8)|'n'; /*  Initial Language Code for Audio */
-  (vm->state).registers.SPRM[18] = ('e'<<8)|'n'; /*  Initial Language Code for Spu */
-  /*  Player Regional Code Mask. 
-   *  bit0 = Region 1
-   *  bit1 = Region 2
-   */
-  (vm->state).registers.SPRM[20] = 0x1; /*  Player Regional Code Mask. Region free! */
-  (vm->state).registers.SPRM[14] = 0x100; /* Try Pan&Scan */
-   
-  (vm->state).pgN = 0;
-  (vm->state).cellN = 0;
-  (vm->state).cell_restart = 0;
-
-  (vm->state).domain = FP_DOMAIN;
-  (vm->state).rsm_vtsN = 0;
-  (vm->state).rsm_cellN = 0;
-  (vm->state).rsm_blockN = 0;
-  
-  (vm->state).vtsN = -1;
-  
-  if (vm->dvd && dvdroot) {
-    /* a new dvd device has been requested */
-    vm_stop(vm);
-  }
-  if (!vm->dvd) {
-    vm->dvd = DVDOpen(dvdroot);
-    if(!vm->dvd) {
-      fprintf(MSG_OUT, "libdvdnav: vm: faild to open/read the DVD\n");
-      return -1;
-    }
-    dvd_read_name(vm, dvdroot);
-    vm->map = remap_loadmap( vm->dvd_name);
-
-    vm->vmgi = ifoOpenVMGI(vm->dvd);
-    if(!vm->vmgi) {
-      fprintf(MSG_OUT, "libdvdnav: vm: faild to read VIDEO_TS.IFO\n");
-      return -1;
-    }
-    if(!ifoRead_FP_PGC(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_FP_PGC failed\n");
-      return -1;
-    }
-    if(!ifoRead_TT_SRPT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_TT_SRPT failed\n");
-      return -1;
-    }
-    if(!ifoRead_PGCI_UT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_PGCI_UT failed\n");
-      return -1;
-    }
-    if(!ifoRead_PTL_MAIT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_PTL_MAIT failed\n");
-      ; /*  return -1; Not really used for now.. */
-    }
-    if(!ifoRead_VTS_ATRT(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_VTS_ATRT failed\n");
-      ; /*  return -1; Not really used for now.. */
-    }
-    if(!ifoRead_VOBU_ADMAP(vm->vmgi)) {
-      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_VOBU_ADMAP vgmi failed\n");
-      ; /*  return -1; Not really used for now.. */
-    }
-    /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
-  }
-  else fprintf(MSG_OUT, "libdvdnav: vm: reset\n");
-  if (vm->vmgi) {
-    fprintf(MSG_OUT, "libdvdnav: DVD disk reports itself with Region mask 0x%08x. Maybe region %u.\n",
-      vm->vmgi->vmgi_mat->vmg_category,
-      (((vm->vmgi->vmgi_mat->vmg_category >> 16) ^ 0xff) & 0xff)    );
-  }
-  return 0;
-}
-
-/*  FIXME TODO XXX $$$ Handle error condition too... */
-int vm_start(vm_t *vm)
-{
-  link_t link_values;
-
-  /*  Set pgc to FP(First Play) pgc */
-  set_FP_PGC(vm);
-  link_values = play_PGC(vm); 
-  link_values = process_command(vm,link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm_start: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-  assert( (vm->state).blockN == 0 );
-
-
-  return 0; /* ?? */
-}
-
-int vm_position_get(vm_t *vm, vm_position_t *position) {
-  position->button = (vm->state).HL_BTNN_REG >> 10;
-  position->spu_channel = (vm->state).SPST_REG;
-  position->audio_channel = (vm->state).AST_REG;
-  position->angle_channel = (vm->state).AGL_REG;
-  position->hop_channel = vm->hop_channel; /* Increases by one on each hop */
-  position->vts = (vm->state).vtsN; 
-  position->domain = (vm->state).domain; 
-  position->cell = (vm->state).cellN;
-  position->cell_restart = (vm->state).cell_restart;
-  position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
-  position->vobu_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
-  position->vobu_next = (vm->state).blockN;
-
-  /* still already detrmined or not at PGC end */
-  if (position->still || (vm->state).cellN < (vm->state).pgc->nr_of_cells)
-    return 1;
-  /* handle PGC stills */
-  if ((vm->state).pgc->still_time) {
-    position->still = (vm->state).pgc->still_time;
-    return 1;
-  }
-  /* This is a rough fix for some strange still situations on some strange DVDs.
-   * There are discs (like the German "Back to the Future" RC2) where the only
-   * indication of a still is a cell playback time higher than the time the frames
-   * in this cell actually take to play (like 1 frame with 1 minute playback time).
-   * On the said BTTF disc, for these cells last_sector and last_vobu_start_sector
-   * are equal and the cells are very short, so we abuse these conditions to
-   * detect such discs. I consider these discs broken, so the fix is somewhat
-   * broken, too. */
-  if (((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector ==
-       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_vobu_start_sector) &&
-      ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
-       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 250)) {
-    int time;
-    time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0xf0) * 36000;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0x0f) * 3600;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0xf0) * 600;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0x0f) * 60;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0xf0) * 10;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0x0f) * 1;
-    if (time > 0xff) time = 0xff;
-    position->still = time;
-  }
-  
-  return 1;
-}
-
-int vm_position_print(vm_t *vm, vm_position_t *position) {
-  fprintf(MSG_OUT, "libdvdnav: But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x cell_restart=%x still=%x start=%x next=%x\n",
-  position->button,
-  position->spu_channel,
-  position->audio_channel,
-  position->angle_channel,
-  position->hop_channel,
-  position->vts,
-  position->domain,
-  position->cell,
-  position->cell_restart,
-  position->still,
-  position->vobu_start,
-  position->vobu_next);
-  return 1;
-}
-
-  
-int vm_start_title(vm_t *vm, int tt) {
-  link_t link_values;
-
-  set_TT(vm, tt);
-  link_values = play_PGC(vm); 
-  link_values = process_command(vm, link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm_start_title: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-  assert( (vm->state).blockN == 0 );
-
-  return 0; /* ?? */
-}
-
-int vm_jump_prog(vm_t *vm, int pr) {
-  link_t link_values;
-
-
-  set_PGC(vm, get_PGCN(vm));
-  (vm->state).pgN = pr; /*  ?? set_PGC() clobbers pgN */
-  link_values = play_PG(vm); 
-  link_values = process_command(vm, link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm_jump_prog: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-  assert( (vm->state).blockN == 0 );
-  
-  return 0; /* ?? */
-}
-
-int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd)
-{
-  link_t link_values;
-  
-  if(vmEval_CMD(cmd, 1, &(vm->state).registers, &link_values)) {
-    link_values = process_command(vm, link_values);
-    assert(link_values.command == PlayThis);
-    (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: vm_eval_cmd: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-    return link_values.data2; /* return if there acutally was a jump */
-  } else {
-    return 0; /*  It updated some state thats all... */
+    fprintf(MSG_OUT, "NAME OPEN FAILED\n");
   }
 }
 
-int vm_get_next_cell(vm_t *vm)
-{
-  link_t link_values;
-  link_values = play_Cell_post(vm);
-  link_values = process_command(vm,link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm_get_next_cell: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-  assert( (vm->state).blockN == 0 );
-  
-  return 0; /*  ?? */
-}
-
-int vm_top_pg(vm_t *vm)
-{
-  link_t link_values;
-  link_values = play_PG(vm);
-  link_values = process_command(vm,link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm_top_pg: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-  assert( (vm->state).blockN == 0 );
-  
-  return 1; /*  Jump */
-}
-
-int vm_go_up(vm_t *vm)
-{
-  link_t link_values;
- 
-  if(set_PGC(vm, (vm->state).pgc->goup_pgc_nr))
-   assert(0);
-
-  link_values = play_PGC(vm);
-  link_values = process_command(vm,link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm_go_up: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-  assert( (vm->state).blockN == 0 );
-  
-  return 1; /*  Jump */
-}
-
-int vm_next_pg(vm_t *vm)
-{
-  if((vm->state).pgN >= (vm->state).pgc->nr_of_programs) {
-    /* last program -> move to first program of next PGC */
-    if ((vm->state).pgc->next_pgc_nr != 0 && set_PGC(vm, (vm->state).pgc->next_pgc_nr) == 0) {
-      vm_jump_prog(vm, 1);
-      return 1;
-    }
-    /* something failed, try to move to the cell after the last */
-    (vm->state).cellN = (vm->state).pgc->nr_of_cells;
-    vm_get_next_cell(vm);
-    return 1;
-  } else {
-    vm_jump_prog(vm, (vm->state).pgN + 1);
-    return 1;
-  }
-}
-
-int vm_prev_pg(vm_t *vm)
-{
-  if ((vm->state).pgN <= 1) {
-    /* first program -> move to last program of previous PGC */
-    if ((vm->state).pgc->prev_pgc_nr != 0 && set_PGC(vm, (vm->state).pgc->prev_pgc_nr) == 0) {
-      vm_jump_prog(vm, (vm->state).pgc->nr_of_programs);
-      return 1;
-    }
-    return 0;
-  } else {
-    vm_jump_prog(vm, (vm->state).pgN - 1);
-    return 1;
-  }
-}
-
-/* Get the current title and part from the current playing position. */
-/* returns S_ERR if not in the VTS_DOMAIN */
-/* FIXME: Should we do some locking here ? */
-int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result)
-{
-  vts_ptt_srpt_t *vts_ptt_srpt;
-  int title=0, part=0, ttn=0;
-  int found = 0;
-  int16_t pgcN, pgN;
-
-  if((!vm) || (!vm->vtsi) )
-    return S_ERR;
-
-  if(!title_result || !part_result) {
-    fprintf(MSG_OUT, "libdvdnav:vm_get_current_title_part: Passed a NULL pointer");
-    return S_ERR;
-  }
-
-  if(!(vm->state.pgc) )
-    return S_ERR;
-  if (vm->state.domain != VTS_DOMAIN)
-    return S_ERR;
-  vts_ptt_srpt = vm->vtsi->vts_ptt_srpt;
-  pgcN = get_PGCN(vm);
-  pgN = vm->state.pgN;
-  printf("VTS_PTT_SRPT - PGC: %3i PG: %3i\n",
-    pgcN, pgN);
-
-  for(ttn=0;( (ttn < vts_ptt_srpt->nr_of_srpts) && (found == 0) );ttn++) {
-    for(part=0;((part < vts_ptt_srpt->title[ttn].nr_of_ptts) && (found == 0));part++) {
-      if ( (vts_ptt_srpt->title[ttn].ptt[part].pgcn == pgcN) &&
-           (vts_ptt_srpt->title[ttn].ptt[part].pgn == pgN ) ) {
-        found = 1;
-        break;
-      }
-    }
-    if (found != 0) break;
-  }
-  ttn++;
-  part++;
-  for(title=0; title < vm->vmgi->tt_srpt->nr_of_srpts; title++){
-    if( (vm->vmgi->tt_srpt->title[title].vts_ttn == ttn) &&
-        (vm->vmgi->tt_srpt->title[title].title_set_nr == vm->state.vtsN)){
-      found = 1;
-      break;
-    }
-  }
-  title++;
-
-  if (found == 1) {
-    fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
-    fprintf(MSG_OUT, "libdvdnav: VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
-             title, part,
-             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgcn ,
-             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgn );
-  } else {
-    fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
-    return S_ERR;
-  }
-  *title_result = title;
-  *part_result = part;
-  return 1;
-}
-
-/* Jump to a particlar part of a particlar title on this vts */
-/* returns S_ERR if not in the VTS_DOMAIN */
-/* FIXME: Should we do some locking here ? */
-int vm_jump_title_part(vm_t *vm, int title, int part) {
-  link_t link_values;
-  int vtsN;
-
-  if((!vm) || (!vm->vtsi) || (!vm->vmgi) )
-    return S_ERR;
-
-  if(!(vm->state.pgc) )
-    return S_ERR;
-/*  if ( (title < 1) || (title > vm->vtsi->vts_ptt_srpt->nr_of_srpts) ||
-       (part  < 1) || (part  > vm->vtsi->vts_ptt_srpt->title[title].nr_of_ptts) ) {
-    return S_ERR;
-  }
- */
-  if( (title < 1) || (title > vm->vmgi->tt_srpt->nr_of_srpts) ) {
-    return S_ERR;
-  }
-  vtsN = vm->vmgi->tt_srpt->title[title - 1].title_set_nr;
-
-  if(set_VTS_PTT(vm, vtsN, title, part) == -1) {
-    return S_ERR;
-  }
-  link_values = play_PGC_PG( vm, (vm->state).pgN ); 
-  link_values = process_command(vm,link_values);
-  assert(link_values.command == PlayThis);
-  (vm->state).blockN = link_values.data1;
-  assert( (vm->state).blockN == 0 );
-  vm->hop_channel++;
-  
-  fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
-
-  return 1;
-}
-
-static domain_t menuid2domain(DVDMenuID_t menuid)
-{
-  domain_t result = VTSM_DOMAIN; /*  Really shouldn't have to.. */
-  
-  switch(menuid) {
-  case DVD_MENU_Title:
-    result = VMGM_DOMAIN;
-    break;
-  case DVD_MENU_Root:
-  case DVD_MENU_Subpicture:
-  case DVD_MENU_Audio:
-  case DVD_MENU_Angle:
-  case DVD_MENU_Part:
-    result = VTSM_DOMAIN;
-    break;
-  }
-  
-  return result;
-}
-
-int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block)
-{
-  domain_t old_domain;
-  link_t link_values;
-  
-  /* Should check if we are allowed/can acces this menu */
-  
-  
-  /* FIXME XXX $$$ How much state needs to be restored 
-   * when we fail to find a menu? */
-  
-  old_domain = (vm->state).domain;
-  
-  switch((vm->state).domain) {
-  case VTS_DOMAIN:
-    saveRSMinfo(vm, 0, block);
-    /* FALL THROUGH */
-  case VTSM_DOMAIN:
-  case VMGM_DOMAIN:
-    (vm->state).domain = menuid2domain(menuid);
-    if(get_PGCIT(vm) != NULL && set_MENU(vm, menuid) != -1) {
-      link_values = play_PGC(vm);
-      link_values = process_command(vm, link_values);
-      assert(link_values.command == PlayThis);
-      (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: vm_menu_call: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-      assert( (vm->state).blockN == 0 );
-      return 1; /*  Jump */
-    } else {
-      (vm->state).domain = old_domain;
-    }
-    break;
-  case FP_DOMAIN: /* FIXME XXX $$$ What should we do here? */
-    break;
-  }
-  
-  return 0;
-}
-
-
-int vm_resume(vm_t *vm)
-{
-  int i;
-  link_t link_values;
-  
-  /*  Check and see if there is any rsm info!! */
-  if((vm->state).rsm_vtsN == 0) {
-    return 0;
-  }
-  
-  (vm->state).domain = VTS_DOMAIN;
-  ifoOpenNewVTSI(vm, vm->dvd, (vm->state).rsm_vtsN);
-  set_PGC(vm, (vm->state).rsm_pgcN);
-  
-  /* These should never be set in SystemSpace and/or MenuSpace */ 
-  /*  (vm->state).TTN_REG = (vm->state).rsm_tt; */
-  /*  (vm->state).TT_PGCN_REG = (vm->state).rsm_pgcN; */
-  /*  (vm->state).HL_BTNN_REG = (vm->state).rsm_btnn; */
-  for(i = 0; i < 5; i++) {
-    (vm->state).registers.SPRM[4 + i] = (vm->state).rsm_regs[i];
-  }
-
-  if((vm->state).rsm_cellN == 0) {
-    assert((vm->state).cellN); /*  Checking if this ever happens */
-    (vm->state).pgN = 1;
-    link_values = play_PG(vm);
-    link_values = process_command(vm, link_values);
-    assert(link_values.command == PlayThis);
-    (vm->state).blockN = link_values.data1;
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: vm_resume1: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-    assert( (vm->state).blockN == 0 );
-  } else { 
-    (vm->state).cellN = (vm->state).rsm_cellN;
-    (vm->state).blockN = (vm->state).rsm_blockN;
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: vm_resume2: blockN set to 0x%x\n", (vm->state).blockN);
-#endif
-    /* (vm->state).pgN = ?? does this gets the righ value in play_Cell, no! */
-    if(set_PGN(vm)) {
-      /* Were at or past the end of the PGC, should not happen for a RSM */
-      assert(0);
-      play_PGC_post(vm);
-    }
-  }
-  
-  return 1; /*  Jump */
-}
-
-/**
- * Return the substream id for 'logical' audio stream audioN.
- *  0 <= audioN < 8
- */
-int vm_get_audio_stream(vm_t *vm, int audioN)
-{
-  int streamN = -1;
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm.c:get_audio_stream audioN=%d\n",audioN);
-#endif
-  if((vm->state).domain == VTSM_DOMAIN 
-     || (vm->state).domain == VMGM_DOMAIN
-     || (vm->state).domain == FP_DOMAIN) {
-    audioN = 0;
-  }
-  
-  if(audioN < 8) {
-    /* Is there any contol info for this logical stream */ 
-    if((vm->state).pgc->audio_control[audioN] & (1<<15)) {
-      streamN = ((vm->state).pgc->audio_control[audioN] >> 8) & 0x07;  
-    }
-  }
-  
-  if((vm->state).domain == VTSM_DOMAIN 
-     || (vm->state).domain == VMGM_DOMAIN
-     || (vm->state).domain == FP_DOMAIN) {
-    if(streamN == -1)
-      streamN = 0;
-  }
-  
-  /* Should also check in vtsi/vmgi status that what kind of stream
-   * it is (ac3/lpcm/dts/sdds...) to find the right (sub)stream id */
-  return streamN;
-}
-
-/**
- * Return the substream id for 'logical' subpicture stream subpN and given mode.
- * 0 <= subpN < 32
- * mode == 0 - widescreen
- * mode == 1 - letterbox
- * mode == 2 - pan&scan
- */
-int vm_get_subp_stream(vm_t *vm, int subpN, int mode)
-{
-  int streamN = -1;
-  int source_aspect = vm_get_video_aspect(vm);
-  
-  if((vm->state).domain == VTSM_DOMAIN 
-     || (vm->state).domain == VMGM_DOMAIN
-     || (vm->state).domain == FP_DOMAIN) {
-    subpN = 0;
-  }
-  
-  if(subpN < 32) { /* a valid logical stream */
-    /* Is this logical stream present */ 
-    if((vm->state).pgc->subp_control[subpN] & (1<<31)) {
-      if(source_aspect == 0) /* 4:3 */	     
-	streamN = ((vm->state).pgc->subp_control[subpN] >> 24) & 0x1f;  
-      if(source_aspect == 3) /* 16:9 */
-        switch (mode) {
-	case 0:
-	  streamN = ((vm->state).pgc->subp_control[subpN] >> 16) & 0x1f;
-	  break;
-	case 1:
-	  streamN = ((vm->state).pgc->subp_control[subpN] >> 8) & 0x1f;
-	  break;
-	case 2:
-	  streamN = (vm->state).pgc->subp_control[subpN] & 0x1f;
-	}
-    }
-  }
-  
-  /* Paranoia.. if no stream select 0 anyway */
-/* I am not paranoid */
-/* if((vm->state).domain == VTSM_DOMAIN 
-     || (vm->state).domain == VMGM_DOMAIN
-     || (vm->state).domain == FP_DOMAIN) {
-    if(streamN == -1)
-      streamN = 0;
-  }
-*/
-  /* Should also check in vtsi/vmgi status that what kind of stream it is. */
-  return streamN;
-}
-
-int vm_get_subp_active_stream(vm_t *vm, int mode)
-{
-  int subpN;
-  int streamN;
-  subpN = (vm->state).SPST_REG & ~0x40;
-  streamN = vm_get_subp_stream(vm, subpN, mode);
-  
-  /* If no such stream, then select the first one that exists. */
-  if(streamN == -1) {
-    for(subpN = 0; subpN < 32; subpN++) {
-      if((vm->state).pgc->subp_control[subpN] & (1<<31)) {
-      
-        streamN = vm_get_subp_stream(vm, subpN, mode);
-        break;
-      }
-    }
-  } 
-  
-  /* We should instead send the on/off status to the spudecoder / mixer */
-  /* If we are in the title domain see if the spu mixing is on */
-  if((vm->state).domain == VTS_DOMAIN && !((vm->state).SPST_REG & 0x40)) { 
-     /* Bit 7 set means hide, and only let Forced display show */
-     return (streamN | 0x80); 
-  } else {
-    return streamN;
-  }
-}
-
-int vm_get_audio_active_stream(vm_t *vm)
-{
-  int audioN;
-  int streamN;
-  audioN = (vm->state).AST_REG ;
-  streamN = vm_get_audio_stream(vm, audioN);
-  
-  /* If no such stream, then select the first one that exists. */
-  if(streamN == -1) {
-    for(audioN = 0; audioN < 8; audioN++) {
-      if((vm->state).pgc->audio_control[audioN] & (1<<15)) {
-        streamN = vm_get_audio_stream(vm, audioN);
-        break;
-      }
-    }
-  } 
-  
-  return streamN;
-}
-
-
-void vm_get_angle_info(vm_t *vm, int *num_avail, int *current)
-{
-  *num_avail = 1;
-  *current = 1;
-  
-  if((vm->state).domain == VTS_DOMAIN) {
-    /*  TTN_REG does not allways point to the correct title.. */
-    title_info_t *title;
-    if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
-      return;
-    title = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1];
-    if(title->title_set_nr != (vm->state).vtsN || 
-       title->vts_ttn != (vm->state).VTS_TTN_REG)
-      return; 
-    *num_avail = title->nr_of_angles;
-    *current = (vm->state).AGL_REG;
-    if(*current > *num_avail) /*  Is this really a good idea? */
-      *current = *num_avail; 
-  }
-}
-
-
-void vm_get_audio_info(vm_t *vm, int *num_avail, int *current)
-{
-  if((vm->state).domain == VTS_DOMAIN) {
-    *num_avail = vm->vtsi->vtsi_mat->nr_of_vts_audio_streams;
-    *current = (vm->state).AST_REG;
-  } else if((vm->state).domain == VTSM_DOMAIN) {
-    *num_avail = vm->vtsi->vtsi_mat->nr_of_vtsm_audio_streams; /*  1 */
-    *current = 1;
-  } else if((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN) {
-    *num_avail = vm->vmgi->vmgi_mat->nr_of_vmgm_audio_streams; /*  1 */
-    *current = 1;
-  }
-}
-
-void vm_get_subp_info(vm_t *vm, int *num_avail, int *current)
-{
-  if((vm->state).domain == VTS_DOMAIN) {
-    *num_avail = vm->vtsi->vtsi_mat->nr_of_vts_subp_streams;
-    *current = (vm->state).SPST_REG;
-  } else if((vm->state).domain == VTSM_DOMAIN) {
-    *num_avail = vm->vtsi->vtsi_mat->nr_of_vtsm_subp_streams; /*  1 */
-    *current = 0x41;
-  } else if((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN) {
-    *num_avail = vm->vmgi->vmgi_mat->nr_of_vmgm_subp_streams; /*  1 */
-    *current = 0x41;
-  }
-}
-
-subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN)
-{
-  subp_attr_t attr;
-  
-  if((vm->state).domain == VTS_DOMAIN) {
-    attr = vm->vtsi->vtsi_mat->vts_subp_attr[streamN];
-  } else if((vm->state).domain == VTSM_DOMAIN) {
-    attr = vm->vtsi->vtsi_mat->vtsm_subp_attr;
-  } else if((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN) {
-    attr = vm->vmgi->vmgi_mat->vmgm_subp_attr;
-  }
-  return attr;
-}
-
-audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN)
-{
-  audio_attr_t attr;
-  
-  if((vm->state).domain == VTS_DOMAIN) {
-    attr = vm->vtsi->vtsi_mat->vts_audio_attr[streamN];
-  } else if((vm->state).domain == VTSM_DOMAIN) {
-    attr = vm->vtsi->vtsi_mat->vtsm_audio_attr;
-  } else if((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN) {
-    attr = vm->vmgi->vmgi_mat->vmgm_audio_attr;
-  }
-  return attr;
-}
-
-video_attr_t vm_get_video_attr(vm_t *vm)
-{
-  video_attr_t attr;
-  
-  if((vm->state).domain == VTS_DOMAIN) {
-    attr = vm->vtsi->vtsi_mat->vts_video_attr;
-  } else if((vm->state).domain == VTSM_DOMAIN) {
-    attr = vm->vtsi->vtsi_mat->vtsm_video_attr;
-  } else if((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN) {
-    attr = vm->vmgi->vmgi_mat->vmgm_video_attr;
-  }
-  return attr;
-}
-
-void vm_get_video_res(vm_t *vm, int *width, int *height)
-{
-  video_attr_t attr;
-  
-  attr = vm_get_video_attr(vm);
-  
-  if(attr.video_format != 0) 
-    *height = 576;
-  else
-    *height = 480;
-  switch(attr.picture_size) {
-  case 0:
-    *width = 720;
-    break;
-  case 1:
-    *width = 704;
-    break;
-  case 2:
-    *width = 352;
-    break;
-  case 3:
-    *width = 352;
-    *height /= 2;
-    break;
-  }
-}
-
-/*  Must be called before domain is changed (get_PGCN()) */
-static void saveRSMinfo(vm_t *vm, int cellN, int blockN)
-{
-  int i;
-  
-  if(cellN != 0) {
-    (vm->state).rsm_cellN = cellN;
-    (vm->state).rsm_blockN = 0;
-  } else {
-    (vm->state).rsm_cellN = (vm->state).cellN;
-    (vm->state).rsm_blockN = blockN;
-  }
-  (vm->state).rsm_vtsN = (vm->state).vtsN;
-  (vm->state).rsm_pgcN = get_PGCN(vm);
-  
-  /* assert((vm->state).rsm_pgcN == (vm->state).TT_PGCN_REG);  for VTS_DOMAIN */
-  
-  for(i = 0; i < 5; i++) {
-    (vm->state).rsm_regs[i] = (vm->state).registers.SPRM[4 + i];
-  }
-}
-
-
-
-/* Figure out the correct pgN from the cell and update (vm->state). */ 
-static int set_PGN(vm_t *vm) {
-  int new_pgN = 0;
-  
-  while(new_pgN < (vm->state).pgc->nr_of_programs 
-	&& (vm->state).cellN >= (vm->state).pgc->program_map[new_pgN])
-    new_pgN++;
-  
-  if(new_pgN == (vm->state).pgc->nr_of_programs) /* We are at the last program */
-    if((vm->state).cellN > (vm->state).pgc->nr_of_cells)
-      return 1; /* We are past the last cell */
-  
-  (vm->state).pgN = new_pgN;
-  
-  if((vm->state).domain == VTS_DOMAIN) {
-    playback_type_t *pb_ty;
-    if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
-      return 0; /*  ?? */
-    pb_ty = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1].pb_ty;
-    if(pb_ty->multi_or_random_pgc_title == /* One_Sequential_PGC_Title */ 0) {
-#if 0 /* TTN_REG can't be trusted to have a correct value here... */
-      vts_ptt_srpt_t *ptt_srpt = vtsi->vts_ptt_srpt;
-      assert((vm->state).VTS_TTN_REG <= ptt_srpt->nr_of_srpts);
-      assert(get_PGCN() == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgcn);
-      assert(1 == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgn);
-#endif
-      (vm->state).PTTN_REG = (vm->state).pgN;
-    } else {
-      /* FIXME: Handle RANDOM or SHUFFLE titles. */
-      fprintf(MSG_OUT, "libdvdnav: RANDOM or SHUFFLE titles are NOT handled yet.\n");
-    }
-      
-  }
-  
-  return 0;
-}
-
-static link_t play_PGC(vm_t *vm) 
-{    
-  link_t link_values;
-  
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm: play_PGC:");
-  if((vm->state).domain != FP_DOMAIN) {
-    fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
-  } else {
-    fprintf(MSG_OUT, " first_play_pgc\n");
-  }
-#endif
-
-  /*  This must be set before the pre-commands are executed because they */
-  /*  might contain a CallSS that will save resume state */
-
-  /* FIXME: This may be only a temporary fix for something... */
-  (vm->state).pgN = 1;
-  (vm->state).cellN = 0;
-
-  /* eval -> updates the state and returns either 
-     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
-     - just play video i.e first PG
-       (This is what happens if you fall of the end of the pre_cmds)
-     - or a error (are there more cases?) */
-  if((vm->state).pgc->command_tbl && (vm->state).pgc->command_tbl->nr_of_pre) {
-    if(vmEval_CMD((vm->state).pgc->command_tbl->pre_cmds, 
-		  (vm->state).pgc->command_tbl->nr_of_pre, 
-		  &(vm->state).registers, &link_values)) {
-      /*  link_values contains the 'jump' return value */
-      return link_values;
-    } else {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: PGC pre commands didn't do a Jump, Link or Call\n");
-#endif
-    }
-  }
-  return play_PG(vm);
-}  
-
-static link_t play_PGC_PG(vm_t *vm, int pgN) 
-{    
-  link_t link_values;
-  
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm: play_PGC:");
-  if((vm->state).domain != FP_DOMAIN) {
-    fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
-  } else {
-    fprintf(MSG_OUT, " first_play_pgc\n");
-  }
-#endif
-
-  /*  This must be set before the pre-commands are executed because they */
-  /*  might contain a CallSS that will save resume state */
-
-  /* FIXME: This may be only a temporary fix for something... */
-  (vm->state).pgN = pgN;
-  (vm->state).cellN = 0;
-
-  /* eval -> updates the state and returns either 
-     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
-     - just play video i.e first PG
-       (This is what happens if you fall of the end of the pre_cmds)
-     - or a error (are there more cases?) */
-  if((vm->state).pgc->command_tbl && (vm->state).pgc->command_tbl->nr_of_pre) {
-    if(vmEval_CMD((vm->state).pgc->command_tbl->pre_cmds, 
-		  (vm->state).pgc->command_tbl->nr_of_pre, 
-		  &(vm->state).registers, &link_values)) {
-      /*  link_values contains the 'jump' return value */
-      return link_values;
-    } else {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: PGC pre commands didn't do a Jump, Link or Call\n");
-#endif
-    }
-  }
-  return play_PG(vm);
-}  
-
-static link_t play_PG(vm_t *vm)
-{
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i)\n", (vm->state).pgN);
-#endif
-  
-  assert((vm->state).pgN > 0);
-  if((vm->state).pgN > (vm->state).pgc->nr_of_programs) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i) > pgc->nr_of_programs (%i)\n", 
-	    (vm->state).pgN, (vm->state).pgc->nr_of_programs );
-#endif
-    assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1); 
-    return play_PGC_post(vm);
-  }
-  
-  (vm->state).cellN = (vm->state).pgc->program_map[(vm->state).pgN - 1];
-  
-  return play_Cell(vm);
-}
-
-
-static link_t play_Cell(vm_t *vm)
-{
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_Cell: (vm->state).cellN (%i)\n", (vm->state).cellN);
-#endif
-  
-  assert((vm->state).cellN > 0);
-  if((vm->state).cellN > (vm->state).pgc->nr_of_cells) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: (vm->state).cellN (%i) > pgc->nr_of_cells (%i)\n", 
-	    (vm->state).cellN, (vm->state).pgc->nr_of_cells );
-#endif
-    assert((vm->state).cellN == (vm->state).pgc->nr_of_cells + 1); 
-    return play_PGC_post(vm);
-  }
-  
-
-  /* Multi angle/Interleaved */
-  switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode) {
-  case 0: /*  Normal */
-    assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 0);
-    break;
-  case 1: /*  The first cell in the block */
-    switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type) {
-    case 0: /*  Not part of a block */
-      assert(0);
-    case 1: /*  Angle block */
-      /* Loop and check each cell instead? So we don't get outsid the block. */
-      (vm->state).cellN += (vm->state).AGL_REG - 1;
-#ifdef STRICT
-      assert((vm->state).cellN <= (vm->state).pgc->nr_of_cells);
-      assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0);
-      assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1);
-#endif
-      if (!((vm->state).cellN <= (vm->state).pgc->nr_of_cells) ||
-          !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0) ||
-	  !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1)) {
-	fprintf(MSG_OUT, "libdvdnav: Invalid angle block\n");
-	(vm->state).cellN -= (vm->state).AGL_REG - 1;
-      }
-      break;
-    case 2: /*  ?? */
-    case 3: /*  ?? */
-    default:
-      fprintf(MSG_OUT, "libdvdnav: Invalid? Cell block_mode (%d), block_type (%d)\n",
-	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode,
-	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type);
-    }
-    break;
-  case 2: /*  Cell in the block */
-  case 3: /*  Last cell in the block */
-  /*  These might perhaps happen for RSM or LinkC commands? */
-  default:
-    fprintf(MSG_OUT, "libdvdnav: Cell is in block but did not enter at first cell!\n");
-  }
-  
-  /* Updates (vm->state).pgN and PTTN_REG */
-  if(set_PGN(vm)) {
-    /* Should not happen */
-    link_t tmp = {LinkTailPGC, /* No Button */ 0, 0, 0};
-    assert(0);
-    return tmp;
-  }
-  (vm->state).cell_restart++; 
-  fprintf(MSG_OUT, "libdvdnav: Cell should restart here\n");
-  {
-    link_t tmp = {PlayThis, /* Block in Cell */ 0, 0, 0};
-    return tmp;
-  }
-
-}
-
-static link_t play_Cell_post(vm_t *vm)
-{
-  cell_playback_t *cell;
-  
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_Cell_post: (vm->state).cellN (%i)\n", (vm->state).cellN);
-#endif
-  
-  cell = &(vm->state).pgc->cell_playback[(vm->state).cellN - 1];
-  
-  /* Still time is already taken care of before we get called. */
-  
-  /* Deal with a Cell command, if any */
-  if(cell->cell_cmd_nr != 0) {
-    link_t link_values;
-    
-/*  These asserts are now not needed.
- *  Some DVDs have no cell commands listed in the PGC,
- *  but the Cell itself points to a cell command that does not exist.
- *  For this situation, just ignore the cell command and continue.
- *
- *  assert((vm->state).pgc->command_tbl != NULL);
- *  assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
- */
-
-    if ((vm->state).pgc->command_tbl != NULL &&
-        (vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr) {
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: Cell command present, executing\n");
-#endif
-      if(vmEval_CMD(&(vm->state).pgc->command_tbl->cell_cmds[cell->cell_cmd_nr - 1], 1,
-		    &(vm->state).registers, &link_values)) {
-        return link_values;
-      } else {
-        fprintf(MSG_OUT, "libdvdnav: Cell command didn't do a Jump, Link or Call\n");
-        /*  Error ?? goto tail? goto next PG? or what? just continue? */
-      }
-    } else {
-      fprintf(MSG_OUT, "libdvdnav: Invalid Cell command\n");
-      
-    }
-  }
-  
-  
-  /* Where to continue after playing the cell... */
-  /* Multi angle/Interleaved */
-  switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode) {
-  case 0: /*  Normal */
-    assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 0);
-    (vm->state).cellN++;
-    break;
-  case 1: /*  The first cell in the block */
-  case 2: /*  A cell in the block */
-  case 3: /*  The last cell in the block */
-  default:
-    switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type) {
-    case 0: /*  Not part of a block */
-      assert(0);
-    case 1: /*  Angle block */
-      /* Skip the 'other' angles */
-      (vm->state).cellN++;
-      while((vm->state).cellN <= (vm->state).pgc->nr_of_cells 
-	    && (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode >= 2) {
-	(vm->state).cellN++;
-      }
-      break;
-    case 2: /*  ?? */
-    case 3: /*  ?? */
-    default:
-      fprintf(MSG_OUT, "libdvdnav: Invalid? Cell block_mode (%d), block_type (%d)\n",
-	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode,
-	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type);
-    }
-    break;
-  }
-  
-  
-  /* Figure out the correct pgN for the new cell */ 
-  if(set_PGN(vm)) {
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: last cell in this PGC\n");
-#endif
-    return play_PGC_post(vm);
-  }
-
-  return play_Cell(vm);
-}
-
-
-static link_t play_PGC_post(vm_t *vm)
-{
-  link_t link_values;
-
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PGC_post:\n");
-#endif
-  
-  /*  FIXME Implement PGC Stills. Currently only Cell stills work */
-  assert((vm->state).pgc->still_time == 0);
-
-  /* eval -> updates the state and returns either 
-     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
-     - or a error (are there more cases?)
-     - if you got to the end of the post_cmds, then what ?? */
-  if((vm->state).pgc->command_tbl &&
-     vmEval_CMD((vm->state).pgc->command_tbl->post_cmds,
-		(vm->state).pgc->command_tbl->nr_of_post, 
-		&(vm->state).registers, &link_values)) {
-    return link_values;
-  }
-  
-  /*  Or perhaps handle it here? */
-  {
-    link_t link_next_pgc = {LinkNextPGC, 0, 0, 0};
-    fprintf(MSG_OUT, "libdvdnav: ** Fell of the end of the pgc, continuing in NextPGC\n");
-    assert((vm->state).pgc->next_pgc_nr != 0);
-    /* Should end up in the STOP_DOMAIN if next_pgc is 0. */
-    return link_next_pgc;
-  }
-}
-
-
-static link_t process_command(vm_t *vm, link_t link_values)
-{
-  /* FIXME $$$ Move this to a separate function? */
-  vm->badness_counter++;
-  if (vm->badness_counter > 1) fprintf(MSG_OUT, "libdvdnav: **** WARNING: process_command re-entered %d*****\n",vm->badness_counter);
-  while(link_values.command != PlayThis) {
-    
-#ifdef TRACE
-    fprintf(MSG_OUT, "libdvdnav: Before printout starts:\n");
-    vmPrint_LINK(link_values);
-    
-    fprintf(MSG_OUT, "libdvdnav: Link values %i %i %i %i\n", link_values.command, 
-	    link_values.data1, link_values.data2, link_values.data3);
-     
-    vm_print_current_domain_state(vm);
-    fprintf(MSG_OUT, "libdvdnav: Before printout ends.\n");
-#endif
-    
-    switch(link_values.command) {
-    case LinkNoLink:
-      /* No Link => PlayThis */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      link_values.command = PlayThis;
-      link_values.data1   = (vm->state).blockN;
-      link_values.data2   = 0;  /* no actual jump */
-      return link_values;
-      
-    case LinkTopC:
-      /* Restart playing from the beginning of the current Cell. */
-      /* BUTTON number:data1 */
-      fprintf(MSG_OUT, "libdvdnav: FIXME: LinkTopC. Replay current Cell\n");
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      link_values = play_Cell(vm);
-      break;
-    case LinkNextC:
-      /* Link to Next Cell */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      (vm->state).cellN += 1; /* if cellN becomes > nr_of_cells? it is handled in play_Cell() */
-      link_values = play_Cell(vm);
-      break;
-    case LinkPrevC:
-      /* Link to Previous Cell */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      (vm->state).cellN -= 1; /*  If cellN becomes < 1? it is handled in play_Cell() */
-      link_values = play_Cell(vm);
-      break;
-      
-    case LinkTopPG:
-      /* Link to Top Program */
-      /* BUTTON number:data1 */
-      fprintf(MSG_OUT, "libdvdnav: FIXME: LinkTopPG. This should start the current PG again.\n");
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      /*  Does pgN always contain the current value? */
-      link_values = play_PG(vm);
-      break;
-    case LinkNextPG:
-      /* Link to Next Program */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      /*  Does pgN always contain the current value? */
-      (vm->state).pgN += 1; /*  FIXME: What if pgN becomes > pgc.nr_of_programs? */
-      link_values = play_PG(vm);
-      break;
-    case LinkPrevPG:
-      /* Link to Previous Program */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      /*  Does pgN always contain the current value? */
-      assert((vm->state).pgN > 1);
-      (vm->state).pgN -= 1; /*  FIXME: What if pgN becomes < 1? */
-      link_values = play_PG(vm);
-      break;
-      
-    case LinkTopPGC:
-      /* Restart playing from beginning of current Program Chain */
-      /* BUTTON number:data1 */
-      fprintf(MSG_OUT, "libdvdnav: FIXME: LinkTopPGC. Restart from beginning of current Program Chain\n");
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      link_values = play_PGC(vm);
-      break;
-    case LinkNextPGC:
-      /* Link to Next Program Chain */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      assert((vm->state).pgc->next_pgc_nr != 0);
-      if(set_PGC(vm, (vm->state).pgc->next_pgc_nr))
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case LinkPrevPGC:
-      /* Link to Previous Program Chain */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      assert((vm->state).pgc->prev_pgc_nr != 0);
-      if(set_PGC(vm, (vm->state).pgc->prev_pgc_nr))
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case LinkGoUpPGC:
-      /* Link to GoUp??? Program Chain */
-      /* BUTTON number:data1 */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      assert((vm->state).pgc->goup_pgc_nr != 0);
-      if(set_PGC(vm, (vm->state).pgc->goup_pgc_nr))
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case LinkTailPGC:
-      /* Link to Tail??? Program Chain */
-      /* BUTTON number:data1 */
-      /* fprintf(MSG_OUT, "libdvdnav: FIXME: LinkTailPGC. What is LinkTailPGC?\n"); */
-      if(link_values.data1 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      link_values = play_PGC_post(vm);
-    break;
-      
-    case LinkRSM:
-      {
-	/* Link to Resume */
-	int i;
-	/*  Check and see if there is any rsm info!! */
-	(vm->state).domain = VTS_DOMAIN;
-	ifoOpenNewVTSI(vm, vm->dvd, (vm->state).rsm_vtsN);
-	set_PGC(vm, (vm->state).rsm_pgcN);
-	
-	/* These should never be set in SystemSpace and/or MenuSpace */ 
-	/* (vm->state).TTN_REG = rsm_tt; ?? */
-	/* (vm->state).TT_PGCN_REG = (vm->state).rsm_pgcN; ?? */
-	for(i = 0; i < 5; i++) {
-	  (vm->state).registers.SPRM[4 + i] = (vm->state).rsm_regs[i];
-	}
-	
-	if(link_values.data1 != 0)
-	  (vm->state).HL_BTNN_REG = link_values.data1 << 10;
-	
-	if((vm->state).rsm_cellN == 0) {
-	  assert((vm->state).cellN); /*  Checking if this ever happens */
-	  /* assert( time/block/vobu is 0 ); */
-	  (vm->state).pgN = 1;
-	  link_values = play_PG(vm);
-	} else { 
-	  /* assert( time/block/vobu is _not_ 0 ); */
-	  /* play_Cell_at_time */
-	  /* (vm->state).pgN = ?? this gets the righ value in play_Cell */
-	  (vm->state).cellN = (vm->state).rsm_cellN;
-	  link_values.command = PlayThis;
-	  link_values.data1 = (vm->state).rsm_blockN;
-	  if(set_PGN(vm)) {
-	    /* Were at the end of the PGC, should not happen for a RSM */
-	    assert(0);
-	    link_values.command = LinkTailPGC;
-	    link_values.data1 = 0;  /* No button */
-	  }
-	}
-      }
-      break;
-    case LinkPGCN:
-      /* Link to Program Chain Number:data1 */
-      if(set_PGC(vm, link_values.data1))
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case LinkPTTN:
-      /* Link to Part of this Title Number:data1 */
-      /* BUTTON number:data2 */
-      assert((vm->state).domain == VTS_DOMAIN);
-      if(link_values.data2 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
-      if(set_VTS_PTT(vm, (vm->state).vtsN, (vm->state).VTS_TTN_REG, link_values.data1) == -1)
-	assert(0);
-      link_values = play_PG(vm);
-      break;
-    case LinkPGN:
-      /* Link to Program Number:data1 */
-      /* BUTTON number:data2 */
-      if(link_values.data2 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
-      /* Update any other state, PTTN perhaps? */
-      (vm->state).pgN = link_values.data1;
-      link_values = play_PG(vm);
-      break;
-    case LinkCN:
-      /* Link to Cell Number:data1 */
-      /* BUTTON number:data2 */
-      if(link_values.data2 != 0)
-	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
-      /* Update any other state, pgN, PTTN perhaps? */
-      (vm->state).cellN = link_values.data1;
-      link_values = play_Cell(vm);
-      break;
-      
-    case Exit:
-      fprintf(MSG_OUT, "libdvdnav: FIXME:in trouble...Link Exit - CRASHING!!!\n");
-      assert(0); /*  What should we do here?? */
-      
-    case JumpTT:
-      /* Jump to VTS Title Domain */
-      /* Only allowed from the First Play domain(PGC) */
-      /* or the Video Manager domain (VMG) */
-      assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
-      if(set_TT(vm,link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case JumpVTS_TT:
-      /* Jump to Title:data1 in same VTS Title Domain */
-      /* Only allowed from the VTS Menu Domain(VTSM) */
-      /* or the Video Title Set Domain(VTS) */
-      assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
-      fprintf(MSG_OUT, "libdvdnav: FIXME: Should be able to use get_VTS_PTT here.\n"); 
-      if(set_VTS_TT(vm,(vm->state).vtsN, link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case JumpVTS_PTT:
-      /* Jump to Part:data2 of Title:data1 in same VTS Title Domain */
-      /* Only allowed from the VTS Menu Domain(VTSM) */
-      /* or the Video Title Set Domain(VTS) */
-      assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
-      if(set_VTS_PTT(vm,(vm->state).vtsN, link_values.data1, link_values.data2) == -1)
-	assert(0);
-      link_values = play_PGC_PG( vm, (vm->state).pgN ); 
-      break;
-      
-    case JumpSS_FP:
-      /* Jump to First Play Domain */
-      /* Only allowed from the VTS Menu Domain(VTSM) */
-      /* or the Video Manager domain (VMG) */
-      assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == VTSM_DOMAIN); /* ?? */
-      set_FP_PGC(vm);
-      link_values = play_PGC(vm);
-      break;
-    case JumpSS_VMGM_MENU:
-      /* Jump to Video Manger domain - Title Menu:data1 or any PGC in VMG */
-      /* Allowed from anywhere except the VTS Title domain */
-      assert((vm->state).domain == VMGM_DOMAIN || 
-	     (vm->state).domain == VTSM_DOMAIN || 
-	     (vm->state).domain == FP_DOMAIN); /* ?? */
-      (vm->state).domain = VMGM_DOMAIN;
-      if(set_MENU(vm,link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case JumpSS_VTSM:
-      /* Jump to a menu in Video Title domain, */
-      /* or to a Menu is the current VTS */
-      /* FIXME: This goes badly wrong for some DVDs. */
-      /* FIXME: Keep in touch with ogle people regarding what to do here */
-      /* ifoOpenNewVTSI:data1 */
-      /* VTS_TTN_REG:data2 */
-      /* get_MENU:data3 */ 
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: BUG TRACKING *******************************************************************\n");
-      fprintf(MSG_OUT, "libdvdnav:     data1=%u data2=%u data3=%u\n", 
-                link_values.data1,
-                link_values.data2,
-                link_values.data3);
-      fprintf(MSG_OUT, "libdvdnav: *******************************************************************\n");
-#endif
-
-      if(link_values.data1 !=0) {
-	assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
-	(vm->state).domain = VTSM_DOMAIN;
-	ifoOpenNewVTSI(vm, vm->dvd, link_values.data1);  /*  Also sets (vm->state).vtsN */
-      } else {
-	/*  This happens on 'The Fifth Element' region 2. */
-	assert((vm->state).domain == VTSM_DOMAIN);
-      }
-      /*  I don't know what title is supposed to be used for. */
-      /*  Alien or Aliens has this != 1, I think. */
-      /* assert(link_values.data2 == 1); */
-      (vm->state).VTS_TTN_REG = link_values.data2;
-      if(set_MENU(vm, link_values.data3) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case JumpSS_VMGM_PGC:
-      /* get_PGC:data1 */
-      assert((vm->state).domain == VMGM_DOMAIN ||
-	     (vm->state).domain == VTSM_DOMAIN ||
-	     (vm->state).domain == FP_DOMAIN); /* ?? */
-      (vm->state).domain = VMGM_DOMAIN;
-      if(set_PGC(vm,link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-      
-    case CallSS_FP:
-      /* saveRSMinfo:data1 */
-      assert((vm->state).domain == VTS_DOMAIN); /* ??    */
-      /*  Must be called before domain is changed */
-      saveRSMinfo(vm, link_values.data1, /* We dont have block info */ 0);
-      set_FP_PGC(vm);
-      link_values = play_PGC(vm);
-      break;
-    case CallSS_VMGM_MENU:
-      /* get_MENU:data1 */ 
-      /* saveRSMinfo:data2 */
-      assert((vm->state).domain == VTS_DOMAIN); /* ??    */
-      /*  Must be called before domain is changed */
-      saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);      
-      (vm->state).domain = VMGM_DOMAIN;
-      if(set_MENU(vm,link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case CallSS_VTSM:
-      /* get_MENU:data1 */ 
-      /* saveRSMinfo:data2 */
-      assert((vm->state).domain == VTS_DOMAIN); /* ??    */
-      /*  Must be called before domain is changed */
-      saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);
-      (vm->state).domain = VTSM_DOMAIN;
-      if(set_MENU(vm,link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case CallSS_VMGM_PGC:
-      /* get_PGC:data1 */
-      /* saveRSMinfo:data2 */
-      assert((vm->state).domain == VTS_DOMAIN); /* ??    */
-      /*  Must be called before domain is changed */
-      saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);
-      (vm->state).domain = VMGM_DOMAIN;
-      if(set_PGC(vm,link_values.data1) == -1)
-	assert(0);
-      link_values = play_PGC(vm);
-      break;
-    case PlayThis:
-      /* Should never happen. */
-      assert(0);
-      break;
-    }
-
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: After printout starts:\n");
-  vm_print_current_domain_state(vm);
-  fprintf(MSG_OUT, "libdvdnav: After printout ends.\n");
-#endif
-    
-  }
-  link_values.data2 = 1; /* there was actually a jump */
-  vm->badness_counter--;
-  return link_values;
-}
-
-/* Searches the TT tables, to find the current TT.
- * returns the current TT.
- * returns 0 if not found.
- */
-static int get_TT(vm_t *vm, int vtsN, int vts_ttn) {
-  int i;
-  int tt=0;
-  for(i = 1; i <= vm->vmgi->tt_srpt->nr_of_srpts; i++) {
-    if( vm->vmgi->tt_srpt->title[i - 1].title_set_nr == vtsN && 
-        vm->vmgi->tt_srpt->title[i - 1].vts_ttn == vts_ttn) {
-      tt=i;
-      break;
-    }
-  }
-  return tt; 
-}
-
-static int set_TT(vm_t *vm, int tt)
-{  
-  assert(tt <= vm->vmgi->tt_srpt->nr_of_srpts);
-  
-  (vm->state).TTN_REG = tt;
-   
-  return set_VTS_TT(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
-		    vm->vmgi->tt_srpt->title[tt - 1].vts_ttn);
-}
-
-
-static int set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn)
-{
-  fprintf(MSG_OUT, "libdvdnav: get_VTS_TT called, testing!!! vtsN=%d, vts_ttn=%d\n", vtsN, vts_ttn);
-  return set_VTS_PTT(vm, vtsN, vts_ttn, 1);
-  /* pgcN = get_ID(vm, vts_ttn);  This might return -1 */
-  /*
-  assert(pgcN != -1);
-
-  (vm->state).TTN_REG = get_TT(*vm, vtsN, vts_ttn);
-  (vm->state).VTS_TTN_REG = vts_ttn;
-  (vm->state).vtsN = 
-  */
-  /* Any other registers? */
-  
-  /* return set_PGC(vm, pgcN); */
-}
-
-
-static int set_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int part)
-{
-  int pgcN, pgN, res;
-  
-  (vm->state).domain = VTS_DOMAIN;
-  if(vtsN != (vm->state).vtsN)
-    ifoOpenNewVTSI(vm, vm->dvd, vtsN); /*  Also sets (vm->state).vtsN */
-  
-  if ((vts_ttn < 1) || (vts_ttn > vm->vtsi->vts_ptt_srpt->nr_of_srpts) ||
-      (part < 1) || (part > vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].nr_of_ptts) ) {
-    return S_ERR;
-  }
-  
-  pgcN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgcn;
-  pgN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgn;
- 
-  (vm->state).TT_PGCN_REG = pgcN;
-  (vm->state).PTTN_REG = pgN;
-
-  (vm->state).TTN_REG = get_TT(vm, vtsN, vts_ttn);
-  assert( (vm->state.TTN_REG) != 0 );
-  (vm->state).VTS_TTN_REG = vts_ttn;
-  (vm->state).vtsN = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
-  /* Any other registers? */
-  
-  res = set_PGC(vm, pgcN);   /* This clobber's state.pgN (sets it to 1), but we don't want clobbering here. */
-  (vm->state).pgN = pgN; /*  Part?? */
-  return res;
-}
-
-
-
-static int set_FP_PGC(vm_t *vm)
-{  
-  (vm->state).domain = FP_DOMAIN;
-
-  (vm->state).pgc = vm->vmgi->first_play_pgc;
-  
-  return 0;
-}
-
-
-static int set_MENU(vm_t *vm, int menu)
-{
-  assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == VTSM_DOMAIN);
-  return set_PGC(vm, get_ID(vm, menu));
-}
-
-/* Search for entry_id match of the PGC Category in the current VTS PGCIT table.
- * Return pgcN based on entry_id match.
- */
-static int get_ID(vm_t *vm, int id)
-{
-  int pgcN, i;
-  pgcit_t *pgcit;
-  
-  /* Relies on state to get the correct pgcit. */
-  pgcit = get_PGCIT(vm);
-  assert(pgcit != NULL);
-  fprintf(MSG_OUT, "libdvdnav: ** Searching for menu (0x%x) entry PGC\n", id);
-
-  /* Force high bit set. */
-  id |=0x80;
-  /* Get menu/title */
-  for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
-    if( (pgcit->pgci_srp[i].entry_id) == id) {
-      pgcN = i + 1;
-      fprintf(MSG_OUT, "libdvdnav: Found menu.\n");
-      return pgcN;
-    }
-  }
-  fprintf(MSG_OUT, "libdvdnav: ** No such id/menu (0x%02x) entry PGC\n", id & 0x7f);
-  for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
-    if ( (pgcit->pgci_srp[i].entry_id & 0x80) == 0x80) {
-      fprintf(MSG_OUT, "libdvdnav: Available menus: 0x%x\n",
-                     pgcit->pgci_srp[i].entry_id & 0x7f);
-    }
-  }
-  return -1; /*  error */
-}
-
-/* Set the vm->state to pgcN.
- * Returns success/failure.
- */
-static int set_PGC(vm_t *vm, int pgcN)
-{
-  /* FIXME: Keep this up to date with the ogle people */
-  pgcit_t *pgcit;
-  
-  pgcit = get_PGCIT(vm);
-  
-  assert(pgcit != NULL); /*  ?? Make this return -1 instead */
-  if(pgcN < 1 || pgcN > pgcit->nr_of_pgci_srp) {
-    fprintf(MSG_OUT, "libdvdnav:  ** No such pgcN = %d\n", pgcN);
-    return -1; /* error */
-  }
-  
-  /* (vm->state).pgcN = pgcN; */
-  (vm->state).pgc = pgcit->pgci_srp[pgcN - 1].pgc;
-  (vm->state).pgN = 1;
- 
-  if((vm->state).domain == VTS_DOMAIN)
-    (vm->state).TT_PGCN_REG = pgcN;
-
-  return 0;
-}
-
-static int get_PGCN(vm_t *vm)
-{
-  pgcit_t *pgcit;
-  int pgcN = 1;
-
-  pgcit = get_PGCIT(vm);
-  
-  assert(pgcit != NULL);
-  
-  while(pgcN <= pgcit->nr_of_pgci_srp) {
-    if(pgcit->pgci_srp[pgcN - 1].pgc == (vm->state).pgc)
-      return pgcN;
-    pgcN++;
-  }
-  fprintf(MSG_OUT, "libdvdnav: get_PGCN failed. Trying to find pgcN in domain %d \n", 
-         (vm->state).domain);
-  /* assert(0);*/ 
-  return -1; /*  error */
-}
-
-int vm_get_video_aspect(vm_t *vm)
-{
-  int aspect = 0;
-  
-  switch ((vm->state).domain) {
-  case VTS_DOMAIN:
-    aspect = vm->vtsi->vtsi_mat->vts_video_attr.display_aspect_ratio;  
-    break;
-  case VTSM_DOMAIN:
-    aspect = vm->vtsi->vtsi_mat->vtsm_video_attr.display_aspect_ratio;
-    break;
-  case VMGM_DOMAIN:
-    aspect = vm->vmgi->vmgi_mat->vmgm_video_attr.display_aspect_ratio;
-    break;
-  default:
-    fprintf(MSG_OUT, "libdvdnav: vm_get_video_aspect failed. Unknown domain %d\n",
-             (vm->state).domain);
-    assert(0);
-    break;
-  }
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: get_video_aspect:aspect=%d\n",aspect);
-#endif
-  assert(aspect == 0 || aspect == 3);
-  (vm->state).registers.SPRM[14] &= ~(0x3 << 10);
-  (vm->state).registers.SPRM[14] |= aspect << 10;
-  
-  return aspect;
-}
-
-int vm_get_video_scale_permission(vm_t *vm)
-{
-  int permission = 0;
-  
-  if((vm->state).domain == VTS_DOMAIN) {
-    permission = vm->vtsi->vtsi_mat->vts_video_attr.permitted_df;
-  } else if((vm->state).domain == VTSM_DOMAIN) {
-    permission = vm->vtsi->vtsi_mat->vtsm_video_attr.permitted_df;
-  } else if((vm->state).domain == VMGM_DOMAIN) {
-    permission = vm->vmgi->vmgi_mat->vmgm_video_attr.permitted_df;
-  }
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: get_video_scale_permission:permission=%d\n",permission);
-#endif
-  
-  return permission;
-}
-
-static void ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN) 
-{
+static void ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN) {
   if((vm->state).vtsN == vtsN) {
     return; /*  We alread have it */
   }
@@ -1985,8 +218,1451 @@ static void ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN)
   (vm->state).vtsN = vtsN;
 }
 
-static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang)
+
+/* Initialisation & Destruction */
+
+vm_t* vm_new_vm() {
+  return (vm_t*)calloc(sizeof(vm_t), sizeof(char));
+}
+
+void vm_free_vm(vm_t *vm) {
+  vm_stop(vm);
+  free(vm);
+}
+
+
+/* IFO Access */
+
+ifo_handle_t *vm_get_vmgi(vm_t *vm) {
+  return vm->vmgi;
+}
+
+ifo_handle_t *vm_get_vtsi(vm_t *vm) {
+  return vm->vtsi;
+}
+
+
+/* Reader Access */
+
+dvd_reader_t *vm_get_dvd_reader(vm_t *vm) {
+  return vm->dvd;
+}
+
+
+/* Basic Handling */
+
+void vm_start(vm_t *vm)
 {
+  /* Set pgc to FP (First Play) pgc */
+  set_FP_PGC(vm);
+  process_command(vm, play_PGC(vm));
+}
+
+void vm_stop(vm_t *vm) {
+  if(vm->vmgi) {
+    ifoClose(vm->vmgi);
+    vm->vmgi=NULL;
+  }
+  if(vm->vtsi) {
+    ifoClose(vm->vtsi);
+    vm->vmgi=NULL;
+  }
+  if(vm->dvd) {
+    DVDClose(vm->dvd);
+    vm->dvd=NULL;
+  }
+  vm->stopped = 1;
+}
+ 
+int vm_reset(vm_t *vm, const char *dvdroot) {
+  /*  Setup State */
+  memset((vm->state).registers.SPRM, 0, sizeof((vm->state).registers.SPRM));
+  memset((vm->state).registers.GPRM, 0, sizeof((vm->state).registers.GPRM));
+  memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
+  memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
+  memset((vm->state).registers.GPRM_time, 0, sizeof((vm->state).registers.GPRM_time));
+  (vm->state).registers.SPRM[0]  = ('e'<<8)|'n'; /* Player Menu Languange code */
+  (vm->state).AST_REG            = 15;           /* 15 why? */
+  (vm->state).SPST_REG           = 62;           /* 62 why? */
+  (vm->state).AGL_REG            = 1;
+  (vm->state).TTN_REG            = 1;
+  (vm->state).VTS_TTN_REG        = 1;
+  /* (vm->state).TT_PGCN_REG        = 0 */
+  (vm->state).PTTN_REG           = 1;
+  (vm->state).HL_BTNN_REG        = 1 << 10;
+  (vm->state).PTL_REG            = 15;           /* Parental Level */
+  (vm->state).registers.SPRM[12] = ('U'<<8)|'S'; /* Parental Management Country Code */
+  (vm->state).registers.SPRM[16] = ('e'<<8)|'n'; /* Initial Language Code for Audio */
+  (vm->state).registers.SPRM[18] = ('e'<<8)|'n'; /* Initial Language Code for Spu */
+  (vm->state).registers.SPRM[20] = 0x1;          /* Player Regional Code Mask. Region free! */
+  (vm->state).registers.SPRM[14] = 0x100;        /* Try Pan&Scan */
+   
+  (vm->state).pgN                = 0;
+  (vm->state).cellN              = 0;
+  (vm->state).cell_restart       = 0;
+
+  (vm->state).domain             = FP_DOMAIN;
+  (vm->state).rsm_vtsN           = 0;
+  (vm->state).rsm_cellN          = 0;
+  (vm->state).rsm_blockN         = 0;
+  
+  (vm->state).vtsN               = -1;
+  
+  if (vm->dvd && dvdroot) {
+    /* a new dvd device has been requested */
+    vm_stop(vm);
+  }
+  if (!vm->dvd) {
+    vm->dvd = DVDOpen(dvdroot);
+    if(!vm->dvd) {
+      fprintf(MSG_OUT, "libdvdnav: vm: faild to open/read the DVD\n");
+      return 0;
+    }
+    dvd_read_name(vm, dvdroot);
+    vm->map  = remap_loadmap(vm->dvd_name);
+    vm->vmgi = ifoOpenVMGI(vm->dvd);
+    if(!vm->vmgi) {
+      fprintf(MSG_OUT, "libdvdnav: vm: faild to read VIDEO_TS.IFO\n");
+      return 0;
+    }
+    if(!ifoRead_FP_PGC(vm->vmgi)) {
+      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_FP_PGC failed\n");
+      return 0;
+    }
+    if(!ifoRead_TT_SRPT(vm->vmgi)) {
+      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_TT_SRPT failed\n");
+      return 0;
+    }
+    if(!ifoRead_PGCI_UT(vm->vmgi)) {
+      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_PGCI_UT failed\n");
+      return 0;
+    }
+    if(!ifoRead_PTL_MAIT(vm->vmgi)) {
+      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_PTL_MAIT failed\n");
+      /* return 0; Not really used for now.. */
+    }
+    if(!ifoRead_VTS_ATRT(vm->vmgi)) {
+      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_VTS_ATRT failed\n");
+      /* return 0; Not really used for now.. */
+    }
+    if(!ifoRead_VOBU_ADMAP(vm->vmgi)) {
+      fprintf(MSG_OUT, "libdvdnav: vm: ifoRead_VOBU_ADMAP vgmi failed\n");
+      /* return 0; Not really used for now.. */
+    }
+    /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
+  }
+  if (vm->vmgi) {
+    int i, mask;
+    fprintf(MSG_OUT, "libdvdnav: DVD disk reports itself with Region mask 0x%08x. Regions:",
+      vm->vmgi->vmgi_mat->vmg_category);
+    for (i = 1, mask = 1; i <= 8; i++, mask <<= 1)
+      if (((vm->vmgi->vmgi_mat->vmg_category >> 16) & mask) == 0)
+        fprintf(MSG_OUT, " %d", i);
+    fprintf(MSG_OUT, "\n");
+  }
+  return 1;
+}
+
+
+/* regular playback */
+
+void vm_position_get(vm_t *vm, vm_position_t *position) {
+  position->button = (vm->state).HL_BTNN_REG >> 10;
+  position->vts = (vm->state).vtsN; 
+  position->domain = (vm->state).domain; 
+  position->spu_channel = (vm->state).SPST_REG;
+  position->audio_channel = (vm->state).AST_REG;
+  position->angle_channel = (vm->state).AGL_REG;
+  position->hop_channel = vm->hop_channel; /* Increases by one on each hop */
+  position->cell = (vm->state).cellN;
+  position->cell_restart = (vm->state).cell_restart;
+  position->cell_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
+  position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
+  position->block = (vm->state).blockN;
+
+  /* still already detrmined or not at PGC end */
+  if (position->still || (vm->state).cellN < (vm->state).pgc->nr_of_cells)
+    return;
+  /* handle PGC stills */
+  if ((vm->state).pgc->still_time) {
+    position->still = (vm->state).pgc->still_time;
+    return;
+  }
+  /* This is a rough fix for some strange still situations on some strange DVDs.
+   * There are discs (like the German "Back to the Future" RC2) where the only
+   * indication of a still is a cell playback time higher than the time the frames
+   * in this cell actually take to play (like 1 frame with 1 minute playback time).
+   * On the said BTTF disc, for these cells last_sector and last_vobu_start_sector
+   * are equal and the cells are very short, so we abuse these conditions to
+   * detect such discs. I consider these discs broken, so the fix is somewhat
+   * broken, too. */
+  if (((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector ==
+       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_vobu_start_sector) &&
+      ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
+       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 250)) {
+    int time;
+    time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0xf0) * 36000;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0x0f) * 3600;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0xf0) * 600;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0x0f) * 60;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0xf0) * 10;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0x0f) * 1;
+    if (time > 0xff) time = 0xff;
+    position->still = time;
+  }
+}
+
+void vm_get_next_cell(vm_t *vm) {
+  process_command(vm, play_Cell_post(vm));
+}
+
+
+/* Jumping */
+
+int vm_jump_pg(vm_t *vm, int pg) {
+  (vm->state).pgN = pg;
+  process_command(vm, play_PG(vm));
+  return 1;
+}
+
+int vm_jump_title_part(vm_t *vm, int title, int part) {
+  int vtsN;
+
+  vtsN = vm->vmgi->tt_srpt->title[title - 1].title_set_nr;
+
+  if(!set_VTS_PTT(vm, vtsN, title, part))
+    return 0;
+  process_command(vm, play_PGC_PG(vm, (vm->state).pgN));
+  vm->hop_channel++;
+  return 1;
+}
+
+int vm_jump_top_pg(vm_t *vm) {
+  process_command(vm, play_PG(vm));
+  return 1;
+}
+
+int vm_jump_next_pg(vm_t *vm) {
+  if((vm->state).pgN >= (vm->state).pgc->nr_of_programs) {
+    /* last program -> move to TailPGC */
+    process_command(vm, play_PGC_post(vm));
+    return 1;
+  } else {
+    vm_jump_pg(vm, (vm->state).pgN + 1);
+    return 1;
+  }
+}
+
+int vm_jump_prev_pg(vm_t *vm) {
+  if ((vm->state).pgN <= 1) {
+    /* first program -> move to last program of previous PGC */
+    if ((vm->state).pgc->prev_pgc_nr && set_PGCN(vm, (vm->state).pgc->prev_pgc_nr)) {
+      process_command(vm, play_PGC(vm));
+      return 1;
+    }
+    return 0;
+  } else {
+    vm_jump_pg(vm, (vm->state).pgN - 1);
+    return 1;
+  }
+}
+
+int vm_jump_up(vm_t *vm) {
+  if((vm->state).pgc->goup_pgc_nr && set_PGCN(vm, (vm->state).pgc->goup_pgc_nr)) {
+    process_command(vm, play_PGC(vm));
+    return 1;
+  }
+  return 0;
+}
+
+int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
+  domain_t old_domain = (vm->state).domain;
+  
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
+    set_RSMinfo(vm, 0, (vm->state).blockN);
+    /* FALL THROUGH */
+  case VTSM_DOMAIN:
+  case VMGM_DOMAIN:
+    switch(menuid) {
+    case DVD_MENU_Title:
+      (vm->state).domain = VMGM_DOMAIN;
+      break;
+    case DVD_MENU_Root:
+    case DVD_MENU_Subpicture:
+    case DVD_MENU_Audio:
+    case DVD_MENU_Angle:
+    case DVD_MENU_Part:
+      (vm->state).domain = VTSM_DOMAIN;
+      break;
+    }
+    if(get_PGCIT(vm) && set_MENU(vm, menuid)) {
+      process_command(vm, play_PGC(vm));
+      return 1;  /* Jump */
+    } else {
+      (vm->state).domain = old_domain;
+    }
+    break;
+  case FP_DOMAIN: /* FIXME XXX $$$ What should we do here? */
+    break;
+  }
+  
+  return 0;
+}
+
+int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd) {
+  link_t link_values;
+  
+  if(vmEval_CMD(cmd, 1, &(vm->state).registers, &link_values))
+    return process_command(vm, link_values);
+  else
+    return 0; /*  It updated some state thats all... */
+}
+
+
+/* getting information */
+
+int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
+  vts_ptt_srpt_t *vts_ptt_srpt;
+  int title, part = 0, vts_ttn;
+  int found;
+  int16_t pgcN, pgN;
+
+  vts_ptt_srpt = vm->vtsi->vts_ptt_srpt;
+  pgcN = get_PGCN(vm);
+  pgN = vm->state.pgN;
+
+  found = 0;
+  for (vts_ttn = 0; (vts_ttn < vts_ptt_srpt->nr_of_srpts) && !found; vts_ttn++) {
+    for (part = 0; (part < vts_ptt_srpt->title[vts_ttn].nr_of_ptts) && !found; part++) {
+      if ((vts_ptt_srpt->title[vts_ttn].ptt[part].pgcn == pgcN) &&
+          (vts_ptt_srpt->title[vts_ttn].ptt[part].pgn  == pgN )) {
+        found = 1;
+        break;
+      }
+    }
+    if (found) break;
+  }
+  vts_ttn++;
+  part++;
+  
+  title = get_TT(vm, vm->state.vtsN, vts_ttn);
+
+#ifdef TRACE
+  if (title) {
+    fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
+    fprintf(MSG_OUT, "libdvdnav: VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
+             title, part,
+             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgcn ,
+             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgn );
+  } else {
+    fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
+  }
+#endif
+  if (!title)
+    return 0;
+  *title_result = title;
+  *part_result = part;
+  return 1;
+}
+
+/* Return the substream id for 'logical' audio stream audioN.
+ * 0 <= audioN < 8
+ */
+int vm_get_audio_stream(vm_t *vm, int audioN) {
+  int streamN = -1;
+
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: vm.c:get_audio_stream audioN=%d\n",audioN);
+#endif
+
+  if((vm->state).domain != VTS_DOMAIN)
+    audioN = 0;
+  
+  if(audioN < 8) {
+    /* Is there any contol info for this logical stream */ 
+    if((vm->state).pgc->audio_control[audioN] & (1<<15)) {
+      streamN = ((vm->state).pgc->audio_control[audioN] >> 8) & 0x07;  
+    }
+  }
+  
+  if((vm->state).domain != VTS_DOMAIN && streamN == -1)
+    streamN = 0;
+  
+  /* FIXME: Should also check in vtsi/vmgi status what kind of stream
+   * it is (ac3/lpcm/dts/sdds...) to find the right (sub)stream id */
+  return streamN;
+}
+
+/* Return the substream id for 'logical' subpicture stream subpN and given mode.
+ * 0 <= subpN < 32
+ * mode == 0 - widescreen
+ * mode == 1 - letterbox
+ * mode == 2 - pan&scan
+ */
+int vm_get_subp_stream(vm_t *vm, int subpN, int mode) {
+  int streamN = -1;
+  int source_aspect = vm_get_video_aspect(vm);
+  
+  if((vm->state).domain != VTS_DOMAIN)
+    subpN = 0;
+  
+  if(subpN < 32) { /* a valid logical stream */
+    /* Is this logical stream present */ 
+    if((vm->state).pgc->subp_control[subpN] & (1<<31)) {
+      if(source_aspect == 0) /* 4:3 */	     
+	streamN = ((vm->state).pgc->subp_control[subpN] >> 24) & 0x1f;  
+      if(source_aspect == 3) /* 16:9 */
+        switch (mode) {
+	case 0:
+	  streamN = ((vm->state).pgc->subp_control[subpN] >> 16) & 0x1f;
+	  break;
+	case 1:
+	  streamN = ((vm->state).pgc->subp_control[subpN] >> 8) & 0x1f;
+	  break;
+	case 2:
+	  streamN = (vm->state).pgc->subp_control[subpN] & 0x1f;
+	}
+    }
+  }
+  
+ if((vm->state).domain != VTS_DOMAIN && streamN == -1)
+   streamN = 0;
+
+  /* FIXME: Should also check in vtsi/vmgi status what kind of stream it is. */
+  return streamN;
+}
+
+int vm_get_audio_active_stream(vm_t *vm) {
+  int audioN;
+  int streamN;
+  audioN = (vm->state).AST_REG ;
+  streamN = vm_get_audio_stream(vm, audioN);
+  
+  /* If no such stream, then select the first one that exists. */
+  if(streamN == -1) {
+    for(audioN = 0; audioN < 8; audioN++) {
+      if((vm->state).pgc->audio_control[audioN] & (1<<15)) {
+        if ((streamN = vm_get_audio_stream(vm, audioN)) >= 0)
+          break;
+      }
+    }
+  }
+
+  return streamN;
+}
+
+int vm_get_subp_active_stream(vm_t *vm, int mode) {
+  int subpN;
+  int streamN;
+  subpN = (vm->state).SPST_REG & ~0x40;
+  streamN = vm_get_subp_stream(vm, subpN, mode);
+  
+  /* If no such stream, then select the first one that exists. */
+  if(streamN == -1) {
+    for(subpN = 0; subpN < 32; subpN++) {
+      if((vm->state).pgc->subp_control[subpN] & (1<<31)) {
+        if ((streamN = vm_get_subp_stream(vm, subpN, mode)) >= 0)
+          break;
+      }
+    }
+  }
+
+  if((vm->state).domain == VTS_DOMAIN && !((vm->state).SPST_REG & 0x40))
+    /* Bit 7 set means hide, and only let Forced display show */
+    return (streamN | 0x80);
+  else
+    return streamN;
+}
+
+void vm_get_angle_info(vm_t *vm, int *current, int *num_avail) {
+  *num_avail = 1;
+  *current = 1;
+  
+  if((vm->state).domain == VTS_DOMAIN) {
+    title_info_t *title;
+    /* TTN_REG does not allways point to the correct title.. */
+    if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
+      return;
+    title = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1];
+    if(title->title_set_nr != (vm->state).vtsN || 
+       title->vts_ttn != (vm->state).VTS_TTN_REG)
+      return; 
+    *num_avail = title->nr_of_angles;
+    *current = (vm->state).AGL_REG;
+  }
+}
+
+#if 0
+/* currently unused */
+void vm_get_audio_info(vm_t *vm, int *current, int *num_avail) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
+    *num_avail = vm->vtsi->vtsi_mat->nr_of_vts_audio_streams;
+    *current = (vm->state).AST_REG;
+    break;
+  case VTSM_DOMAIN:
+    *num_avail = vm->vtsi->vtsi_mat->nr_of_vtsm_audio_streams; /*  1 */
+    *current = 1;
+    break;
+  case VMGM_DOMAIN:
+  case FP_DOMAIN:
+    *num_avail = vm->vmgi->vmgi_mat->nr_of_vmgm_audio_streams; /*  1 */
+    *current = 1;
+    break;
+  }
+}
+
+/* currently unused */
+void vm_get_subp_info(vm_t *vm, int *current, int *num_avail) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
+    *num_avail = vm->vtsi->vtsi_mat->nr_of_vts_subp_streams;
+    *current = (vm->state).SPST_REG;
+    break;
+  case VTSM_DOMAIN:
+    *num_avail = vm->vtsi->vtsi_mat->nr_of_vtsm_subp_streams; /*  1 */
+    *current = 0x41;
+    break;
+  case VMGM_DOMAIN:
+  case FP_DOMAIN:
+    *num_avail = vm->vmgi->vmgi_mat->nr_of_vmgm_subp_streams; /*  1 */
+    *current = 0x41;
+    break;
+  }
+}
+
+/* currently unused */
+void vm_get_video_res(vm_t *vm, int *width, int *height) {
+  video_attr_t attr = vm_get_video_attr(vm);
+  
+  if(attr.video_format != 0) 
+    *height = 576;
+  else
+    *height = 480;
+  switch(attr.picture_size) {
+  case 0:
+    *width = 720;
+    break;
+  case 1:
+    *width = 704;
+    break;
+  case 2:
+    *width = 352;
+    break;
+  case 3:
+    *width = 352;
+    *height /= 2;
+    break;
+  }
+}
+#endif
+
+int vm_get_video_aspect(vm_t *vm) {
+  int aspect = vm_get_video_attr(vm).display_aspect_ratio;
+  
+  assert(aspect == 0 || aspect == 3);
+  (vm->state).registers.SPRM[14] &= ~(0x3 << 10);
+  (vm->state).registers.SPRM[14] |= aspect << 10;
+  
+  return aspect;
+}
+
+int vm_get_video_scale_permission(vm_t *vm) {
+  return vm_get_video_attr(vm).permitted_df;
+}
+
+video_attr_t vm_get_video_attr(vm_t *vm) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
+    return vm->vtsi->vtsi_mat->vts_video_attr;
+  case VTSM_DOMAIN:
+    return vm->vtsi->vtsi_mat->vtsm_video_attr;
+  case VMGM_DOMAIN:
+  case FP_DOMAIN:
+    return vm->vmgi->vmgi_mat->vmgm_video_attr;
+  }
+  assert(0);
+}
+
+audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
+    return vm->vtsi->vtsi_mat->vts_audio_attr[streamN];
+  case VTSM_DOMAIN:
+    return vm->vtsi->vtsi_mat->vtsm_audio_attr;
+  case VMGM_DOMAIN:
+  case FP_DOMAIN:
+    return vm->vmgi->vmgi_mat->vmgm_audio_attr;
+  }
+  assert(0);
+}
+
+subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
+    return vm->vtsi->vtsi_mat->vts_subp_attr[streamN];
+  case VTSM_DOMAIN:
+    return vm->vtsi->vtsi_mat->vtsm_subp_attr;
+  case VMGM_DOMAIN:
+  case FP_DOMAIN:
+    return vm->vmgi->vmgi_mat->vmgm_subp_attr;
+  }
+  assert(0);
+}
+
+
+/* Playback control */
+
+static link_t play_PGC(vm_t *vm) {
+  link_t link_values;
+  
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: vm: play_PGC:");
+  if((vm->state).domain != FP_DOMAIN) {
+    fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
+  } else {
+    fprintf(MSG_OUT, " first_play_pgc\n");
+  }
+#endif
+
+  /* This must be set before the pre-commands are executed because they
+   * might contain a CallSS that will save resume state */
+
+  /* FIXME: This may be only a temporary fix for something... */
+  (vm->state).pgN = 1;
+  (vm->state).cellN = 0;
+  (vm->state).blockN = 0;
+
+  /* eval -> updates the state and returns either 
+     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
+     - just play video i.e first PG
+       (This is what happens if you fall of the end of the pre_cmds)
+     - or an error (are there more cases?) */
+  if((vm->state).pgc->command_tbl && (vm->state).pgc->command_tbl->nr_of_pre) {
+    if(vmEval_CMD((vm->state).pgc->command_tbl->pre_cmds, 
+		  (vm->state).pgc->command_tbl->nr_of_pre, 
+		  &(vm->state).registers, &link_values)) {
+      /*  link_values contains the 'jump' return value */
+      return link_values;
+    } else {
+#ifdef TRACE
+      fprintf(MSG_OUT, "libdvdnav: PGC pre commands didn't do a Jump, Link or Call\n");
+#endif
+    }
+  }
+  return play_PG(vm);
+}  
+
+static link_t play_PGC_PG(vm_t *vm, int pgN) {    
+  link_t link_values;
+  
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: vm: play_PGC:");
+  if((vm->state).domain != FP_DOMAIN) {
+    fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
+  } else {
+    fprintf(MSG_OUT, " first_play_pgc\n");
+  }
+#endif
+
+  /*  This must be set before the pre-commands are executed because they
+   *  might contain a CallSS that will save resume state */
+
+  /* FIXME: This may be only a temporary fix for something... */
+  (vm->state).pgN = pgN;
+  (vm->state).cellN = 0;
+  (vm->state).blockN = 0;
+
+  /* eval -> updates the state and returns either 
+     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
+     - just play video i.e first PG
+       (This is what happens if you fall of the end of the pre_cmds)
+     - or an error (are there more cases?) */
+  if((vm->state).pgc->command_tbl && (vm->state).pgc->command_tbl->nr_of_pre) {
+    if(vmEval_CMD((vm->state).pgc->command_tbl->pre_cmds, 
+		  (vm->state).pgc->command_tbl->nr_of_pre, 
+		  &(vm->state).registers, &link_values)) {
+      /*  link_values contains the 'jump' return value */
+      return link_values;
+    } else {
+#ifdef TRACE
+      fprintf(MSG_OUT, "libdvdnav: PGC pre commands didn't do a Jump, Link or Call\n");
+#endif
+    }
+  }
+  return play_PG(vm);
+}  
+
+static link_t play_PGC_post(vm_t *vm) {
+  link_t link_values;
+
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: play_PGC_post:\n");
+#endif
+  
+  /* FIXME: Implement PGC Stills. Currently only Cell stills work */
+  assert((vm->state).pgc->still_time == 0);
+
+  /* eval -> updates the state and returns either 
+     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
+     - just go to next PGC
+       (This is what happens if you fall of the end of the post_cmds)
+     - or an error (are there more cases?) */
+  if((vm->state).pgc->command_tbl &&
+     vmEval_CMD((vm->state).pgc->command_tbl->post_cmds,
+		(vm->state).pgc->command_tbl->nr_of_post, 
+		&(vm->state).registers, &link_values)) {
+    return link_values;
+  }
+  
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: ** Fell of the end of the pgc, continuing in NextPGC\n");
+#endif
+  assert((vm->state).pgc->next_pgc_nr != 0);
+  /* Should end up in the STOP_DOMAIN if next_pgc is 0. */
+  if(!set_PGCN(vm, (vm->state).pgc->next_pgc_nr))
+    assert(0);
+  return play_PGC(vm);
+}
+
+static link_t play_PG(vm_t *vm) {
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i)\n", (vm->state).pgN);
+#endif
+  
+  assert((vm->state).pgN > 0);
+  if((vm->state).pgN > (vm->state).pgc->nr_of_programs) {
+#ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav: play_PG: (vm->state).pgN (%i) > pgc->nr_of_programs (%i)\n", 
+	    (vm->state).pgN, (vm->state).pgc->nr_of_programs );
+#endif
+    assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1); 
+    return play_PGC_post(vm);
+  }
+  
+  (vm->state).cellN = (vm->state).pgc->program_map[(vm->state).pgN - 1];
+  
+  return play_Cell(vm);
+}
+
+static link_t play_Cell(vm_t *vm) {
+  static const link_t play_this = {PlayThis, /* Block in Cell */ 0, 0, 0};
+
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: play_Cell: (vm->state).cellN (%i)\n", (vm->state).cellN);
+#endif
+  
+  assert((vm->state).cellN > 0);
+  if((vm->state).cellN > (vm->state).pgc->nr_of_cells) {
+#ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav: (vm->state).cellN (%i) > pgc->nr_of_cells (%i)\n", 
+	    (vm->state).cellN, (vm->state).pgc->nr_of_cells );
+#endif
+    assert((vm->state).cellN == (vm->state).pgc->nr_of_cells + 1); 
+    return play_PGC_post(vm);
+  }
+  
+  /* Multi angle/Interleaved */
+  switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode) {
+  case 0: /*  Normal */
+    assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 0);
+    break;
+  case 1: /*  The first cell in the block */
+    switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type) {
+    case 0: /*  Not part of a block */
+      assert(0);
+    case 1: /*  Angle block */
+      /* Loop and check each cell instead? So we don't get outside the block? */
+      (vm->state).cellN += (vm->state).AGL_REG - 1;
+#ifdef STRICT
+      assert((vm->state).cellN <= (vm->state).pgc->nr_of_cells);
+      assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0);
+      assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1);
+#else
+      if (!((vm->state).cellN <= (vm->state).pgc->nr_of_cells) ||
+          !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode != 0) ||
+	  !((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 1)) {
+	fprintf(MSG_OUT, "libdvdnav: Invalid angle block\n");
+	(vm->state).cellN -= (vm->state).AGL_REG - 1;
+      }
+#endif
+      break;
+    case 2: /*  ?? */
+    case 3: /*  ?? */
+    default:
+      fprintf(MSG_OUT, "libdvdnav: Invalid? Cell block_mode (%d), block_type (%d)\n",
+	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode,
+	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type);
+      assert(0);
+    }
+    break;
+  case 2: /*  Cell in the block */
+  case 3: /*  Last cell in the block */
+  /* These might perhaps happen for RSM or LinkC commands? */
+  default:
+    fprintf(MSG_OUT, "libdvdnav: Cell is in block but did not enter at first cell!\n");
+  }
+  
+  /* Updates (vm->state).pgN and PTTN_REG */
+  if(!set_PGN(vm)) {
+    /* Should not happen */
+    assert(0);
+    return play_PGC_post(vm);
+  }
+  (vm->state).cell_restart++;
+  (vm->state).blockN = 0;
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: Cell should restart here\n");
+#endif
+  return play_this;
+}
+
+static link_t play_Cell_post(vm_t *vm) {
+  cell_playback_t *cell;
+  
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: play_Cell_post: (vm->state).cellN (%i)\n", (vm->state).cellN);
+#endif
+  
+  cell = &(vm->state).pgc->cell_playback[(vm->state).cellN - 1];
+  
+  /* Still time is already taken care of before we get called. */
+  
+  /* Deal with a Cell command, if any */
+  if(cell->cell_cmd_nr != 0) {
+    link_t link_values;
+    
+/*  These asserts are now not needed.
+ *  Some DVDs have no cell commands listed in the PGC,
+ *  but the Cell itself points to a cell command that does not exist.
+ *  For this situation, just ignore the cell command and continue.
+ *
+ *  assert((vm->state).pgc->command_tbl != NULL);
+ *  assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
+ */
+
+    if ((vm->state).pgc->command_tbl != NULL &&
+        (vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr) {
+#ifdef TRACE
+      fprintf(MSG_OUT, "libdvdnav: Cell command present, executing\n");
+#endif
+      if(vmEval_CMD(&(vm->state).pgc->command_tbl->cell_cmds[cell->cell_cmd_nr - 1], 1,
+		    &(vm->state).registers, &link_values)) {
+        return link_values;
+      } else {
+#ifdef TRACE
+        fprintf(MSG_OUT, "libdvdnav: Cell command didn't do a Jump, Link or Call\n");
+#endif
+      }
+    } else {
+#ifdef TRACE
+      fprintf(MSG_OUT, "libdvdnav: Invalid Cell command\n");
+#endif
+    }
+  }
+  
+  /* Where to continue after playing the cell... */
+  /* Multi angle/Interleaved */
+  switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode) {
+  case 0: /*  Normal */
+    assert((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type == 0);
+    (vm->state).cellN++;
+    break;
+  case 1: /*  The first cell in the block */
+  case 2: /*  A cell in the block */
+  case 3: /*  The last cell in the block */
+  default:
+    switch((vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type) {
+    case 0: /*  Not part of a block */
+      assert(0);
+    case 1: /*  Angle block */
+      /* Skip the 'other' angles */
+      (vm->state).cellN++;
+      while((vm->state).cellN <= (vm->state).pgc->nr_of_cells &&
+	    (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode >= 2) {
+	(vm->state).cellN++;
+      }
+      break;
+    case 2: /*  ?? */
+    case 3: /*  ?? */
+    default:
+      fprintf(MSG_OUT, "libdvdnav: Invalid? Cell block_mode (%d), block_type (%d)\n",
+	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_mode,
+	      (vm->state).pgc->cell_playback[(vm->state).cellN - 1].block_type);
+      assert(0);
+    }
+    break;
+  }
+  
+  /* Figure out the correct pgN for the new cell */ 
+  if(!set_PGN(vm)) {
+#ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav: last cell in this PGC\n");
+#endif
+    return play_PGC_post(vm);
+  }
+  return play_Cell(vm);
+}
+
+
+/* link processing */
+
+static int process_command(vm_t *vm, link_t link_values) {
+  
+  while(link_values.command != PlayThis) {
+    
+#ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav: Before printout starts:\n");
+    vmPrint_LINK(link_values);
+    fprintf(MSG_OUT, "libdvdnav: Link values %i %i %i %i\n", link_values.command, 
+	    link_values.data1, link_values.data2, link_values.data3);
+    vm_print_current_domain_state(vm);
+    fprintf(MSG_OUT, "libdvdnav: Before printout ends.\n");
+#endif
+    
+    switch(link_values.command) {
+    case LinkNoLink:
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      return 0;  /* no actual jump */
+
+    case LinkTopC:
+      /* Restart playing from the beginning of the current Cell. */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      link_values = play_Cell(vm);
+      break;
+    case LinkNextC:
+      /* Link to Next Cell */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      assert((vm->state).cellN > 1);
+      (vm->state).cellN += 1;
+      link_values = play_Cell(vm);
+      break;
+    case LinkPrevC:
+      /* Link to Previous Cell */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      (vm->state).cellN -= 1;
+      link_values = play_Cell(vm);
+      break;
+      
+    case LinkTopPG:
+      /* Link to Top of Program */
+      /* BUTTON number:data1 */
+      fprintf(MSG_OUT, "libdvdnav: FIXME: LinkTopPG. This should start the current PG again.\n");
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      link_values = play_PG(vm);
+      break;
+    case LinkNextPG:
+      /* Link to Next Program */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      (vm->state).pgN += 1;
+      link_values = play_PG(vm);
+      break;
+    case LinkPrevPG:
+      /* Link to Previous Program */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      assert((vm->state).pgN > 1);
+      (vm->state).pgN -= 1;
+      link_values = play_PG(vm);
+      break;
+
+    case LinkTopPGC:
+      /* Restart playing from beginning of current Program Chain */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      link_values = play_PGC(vm);
+      break;
+    case LinkNextPGC:
+      /* Link to Next Program Chain */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      assert((vm->state).pgc->next_pgc_nr != 0);
+      if(!set_PGCN(vm, (vm->state).pgc->next_pgc_nr))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case LinkPrevPGC:
+      /* Link to Previous Program Chain */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      assert((vm->state).pgc->prev_pgc_nr != 0);
+      if(!set_PGCN(vm, (vm->state).pgc->prev_pgc_nr))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case LinkGoUpPGC:
+      /* Link to GoUp Program Chain */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      assert((vm->state).pgc->goup_pgc_nr != 0);
+      if(!set_PGCN(vm, (vm->state).pgc->goup_pgc_nr))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case LinkTailPGC:
+      /* Link to Tail of Program Chain */
+      /* BUTTON number:data1 */
+      if(link_values.data1 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
+      link_values = play_PGC_post(vm);
+    break;
+
+    case LinkRSM:
+      {
+	/* Link to Resume point */
+	int i;
+	
+	/*  Check and see if there is any rsm info!! */
+	assert((vm->state).rsm_vtsN);
+	(vm->state).domain = VTS_DOMAIN;
+	ifoOpenNewVTSI(vm, vm->dvd, (vm->state).rsm_vtsN);
+	set_PGCN(vm, (vm->state).rsm_pgcN);
+	
+	/* These should never be set in SystemSpace and/or MenuSpace */ 
+	/* (vm->state).TTN_REG = rsm_tt; ?? */
+	/* (vm->state).TT_PGCN_REG = (vm->state).rsm_pgcN; ?? */
+	for(i = 0; i < 5; i++) {
+	  (vm->state).registers.SPRM[4 + i] = (vm->state).rsm_regs[i];
+	}
+	
+	if(link_values.data1 != 0)
+	  (vm->state).HL_BTNN_REG = link_values.data1 << 10;
+	
+	if((vm->state).rsm_cellN == 0) {
+	  assert((vm->state).cellN); /*  Checking if this ever happens */
+	  (vm->state).pgN = 1;
+	  link_values = play_PG(vm);
+	} else { 
+	  /* (vm->state).pgN = ?? this gets the righ value in set_PGN() below */
+	  (vm->state).cellN = (vm->state).rsm_cellN;
+	  link_values.command = PlayThis;
+	  link_values.data1 = (vm->state).rsm_blockN;
+	  if(!set_PGN(vm)) {
+	    /* Were at the end of the PGC, should not happen for a RSM */
+	    assert(0);
+	    link_values.command = LinkTailPGC;
+	    link_values.data1 = 0;  /* No button */
+	  }
+	}
+      }
+      break;
+    case LinkPGCN:
+      /* Link to Program Chain Number:data1 */
+      if(!set_PGCN(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case LinkPTTN:
+      /* Link to Part of current Title Number:data1 */
+      /* BUTTON number:data2 */
+      assert((vm->state).domain == VTS_DOMAIN);
+      if(link_values.data2 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
+      if(!set_VTS_PTT(vm, (vm->state).vtsN, (vm->state).VTS_TTN_REG, link_values.data1))
+	assert(0);
+      link_values = play_PG(vm);
+      break;
+    case LinkPGN:
+      /* Link to Program Number:data1 */
+      /* BUTTON number:data2 */
+      if(link_values.data2 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
+      /* Update any other state, PTTN perhaps? */
+      (vm->state).pgN = link_values.data1;
+      link_values = play_PG(vm);
+      break;
+    case LinkCN:
+      /* Link to Cell Number:data1 */
+      /* BUTTON number:data2 */
+      if(link_values.data2 != 0)
+	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
+      /* Update any other state, pgN, PTTN perhaps? */
+      (vm->state).cellN = link_values.data1;
+      link_values = play_Cell(vm);
+      break;
+      
+    case Exit:
+      fprintf(MSG_OUT, "libdvdnav: FIXME:in trouble...Link Exit - CRASHING!!!\n");
+      assert(0); /*  What should we do here?? */
+      
+    case JumpTT:
+      /* Jump to VTS Title Domain */
+      /* Only allowed from the First Play domain(PGC) */
+      /* or the Video Manager domain (VMG) */
+      assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
+      if(!set_TT(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case JumpVTS_TT:
+      /* Jump to Title:data1 in same VTS Title Domain */
+      /* Only allowed from the VTS Menu Domain(VTSM) */
+      /* or the Video Title Set Domain(VTS) */
+      assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
+      if(!set_VTS_TT(vm, (vm->state).vtsN, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case JumpVTS_PTT:
+      /* Jump to Part:data2 of Title:data1 in same VTS Title Domain */
+      /* Only allowed from the VTS Menu Domain(VTSM) */
+      /* or the Video Title Set Domain(VTS) */
+      assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
+      if(!set_VTS_PTT(vm, (vm->state).vtsN, link_values.data1, link_values.data2))
+	assert(0);
+      link_values = play_PGC_PG(vm, (vm->state).pgN);
+      break;
+      
+    case JumpSS_FP:
+      /* Jump to First Play Domain */
+      /* Only allowed from the VTS Menu Domain(VTSM) */
+      /* or the Video Manager domain (VMG) */
+      assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == VTSM_DOMAIN); /* ?? */
+      if (!set_FP_PGC(vm))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case JumpSS_VMGM_MENU:
+      /* Jump to Video Manger domain - Title Menu:data1 or any PGC in VMG */
+      /* Allowed from anywhere except the VTS Title domain */
+      assert((vm->state).domain != VTS_DOMAIN); /* ?? */
+      (vm->state).domain = VMGM_DOMAIN;
+      if(!set_MENU(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case JumpSS_VTSM:
+      /* Jump to a menu in Video Title domain, */
+      /* or to a Menu is the current VTS */
+      /* FIXME: This goes badly wrong for some DVDs. */
+      /* FIXME: Keep in touch with ogle people regarding what to do here */
+      /* ifoOpenNewVTSI:data1 */
+      /* VTS_TTN_REG:data2 */
+      /* get_MENU:data3 */ 
+#ifdef TRACE
+      fprintf(MSG_OUT, "libdvdnav: BUG TRACKING *******************************************************************\n");
+      fprintf(MSG_OUT, "libdvdnav:     data1=%u data2=%u data3=%u\n", 
+                link_values.data1,
+                link_values.data2,
+                link_values.data3);
+      fprintf(MSG_OUT, "libdvdnav: *******************************************************************\n");
+#endif
+
+      if(link_values.data1 != 0) {
+	assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
+	(vm->state).domain = VTSM_DOMAIN;
+	ifoOpenNewVTSI(vm, vm->dvd, link_values.data1);  /*  Also sets (vm->state).vtsN */
+      } else {
+	/*  This happens on 'The Fifth Element' region 2. */
+	assert((vm->state).domain == VTSM_DOMAIN);
+      }
+      /*  I don't know what title is supposed to be used for. */
+      /*  Alien or Aliens has this != 1, I think. */
+      /* assert(link_values.data2 == 1); */
+      (vm->state).VTS_TTN_REG = link_values.data2;
+      if(!set_MENU(vm, link_values.data3))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case JumpSS_VMGM_PGC:
+      /* set_PGCN:data1 */
+      assert((vm->state).domain != VTS_DOMAIN); /* ?? */
+      (vm->state).domain = VMGM_DOMAIN;
+      if(!set_PGCN(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+      
+    case CallSS_FP:
+      /* set_RSMinfo:data1 */
+      assert((vm->state).domain == VTS_DOMAIN); /* ?? */
+      /* Must be called before domain is changed */
+      set_RSMinfo(vm, link_values.data1, /* We dont have block info */ 0);
+      set_FP_PGC(vm);
+      link_values = play_PGC(vm);
+      break;
+    case CallSS_VMGM_MENU:
+      /* set_MENU:data1 */ 
+      /* set_RSMinfo:data2 */
+      assert((vm->state).domain == VTS_DOMAIN); /* ?? */
+      /* Must be called before domain is changed */
+      set_RSMinfo(vm, link_values.data2, /* We dont have block info */ 0);      
+      (vm->state).domain = VMGM_DOMAIN;
+      if(!set_MENU(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case CallSS_VTSM:
+      /* set_MENU:data1 */ 
+      /* set_RSMinfo:data2 */
+      assert((vm->state).domain == VTS_DOMAIN); /* ?? */
+      /* Must be called before domain is changed */
+      set_RSMinfo(vm, link_values.data2, /* We dont have block info */ 0);
+      (vm->state).domain = VTSM_DOMAIN;
+      if(!set_MENU(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case CallSS_VMGM_PGC:
+      /* set_PGC:data1 */
+      /* set_RSMinfo:data2 */
+      assert((vm->state).domain == VTS_DOMAIN); /* ?? */
+      /* Must be called before domain is changed */
+      set_RSMinfo(vm, link_values.data2, /* We dont have block info */ 0);
+      (vm->state).domain = VMGM_DOMAIN;
+      if(!set_PGCN(vm, link_values.data1))
+	assert(0);
+      link_values = play_PGC(vm);
+      break;
+    case PlayThis:
+      /* Should never happen. */
+      assert(0);
+      break;
+    }
+
+#ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav: After printout starts:\n");
+    vm_print_current_domain_state(vm);
+    fprintf(MSG_OUT, "libdvdnav: After printout ends.\n");
+#endif
+    
+  }
+  (vm->state).blockN = link_values.data1;
+  return 1;
+}
+
+
+/* Set functions */
+
+static int set_TT(vm_t *vm, int tt) {  
+  assert(tt <= vm->vmgi->tt_srpt->nr_of_srpts);
+  (vm->state).TTN_REG = tt;
+  return set_VTS_TT(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
+		    vm->vmgi->tt_srpt->title[tt - 1].vts_ttn);
+}
+
+static int set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn) {
+  return set_VTS_PTT(vm, vtsN, vts_ttn, 1);
+}
+
+static int set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part) {
+  int pgcN, pgN, res;
+  
+  (vm->state).domain = VTS_DOMAIN;
+
+  if(vtsN != (vm->state).vtsN)
+    ifoOpenNewVTSI(vm, vm->dvd, vtsN);  /* Also sets (vm->state).vtsN */
+  
+  if ((vts_ttn < 1) || (vts_ttn > vm->vtsi->vts_ptt_srpt->nr_of_srpts) ||
+      (part < 1) || (part > vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].nr_of_ptts) ) {
+    return 0;
+  }
+  
+  pgcN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgcn;
+  pgN = vm->vtsi->vts_ptt_srpt->title[vts_ttn - 1].ptt[part - 1].pgn;
+ 
+  (vm->state).TT_PGCN_REG = pgcN;
+  (vm->state).PTTN_REG    = pgN;
+  (vm->state).TTN_REG     = get_TT(vm, vtsN, vts_ttn);
+  assert( (vm->state.TTN_REG) != 0 );
+  (vm->state).VTS_TTN_REG = vts_ttn;
+  (vm->state).vtsN        = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
+  /* Any other registers? */
+  
+  res = set_PGCN(vm, pgcN);   /* This clobber's state.pgN (sets it to 1), but we don't want clobbering here. */
+  (vm->state).pgN = pgN;
+  return res;
+}
+
+static int set_FP_PGC(vm_t *vm) {  
+  (vm->state).domain = FP_DOMAIN;
+  (vm->state).pgc = vm->vmgi->first_play_pgc;
+  return 1;
+}
+
+
+static int set_MENU(vm_t *vm, int menu) {
+  assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == VTSM_DOMAIN);
+  return set_PGCN(vm, get_ID(vm, menu));
+}
+
+static int set_PGCN(vm_t *vm, int pgcN) {
+  pgcit_t *pgcit;
+  
+  pgcit = get_PGCIT(vm);
+  assert(pgcit != NULL);  /* ?? Make this return -1 instead */
+
+  if(pgcN < 1 || pgcN > pgcit->nr_of_pgci_srp) {
+#ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav:  ** No such pgcN = %d\n", pgcN);
+#endif
+    return 0;
+  }
+  
+  (vm->state).pgc = pgcit->pgci_srp[pgcN - 1].pgc;
+  (vm->state).pgN = 1;
+ 
+  if((vm->state).domain == VTS_DOMAIN)
+    (vm->state).TT_PGCN_REG = pgcN;
+
+  return 1;
+}
+
+/* Figure out the correct pgN from the cell and update (vm->state). */ 
+static int set_PGN(vm_t *vm) {
+  int new_pgN = 0;
+  
+  while(new_pgN < (vm->state).pgc->nr_of_programs 
+	&& (vm->state).cellN >= (vm->state).pgc->program_map[new_pgN])
+    new_pgN++;
+  
+  if(new_pgN == (vm->state).pgc->nr_of_programs) /* We are at the last program */
+    if((vm->state).cellN > (vm->state).pgc->nr_of_cells)
+      return 0; /* We are past the last cell */
+  
+  (vm->state).pgN = new_pgN;
+  
+  if((vm->state).domain == VTS_DOMAIN) {
+    playback_type_t *pb_ty;
+    if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
+      return 0; /* ?? */
+    pb_ty = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1].pb_ty;
+    if(pb_ty->multi_or_random_pgc_title == /* One_Sequential_PGC_Title */ 0) {
+      int dummy;
+#if 0
+      /* TTN_REG can't be trusted to have a correct value here... */
+      vts_ptt_srpt_t *ptt_srpt = vtsi->vts_ptt_srpt;
+      assert((vm->state).VTS_TTN_REG <= ptt_srpt->nr_of_srpts);
+      assert(get_PGCN() == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgcn);
+      assert(1 == ptt_srpt->title[(vm->state).VTS_TTN_REG - 1].ptt[0].pgn);
+#endif
+      vm_get_current_title_part(vm, &dummy, &(vm->state).pgN);
+      (vm->state).PTTN_REG = (vm->state).pgN;
+    } else {
+      /* FIXME: Handle RANDOM or SHUFFLE titles. */
+      fprintf(MSG_OUT, "libdvdnav: RANDOM or SHUFFLE titles are NOT handled yet.\n");
+    }
+  }
+  return 1;
+}
+
+/* Must be called before domain is changed (set_PGCN()) */
+static void set_RSMinfo(vm_t *vm, int cellN, int blockN) {
+  int i;
+  
+  if(cellN) {
+    (vm->state).rsm_cellN = cellN;
+    (vm->state).rsm_blockN = blockN;
+  } else {
+    (vm->state).rsm_cellN = (vm->state).cellN;
+    (vm->state).rsm_blockN = blockN;
+  }
+  (vm->state).rsm_vtsN = (vm->state).vtsN;
+  (vm->state).rsm_pgcN = get_PGCN(vm);
+  
+  /* assert((vm->state).rsm_pgcN == (vm->state).TT_PGCN_REG);  for VTS_DOMAIN */
+  
+  for(i = 0; i < 5; i++) {
+    (vm->state).rsm_regs[i] = (vm->state).registers.SPRM[4 + i];
+  }
+}
+
+
+/* Get functions */
+
+/* Searches the TT tables, to find the current TT.
+ * returns the current TT.
+ * returns 0 if not found.
+ */
+static int get_TT(vm_t *vm, int vtsN, int vts_ttn) {
+  int i;
+  int tt=0;
+
+  for(i = 1; i <= vm->vmgi->tt_srpt->nr_of_srpts; i++) {
+    if( vm->vmgi->tt_srpt->title[i - 1].title_set_nr == vtsN && 
+        vm->vmgi->tt_srpt->title[i - 1].vts_ttn == vts_ttn) {
+      tt=i;
+      break;
+    }
+  }
+  return tt;
+}
+
+/* Search for entry_id match of the PGC Category in the current VTS PGCIT table.
+ * Return pgcN based on entry_id match.
+ */
+static int get_ID(vm_t *vm, int id) {
+  int pgcN, i;
+  pgcit_t *pgcit;
+  
+  /* Relies on state to get the correct pgcit. */
+  pgcit = get_PGCIT(vm);
+  assert(pgcit != NULL);
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: ** Searching for menu (0x%x) entry PGC\n", id);
+#endif
+
+  /* Force high bit set. */
+  id |=0x80;
+
+  /* Get menu/title */
+  for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
+    if( (pgcit->pgci_srp[i].entry_id) == id) {
+      pgcN = i + 1;
+#ifdef TRACE
+      fprintf(MSG_OUT, "libdvdnav: Found menu.\n");
+#endif
+      return pgcN;
+    }
+  }
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: ** No such id/menu (0x%02x) entry PGC\n", id & 0x7f);
+  for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
+    if ( (pgcit->pgci_srp[i].entry_id & 0x80) == 0x80) {
+      fprintf(MSG_OUT, "libdvdnav: Available menus: 0x%x\n",
+                     pgcit->pgci_srp[i].entry_id & 0x7f);
+    }
+  }
+#endif
+  return 0; /*  error */
+}
+
+static int get_PGCN(vm_t *vm) {
+  pgcit_t *pgcit;
+  int pgcN = 1;
+
+  pgcit = get_PGCIT(vm);
+  assert(pgcit != NULL);
+  
+  while(pgcN <= pgcit->nr_of_pgci_srp) {
+    if(pgcit->pgci_srp[pgcN - 1].pgc == (vm->state).pgc)
+      return pgcN;
+    pgcN++;
+  }
+  fprintf(MSG_OUT, "libdvdnav: get_PGCN failed. Was trying to find pgcN in domain %d\n", 
+         (vm->state).domain);
+  /* assert(0);*/ 
+  return 0; /*  error */
+}
+
+static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang) {
   int i;
   
   if(h == NULL || h->pgci_ut == NULL) {
@@ -2004,13 +1680,12 @@ static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang)
  	    (char)(h->pgci_ut->lu[0].lang_code >> 8),
 	    (char)(h->pgci_ut->lu[0].lang_code & 0xff));
     fprintf(MSG_OUT, "libdvdnav: Menu Languages available: ");
-    for(i=0;i< h->pgci_ut->nr_of_lus;i++) {
+    for(i = 0; i < h->pgci_ut->nr_of_lus; i++) {
       fprintf(MSG_OUT, "%c%c ",
- 	    (char)(h->pgci_ut->lu[0].lang_code >> 8),
-	    (char)(h->pgci_ut->lu[0].lang_code & 0xff));
+ 	    (char)(h->pgci_ut->lu[i].lang_code >> 8),
+	    (char)(h->pgci_ut->lu[i].lang_code & 0xff));
     }
     fprintf(MSG_OUT, "\n");
-
     i = 0; /*  error? */
   }
   
@@ -2043,8 +1718,39 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
   return pgcit;
 }
 
+
+/* Debug functions */
+
+#ifdef TRACE
+void vm_position_print(vm_t *vm, vm_position_t *position) {
+  fprintf(MSG_OUT, "libdvdnav: But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x cell_restart=%x cell_start=%x still=%x block=%x\n",
+  position->button,
+  position->spu_channel,
+  position->audio_channel,
+  position->angle_channel,
+  position->hop_channel,
+  position->vts,
+  position->domain,
+  position->cell,
+  position->cell_restart,
+  position->cell_start,
+  position->still,
+  position->block);
+}
+#endif
+
+
 /*
  * $Log$
+ * Revision 1.43  2003/02/20 15:32:19  mroi
+ * big libdvdnav cleanup, quoting the ChangeLog:
+ *   * some bugfixes
+ *   * code cleanup
+ *   * build process polishing
+ *   * more sensible event order in get_next_block to ensure useful event delivery
+ *   * VOBU level resume
+ *   * fixed: seeking in a multiangle feature briefly showed the wrong angle
+ *
  * Revision 1.42  2003/01/13 13:33:45  mroi
  * slightly improved logic of program skipping:
  * previous program:

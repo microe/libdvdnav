@@ -1,3 +1,23 @@
+/*
+ * This file is part of libdvdnav, a DVD navigation library.
+ *
+ * libdvdnav is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * libdvdnav is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
+ *
+ * $Id$
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -5,6 +25,7 @@
 #include <sys/fcntl.h>
 #include <assert.h>
 #include "remap.h"
+#include "dvdnav_internal.h"
 
 struct block_s {
     int domain;
@@ -164,15 +185,14 @@ remap_t* remap_loadmap( char *title) {
     /* Build the map filename */
     home = getenv("HOME"); assert(home);
     strncpy(fname, home, sizeof(fname));
-    strncat(fname, "/.xine/", sizeof(fname));
+    strncat(fname, "/.dvdnav/", sizeof(fname));
     strncat(fname, title, sizeof(fname));
     strncat(fname, ".map", sizeof(fname));
 
-    printf("Loading %s.\n", fname);
     /* Open the map file */
     fp = fopen( fname, "r");
     if (!fp) {
-	printf("Unable to find map file '%s'\n", fname);
+	fprintf(MSG_OUT, "libdvdnav: Unable to find map file '%s'\n", fname);
 	return NULL;
     }
 
@@ -186,7 +206,7 @@ remap_t* remap_loadmap( char *title) {
 	    res = parseblock( buf, 
 		&tmp.domain, &tmp.title, &tmp.program, &tmp.start_block, &tmp.end_block);
 	    if (res != 5) {
-		printf("Ignoring map line (%d): %s\n", res, buf);
+		fprintf(MSG_OUT, "libdvdnav: Ignoring map line (%d): %s\n", res, buf);
 		continue;
 	    }
 	    remap_add_node( map, tmp);
@@ -205,7 +225,7 @@ unsigned long remap_block(
     block_t *b;
 
     if (map->debug) {
-	printf("%s: domain %d, title %d, program %d, start %lx, next %lx\n",
+	fprintf(MSG_OUT, "libdvdnav: %s: domain %d, title %d, program %d, start %lx, next %lx\n",
 	    map->title, domain, title, program, cblock, cblock+offset);
     }
 
@@ -217,7 +237,7 @@ unsigned long remap_block(
     
     if (b) {
        if (map->debug) {
-	   printf("Redirected to %lx\n", b->end_block);
+	   fprintf(MSG_OUT, "libdvdnav: Redirected to %lx\n", b->end_block);
        }
        return b->end_block - cblock;
     }

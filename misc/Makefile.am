@@ -1,4 +1,4 @@
-EXTRA_DIST = autogen.sh  dvdnav-config.in
+EXTRA_DIST = dvdnav-config.in
 
 bin_SCRIPTS = dvdnav-config
 

@@ -25,7 +25,6 @@
 #include "config.h"
 #endif
 
-#include <dvdnav.h>
 #include "dvdnav_internal.h"
 
 #include "vm.h"
@@ -33,8 +32,10 @@
 /* Navigation API calls */
 
 dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
-  if(!this)
-   return S_ERR;
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
 
   this->position_current.still = 0;
   this->skip_still = 1;
@@ -43,11 +44,8 @@ dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int *titles) {
-  if(!this)
-   return S_ERR;
-
-  if(!titles) {
-    printerr("Passed a NULL pointer");
+  if(!this || !titles) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
 
@@ -63,11 +61,8 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int *titles) {
 }
 
 dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *this, int title, int *parts) {
-  if(!this)
-   return S_ERR;
-
-  if(!parts) {
-    printerr("Passed a NULL pointer");
+  if(!this || !parts) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
   if(!this->started) {
@@ -75,81 +70,125 @@ dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *this, int title, int *parts
     return S_ERR;
   }
   if ((title < 1) || (title > vm_get_vmgi(this->vm)->tt_srpt->nr_of_srpts) ) {
-    printerr("Passed a title number out of range");
+    printerr("Passed a title number out of range.");
     return S_ERR;
   }
+
   (*parts) = vm_get_vmgi(this->vm)->tt_srpt->title[title-1].nr_of_ptts;
+
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int *title, int *part) {
-  if(!this || !this->vm)
-   return S_ERR;
-
-  if(!title || !part) {
-    printerr("Passed a NULL pointer");
+  int retval;
+  
+  if(!this || !title || !part) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
-
-  return vm_get_current_title_part(this->vm, title, part);
+  
+  pthread_mutex_lock(&this->vm_lock);
+  if (!this->vm->vtsi || !this->vm->vmgi) {
+    printerr("Bad VM state.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  if (!this->vm->state.pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  if (this->vm->state.domain != VTS_DOMAIN) {
+    printerr("Not in VTS domain.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  retval = vm_get_current_title_part(this->vm, title, part);
+  pthread_mutex_unlock(&this->vm_lock);
+  
+  return retval ? S_OK : S_ERR;
 }
 
 dvdnav_status_t dvdnav_title_play(dvdnav_t *this, int title) {
-
   if(!this) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
-
   return dvdnav_part_play(this, title, 1);
 }
 
 dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int title, int part) {
+  int retval;
 
   if(!this) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
+  
+  pthread_mutex_lock(&this->vm_lock);
+  if (!this->vm->vtsi || !this->vm->vmgi) {
+    printerr("Bad VM state.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  if (!this->vm->state.pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  if((title < 1) || (title > this->vm->vmgi->tt_srpt->nr_of_srpts)) {
+    printerr("Title out of range.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  retval = vm_jump_title_part(this->vm, title, part);
+  pthread_mutex_unlock(&this->vm_lock);
 
-  return vm_jump_title_part(this->vm, title, part);
+  return retval ? S_OK : S_ERR;
 }
 
 dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *this, int title,
-					  int part, int parts_to_play) {
-  /* Perform jump as per usual */
-
-  return dvdnav_part_play(this, title, part);
-  
-  /* FIXME: Impement auto-stop */
-  
-  /* return S_OK;*/ 
+					   int part, int parts_to_play) {
+  /* FIXME: Implement auto-stop */
+ if (dvdnav_part_play(this, title, part) == S_OK)
+   printerr("Not implemented yet.");
+ return S_ERR;
 }
 
 dvdnav_status_t dvdnav_time_play(dvdnav_t *this, int title,
-				unsigned long int time) {
-  /* FIXME: Implement */
+				 unsigned long int time) {
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
   
-  return S_OK;
+  /* FIXME: Implement */
+  printerr("Not implemented yet.");
+  return S_ERR;
 }
 
 dvdnav_status_t dvdnav_stop(dvdnav_t *this) {
-  if(!this)
-   return S_ERR;
-
-  /* Set the STOP flag */
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
   
-  this->stop = 1;
-  
+  pthread_mutex_lock(&this->vm_lock);
+  vm_stop(this->vm);
+  pthread_mutex_unlock(&this->vm_lock);
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_go_up(dvdnav_t *this) {
-  if(!this)
-   return S_ERR;
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
 
   /* A nice easy function... delegate to the VM */
-  vm_go_up(this->vm);
+  pthread_mutex_lock(&this->vm_lock);
+  vm_jump_up(this->vm);
+  pthread_mutex_unlock(&this->vm_lock);
 
   return S_OK;
 }
-
-
-

@@ -1,4 +1,3 @@
-
 if INSTALL_M4
 m4datadir = @ACLOCAL_DIR@
 m4data_DATA = dvdnav.m4

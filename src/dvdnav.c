@@ -30,7 +30,6 @@
 */
 
 #include <pthread.h>
-#include <dvdnav.h>
 #include "dvdnav_internal.h"
 #include "read_cache.h"
 
@@ -42,119 +41,9 @@
 
 #include "remap.h"
 
-/*
- * NOTE:
- *      All NLCK_*() function are not mutex locked, this made them reusable in
- *      a locked context. Take care.
- *
- */
+static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
+  /* clear everything except file, vm, mutex, readahead */
 
-/* Current domain (backend to dvdnav_is_domain_() funcs) */
-static int8_t NLCK_dvdnav_is_domain(dvdnav_t *this, domain_t domain) {
-  dvd_state_t  *state;
-  
-  if((!this) || (!this->started) || (!this->vm))
-    return -1;
-  
-  state = &(this->vm->state);
-
-  if(!state)
-    return -1;
-
-  return (state->domain == domain) ? 1 : 0;
-}
-
-static int8_t _dvdnav_is_domain(dvdnav_t *this, domain_t domain) {
-  int8_t        retval;
-  
-  pthread_mutex_lock(&this->vm_lock); 
-  retval = NLCK_dvdnav_is_domain(this, domain);
-  pthread_mutex_unlock(&this->vm_lock);
-  
-  return retval;
-}
-
-static int8_t NCLK_dvdnav_get_audio_logical_stream(dvdnav_t *this, uint8_t audio_num) {
-  dvd_state_t *state;
-  int8_t       logical = -1;
-  
-  if(!NLCK_dvdnav_is_domain(this, VTS_DOMAIN))
-    audio_num = 0;
-  
-  state = &(this->vm->state);
-  
-  if(audio_num < 8) {
-    if(state->pgc->audio_control[audio_num] & (1 << 15)) {
-      logical = (state->pgc->audio_control[audio_num] >> 8) & 0x07;  
-    }
-  }
-  
-  return logical;
-}
-
-static int8_t NCLK_dvdnav_get_spu_logical_stream(dvdnav_t *this, uint8_t subp_num) {
-  dvd_state_t   *state;
-  ifo_handle_t  *vtsi;
-  
-  if(!this)
-    return -1;
-  
-  state = &(this->vm->state);
-  vtsi  = this->vm->vtsi;
-  
-  if(subp_num >= vtsi->vtsi_mat->nr_of_vts_subp_streams)
-    return -1;
-  
-  return vm_get_subp_stream(this->vm, subp_num, 0);
-}
-
-static int8_t NLCK_dvdnav_get_active_spu_stream(dvdnav_t *this) {
-  dvd_state_t  *state;
-  int8_t        subp_num;
-  int           stream_num;
-  
-  state      = &(this->vm->state);
-  subp_num   = state->SPST_REG & ~0x40;
-  stream_num = NCLK_dvdnav_get_spu_logical_stream(this, subp_num);
-  
-  if(stream_num == -1)
-    for(subp_num = 0; subp_num < 32; subp_num++)
-      if(state->pgc->subp_control[subp_num] & (1 << 31)) {
-	stream_num = NCLK_dvdnav_get_spu_logical_stream(this, subp_num);
-	break;
-      }
-  
-  return stream_num;
-}
-
-uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
-  uint8_t         retval;
-  
-  pthread_mutex_lock(&this->vm_lock); 
-  retval = (uint8_t) vm_get_video_aspect(this->vm);
-  pthread_mutex_unlock(&this->vm_lock); 
-  
-  return retval;
-}
-
-uint8_t dvdnav_get_video_scale_permission(dvdnav_t *this) {
-  uint8_t         retval;
-  
-  pthread_mutex_lock(&this->vm_lock); 
-  retval = (uint8_t) vm_get_video_scale_permission(this->vm);
-  pthread_mutex_unlock(&this->vm_lock); 
-  
-  return retval;
-}
-
-dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
-  if (!this) {
-    printerr("Passed a NULL pointer");
-    return S_ERR;
-  }
-  /* clear everything except path, file, vm, mutex, readahead */
-
-  /* path */
   if (this->file) DVDCloseFile(this->file);
   this->file = NULL;
   this->open_vtsN = -1;
@@ -166,17 +55,15 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   /* Set initial values of flags */
   this->position_current.still = 0;
   this->skip_still = 0;
-  this->stop = 0;
   this->spu_clut_changed = 0;
-  this->started=0;
-  /* this->use_read_ahead */
+  this->started = 0;
 
   dvdnav_read_cache_clear(this->cache);
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
+dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
   dvdnav_t *this;
   struct timeval time;
   
@@ -186,10 +73,9 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   (*dest) = NULL;
   this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
   if(!this)
-   return S_ERR;
+    return S_ERR;
   memset(this, 0, (sizeof(dvdnav_t) ) ); /* Make sure this structure is clean */
-  (*dest) = this;
-
+ 
   pthread_mutex_init(&this->vm_lock, NULL);
   /* Initialise the error string */
   printerr("");
@@ -197,13 +83,13 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   /* Initialise the VM */
   this->vm = vm_new_vm();
   if(!this->vm) {
-    printerr("Error initialising the DVD VM");
+    printerr("Error initialising the DVD VM.");
     pthread_mutex_destroy(&this->vm_lock);
     free(this);
     return S_ERR;
   }
-  if(vm_reset(this->vm, path) == -1) {
-    printerr("Error starting the VM / opening the DVD device");
+  if(!vm_reset(this->vm, path)) {
+    printerr("Error starting the VM / opening the DVD device.");
     pthread_mutex_destroy(&this->vm_lock);
     vm_free_vm(this->vm);
     free(this);
@@ -213,33 +99,33 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   /* Set the path. FIXME: Is a deep copy 'right' */
   strncpy(this->path, path, MAX_PATH_LEN);
 
-  dvdnav_clear(this);
- 
   /* Pre-open and close a file so that the CSS-keys are cached. */
   this->file = DVDOpenFile(vm_get_dvd_reader(this->vm), 0, DVD_READ_MENU_VOBS);
-  if (this->file) DVDCloseFile(this->file);
-  this->file = NULL;
     
   /* Start the read-ahead cache. */
   this->cache = dvdnav_read_cache_new(this);
 
-  /* Seed the random numbers. So that the DVD VM Command rand()i
-   * gives a different start value each time a DVD is played.
-   */
-  gettimeofday(&time,NULL);
+  /* Seed the random numbers. So that the DVD VM Command rand()
+   * gives a different start value each time a DVD is played. */
+  gettimeofday(&time, NULL);
   srand(time.tv_usec);
  
+  dvdnav_clear(this);
+ 
+  (*dest) = this;
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_close(dvdnav_t *this) {
-  if(!this) {
-    printerr("Passed a NULL pointer");
-    return S_ERR;
-  }
+
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: close:called\n");
 #endif
+
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
 
   if (this->file) {
     DVDCloseFile(this->file);
@@ -250,24 +136,18 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
   }
 
   /* Free the VM */
-  if(this->vm) {
+  if(this->vm)
     vm_free_vm(this->vm);
-  }
-  if (this->file) {
-    DVDCloseFile(this->file);
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: close2:file closing\n");
-#endif
-    this->file = NULL;
-  }
+
   pthread_mutex_destroy(&this->vm_lock);
 
   /* We leave the final freeing of the entire structure to the cache,
    * because we don't know, if there are still buffers out in the wild,
    * that must return first. */
-  if(this->cache) {
+  if(this->cache)
     dvdnav_read_cache_free(this->cache);
-  } else free(this);
+  else
+    free(this);
   
   return S_OK;
 }
@@ -278,101 +158,83 @@ dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: reset:called\n");
 #endif
+
   if(!this) {
-    printerr("Passed a NULL pointer");
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: getting lock\n");
-#endif
+
   pthread_mutex_lock(&this->vm_lock); 
+
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: reseting vm\n");
 #endif
-  if(vm_reset(this->vm, NULL) == -1) {
-    printerr("Error restarting the VM");
+  if(!vm_reset(this->vm, NULL)) {
+    printerr("Error restarting the VM.");
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: clearing dvdnav\n");
 #endif
-  result=dvdnav_clear(this);
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: unlocking\n");
-#endif
+  result = dvdnav_clear(this);
+
   pthread_mutex_unlock(&this->vm_lock); 
   return result;
 }
 
-dvdnav_status_t dvdnav_path(dvdnav_t *this, char** path) {
-  if(!this || !path || !(*path)) {
+dvdnav_status_t dvdnav_path(dvdnav_t *this, const char** path) {
+
+  if(!this || !path) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
 
-  /* FIXME: Is shallow copy 'right'? */
   (*path) = this->path;
 
   return S_OK;
 }
 
-char* dvdnav_err_to_string(dvdnav_t *this) {
-  if(!this) {
-    /* Shold this be "passed a NULL pointer?" */
+const char* dvdnav_err_to_string(dvdnav_t *this) {
+  
+  if(!this)
     return "Hey! You gave me a NULL pointer you naughty person!";
-  }
   
   return this->err_str;
 }
 
-/**
+/*
  * Returns 1 if block contains NAV packet, 0 otherwise.
  * Precesses said NAV packet if present.
  *
  * Most of the code in here is copied from xine's MPEG demuxer
  * so any bugs which are found in that should be corrected here also.
  */
-int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_pci) {
-  int            bMpeg1=0;
+static int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, pci_t *nav_pci) {
+  int            bMpeg1 = 0;
   uint32_t       nHeaderLen;
   uint32_t       nPacketLen;
   uint32_t       nStreamID;
-/* uint8_t       *p_start=p; */
-
-
-  if (p==NULL) {
-    fprintf(MSG_OUT, "libdvdnav: Passed a NULL pointer.\n");
-    return 0;
-  }
-
-  /* dprint("Checking packet...\n"); */
 
   if (p[3] == 0xBA) { /* program stream pack header */
-
     int nStuffingBytes;
-
-    /* xprintf (VERBOSE|DEMUX, "program stream pack header\n"); */
 
     bMpeg1 = (p[4] & 0x40) == 0;
 
     if (bMpeg1) {
-      p   += 12;
+      p += 12;
     } else { /* mpeg2 */
       nStuffingBytes = p[0xD] & 0x07;
       p += 14 + nStuffingBytes;
     }
   }
 
-
   if (p[3] == 0xbb) { /* program stream system header */
-    int nHeaderLen;
-
     nHeaderLen = (p[4] << 8) | p[5];
     p += 6 + nHeaderLen;
   }
 
   /* we should now have a PES packet here */
-
   if (p[0] || p[1] || (p[2] != 1)) {
     fprintf(MSG_OUT, "libdvdnav: demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
     return 0;
@@ -385,14 +247,14 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
   p += nHeaderLen;
 
   if (nStreamID == 0xbf) { /* Private stream 2 */
-/*
- *   int i;
- *    fprintf(MSG_OUT, "libdvdnav: nav packet=%u\n",p-p_start-6);
- *   for(i=0;i<80;i++) {
- *     fprintf(MSG_OUT, "%02x ",p[i-6]);
- *   }
- *   fprintf(MSG_OUT, "\n");
- */
+#if 0
+    int i;
+    fprintf(MSG_OUT, "libdvdnav: nav packet=%u\n",p-p_start-6);
+    for(i=0;i<80;i++)
+      fprintf(MSG_OUT, "%02x ",p[i-6]);
+    fprintf(MSG_OUT, "\n");
+#endif
+
     if(p[0] == 0x00) {
       navRead_PCI(nav_pci, p+1);
     }
@@ -403,9 +265,7 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
     if(p[6] == 0x01) {
       nPacketLen = p[4] << 8 | p[5];
       p += 6;
-      /* dprint("NAV DSI packet\n");  */
       navRead_DSI(nav_dsi, p+1);
-
     } 
     return 1;
   }
@@ -415,7 +275,7 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
 /* DSI is used for most angle stuff. 
  * PCI is used for only non-seemless angle stuff
  */ 
-int dvdnav_get_vobu(dvdnav_t *self, dsi_t* nav_dsi, pci_t* nav_pci, dvdnav_vobu_t* vobu) {
+static int dvdnav_get_vobu(dvdnav_t *this, dsi_t *nav_dsi, pci_t *nav_pci, dvdnav_vobu_t *vobu) {
   uint32_t next;
   int angle, num_angle;
 
@@ -434,70 +294,72 @@ int dvdnav_get_vobu(dvdnav_t *self, dsi_t* nav_dsi, pci_t* nav_pci, dvdnav_vobu_
    * Should really assert if bit 31 != 1
    */
   
-  /* Relative offset from vobu_start */
-  vobu->vobu_next = ( nav_dsi->vobu_sri.next_vobu & 0x3fffffff );  
-  
-  /* Old code -- may still be sueful one day 
+#if 0
+  /* Old code -- may still be useful one day */
   if(nav_dsi->vobu_sri.next_vobu != SRI_END_OF_CELL ) {
     vobu->vobu_next = ( nav_dsi->vobu_sri.next_vobu & 0x3fffffff );
   } else {
     vobu->vobu_next = vobu->vobu_length;
-  } */
+  }
+#else
+  /* Relative offset from vobu_start */
+  vobu->vobu_next = ( nav_dsi->vobu_sri.next_vobu & 0x3fffffff );
+#endif
   
-  dvdnav_get_angle_info(self, &angle, &num_angle);
-#if 0
+  vm_get_angle_info(this->vm, &angle, &num_angle);
+
   /* FIMXE: The angle reset doesn't work for some reason for the moment */
-  
+#if 0
   if((num_angle < angle) && (angle != 1)) {
-    printf("OOOOOOO angle ends!\n");
+    fprintf(MSG_OUT, "libdvdnav: angle ends!\n");
     
     /* This is to switch back to angle one when we
      * finish with angles. */
-    dvdnav_angle_change(self, 1);
+    dvdnav_angle_change(this, 1);
   } 
 #endif
 
   if(num_angle != 0) {
-    next = nav_pci->nsml_agli.nsml_agl_dsta[angle-1];
     
-    if(next != 0) {
+    if((next = nav_pci->nsml_agli.nsml_agl_dsta[angle-1]) != 0) {
       if((next & 0x3fffffff) != 0) {
-	if(next & 0x80000000) {
+	if(next & 0x80000000)
 	  vobu->vobu_next = - (int32_t)(next & 0x3fffffff);
-	} else {
+	else
 	  vobu->vobu_next = + (int32_t)(next & 0x3fffffff);
-	}
       }
-      
-    } else if( nav_dsi->sml_agli.data[angle-1].address != 0 ) {
-      next = nav_dsi->sml_agli.data[angle-1].address;
+    } else if((next = nav_dsi->sml_agli.data[angle-1].address) != 0) {
       vobu->vobu_length = nav_dsi->sml_pbi.ilvu_ea;
       
-      if((next & 0x80000000) && (next != 0x7fffffff)) {
+      if((next & 0x80000000) && (next != 0x7fffffff))
 	vobu->vobu_next =  - (int32_t)(next & 0x3fffffff);
-      } else {
+      else
 	vobu->vobu_next =  + (int32_t)(next & 0x3fffffff);
-      }
     }
   }
 
   return 1;
 }
 
-/* This is the main get_next_block function which actually gets the media stream video and audio etc.
- * The use of this function is optional, with the application programmer
- * free to implement their own version of this function
- * FIXME: Make the function calls from here public API calls.
+/*
+ * These are the main get_next_block function which actually get the media stream video and audio etc.
+ *
+ * There are two versions: The second one is using the zero-copy read ahead cache and therefore
+ * hands out pointers targetting directly into the cache.
+ * The first one uses a memcopy to fill this cache block into the application provided memory.
+ * The benefit of this first one is that no special memory management is needed. The application is
+ * the only one responsible of allocating and freeing the memory associated with the pointer.
+ * The drawback is the additional memcopy.
  */
 
 dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
- 				      int *event, int *len) {
+				      int *event, int *len) {
   unsigned char *block;
   dvdnav_status_t status;
   
   block = buf;
   status = dvdnav_get_next_cache_block(this, &block, event, len);
-  if (block != buf) {
+  if (status == S_OK && block != buf) {
     /* we received a block from the cache, copy it, so we can give it back */
     memcpy(buf, block, DVD_VIDEO_LB_LEN);
     dvdnav_free_cache_block(this, block);
@@ -506,14 +368,16 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 }
  
 dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
- 					    int *event, int *len) {
+					    int *event, int *len) {
   dvd_state_t *state;
   int result;
+
   if(!this || !event || !len || !buf || !*buf) {
-    printerr("Passed a NULL pointer");
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
-  pthread_mutex_lock(&this->vm_lock); 
+
+  pthread_mutex_lock(&this->vm_lock);
   
   if(!this->started) {
     /* Start the VM */
@@ -526,118 +390,64 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
   (*len) = 0;
  
   /* Check the STOP flag */
-  if(this->stop) {
+  if(this->vm->stopped) {
     (*event) = DVDNAV_STOP;
+    this->started = 0;
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
 
-  /* Check the STILLFRAME flag */
-  /* FIXME: Still cell, not still frame  */
-  if(this->position_current.still != 0) {
-    dvdnav_still_event_t still_event;
+  vm_position_get(this->vm, &this->position_next);
+  
+#ifdef TRACE
+  fprintf(MSG_OUT, "libdvdnav: POS-NEXT ");
+  vm_position_print(this->vm, &this->position_next);
+  fprintf(MSG_OUT, "libdvdnav: POS-CUR ");
+  vm_position_print(this->vm, &this->position_current);
+#endif
 
-    still_event.length = this->position_current.still;
-
-    (*event) = DVDNAV_STILL_FRAME;
-    (*len) = sizeof(dvdnav_still_event_t);
-    memcpy(*buf, &(still_event), sizeof(dvdnav_still_event_t));
- 
-    pthread_mutex_unlock(&this->vm_lock); 
-    return S_OK;
-  }
-
-  vm_position_get(this->vm,&this->position_next);
-  /**********
-   fprintf(MSG_OUT, "libdvdnav: POS-NEXT ");
-   vm_position_print(this->vm, &this->position_next);
-   fprintf(MSG_OUT, "libdvdnav: POS-CUR ");
-   vm_position_print(this->vm, &this->position_current);
-  **********/
-
+  /* did we hop? */
   if(this->position_current.hop_channel != this->position_next.hop_channel) {
-    this->position_current.hop_channel = this->position_next.hop_channel;
     (*event) = DVDNAV_HOP_CHANNEL;
-    (*len) = 0;
-    pthread_mutex_unlock(&this->vm_lock); 
-    return S_OK;
-  }
-
-
-
-  if(this->spu_clut_changed) {
-    (*event) = DVDNAV_SPU_CLUT_CHANGE;
 #ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: SPU_CLUT_CHANGE\n");
+    fprintf(MSG_OUT, "libdvdnav: HOP_CHANNEL\n");
 #endif
-    (*len) = 16 * sizeof(uint32_t);
-    memcpy(*buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
-    this->spu_clut_changed = 0;
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: SPU_CLUT_CHANGE returning S_OK\n");
-#endif
-    pthread_mutex_unlock(&this->vm_lock); 
-    return S_OK;
-  }
-  
-  if(this->position_current.spu_channel != this->position_next.spu_channel) {
-    dvdnav_spu_stream_change_event_t stream_change;
-    (*event) = DVDNAV_SPU_STREAM_CHANGE;
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE\n");
-#endif
-    (*len) = sizeof(dvdnav_spu_stream_change_event_t);
-    stream_change.physical_wide = vm_get_subp_active_stream(this->vm, 0);
-    stream_change.physical_letterbox = vm_get_subp_active_stream(this->vm, 1);
-    stream_change.physical_pan_scan = vm_get_subp_active_stream(this->vm, 2);
-    memcpy(*buf, &(stream_change), sizeof( dvdnav_spu_stream_change_event_t));
-    this->position_current.spu_channel = this->position_next.spu_channel;
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_wide=%d\n",stream_change.physical_wide);
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_letterbox=%d\n",stream_change.physical_letterbox);
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_pan_scan=%d\n",stream_change.physical_pan_scan);
-#endif
-    if (stream_change.physical_wide != -1 &&
-        stream_change.physical_letterbox != -1 &&
-        stream_change.physical_pan_scan != -1) {
-#ifdef LOG_DEBUG
-      fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE returning S_OK\n");
-#endif
-      pthread_mutex_unlock(&this->vm_lock); 
-      return S_OK;
+    if (this->position_next.hop_channel > HOP_SEEK) {
+      int num_angles = 0, current;
+      
+      /* we seeked -> check for multiple angles */
+      vm_get_angle_info(this->vm, &current, &num_angles);
+      if (num_angles > 1) {
+        int result, block;
+	/* we have to skip the first VOBU when seeking in a multiangle feature,
+	 * because it might belong to the wrong angle */
+	block = this->position_next.cell_start + this->position_next.block;
+	result = dvdnav_read_cache_block(this->cache, block, 1, buf);
+	if(result <= 0) {
+	  printerr("Error reading NAV packet.");
+	  pthread_mutex_unlock(&this->vm_lock); 
+	  return S_ERR;
+	}
+	/* Decode nav into pci and dsi. Then get next VOBU info. */
+	if(!dvdnav_decode_packet(this, *buf, &this->dsi, &this->pci)) {
+	  printerr("Expected NAV packet but none found.");
+	  pthread_mutex_unlock(&this->vm_lock); 
+	  return S_ERR;
+	}
+	dvdnav_get_vobu(this, &this->dsi, &this->pci, &this->vobu);
+	/* skip to next, if there is a next */
+	if (this->vobu.vobu_next != SRI_END_OF_CELL) {
+	  this->vobu.vobu_start += this->vobu.vobu_next;
+	  this->vobu.vobu_next   = 0;
+	}
+	/* update VM state */
+	this->vm->state.blockN = this->vobu.vobu_start - this->position_next.cell_start;
+      }
     }
-  }
-  
-  if(this->position_current.audio_channel != this->position_next.audio_channel) {
-    dvdnav_audio_stream_change_event_t stream_change;
-    (*event) = DVDNAV_AUDIO_STREAM_CHANGE;
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE\n");
-#endif
-    (*len) = sizeof(dvdnav_audio_stream_change_event_t);
-    stream_change.physical= vm_get_audio_active_stream( this->vm );
-    memcpy(*buf, &(stream_change), sizeof( dvdnav_audio_stream_change_event_t));
-    this->position_current.audio_channel = this->position_next.audio_channel;
-#ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
-#endif
-    pthread_mutex_unlock(&this->vm_lock); 
-    return S_OK;
-  }
-     
-  /* Check the HIGHLIGHT flag */
-  /* FIXME: Use BUTTON instead of HIGHLIGHT. */
-  if(this->position_current.button != this->position_next.button) {
-    dvdnav_highlight_event_t hevent;
-
-    hevent.display = 1;
-    hevent.buttonN = this->position_next.button;
-
-    this->position_current.button = this->position_next.button;
-    
-    (*event) = DVDNAV_HIGHLIGHT;
-    (*len) = sizeof(hevent);
-    memcpy(*buf, &(hevent), sizeof(hevent));
+    this->position_current.hop_channel = this->position_next.hop_channel;
+    /* Make blockN > vobu_length to do expected_nav */
+    this->vobu.vobu_length = 0;
+    this->vobu.blockN      = 1;
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
@@ -650,7 +460,6 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     dvdnav_vts_change_event_t vts_event;
     
     if(this->file) {
-      dvdnav_read_cache_clear(this->cache);
       DVDCloseFile(this->file);
       this->file = NULL;
     }
@@ -658,22 +467,22 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     vts_event.old_vtsN = this->open_vtsN;
     vts_event.old_domain = this->open_domain;
      
-    /* Use the current DOMAIN to find whether to open menu or title VOBs */
+    /* Use the DOMAIN to find whether to open menu or title VOBs */
     switch(this->position_next.domain) {
-     case FP_DOMAIN:
-     case VMGM_DOMAIN:
+    case FP_DOMAIN:
+    case VMGM_DOMAIN:
       domain = DVD_READ_MENU_VOBS;
       vtsN = 0;
       break;
-     case VTSM_DOMAIN:
+    case VTSM_DOMAIN:
       domain = DVD_READ_MENU_VOBS;
       vtsN = this->position_next.vts; 
       break;
-     case VTS_DOMAIN:
+    case VTS_DOMAIN:
       domain = DVD_READ_TITLE_VOBS;
       vtsN = this->position_next.vts; 
       break;
-     default:
+    default:
       printerr("Unknown domain when changing VTS.");
       pthread_mutex_unlock(&this->vm_lock); 
       return S_ERR;
@@ -695,11 +504,12 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
 
     /* File opened successfully so return a VTS change event */
     (*event) = DVDNAV_VTS_CHANGE;
-    memcpy(*buf, &(vts_event), sizeof(vts_event));
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: VTS_CHANGE\n");
+#endif
     (*len) = sizeof(vts_event);
+    memcpy(*buf, &(vts_event), sizeof(vts_event));
 
-    /* On a VTS change, we want to disable any highlights which
-     * may have been shown (FIXME: is this valid?) */
     this->spu_clut_changed = 1;
     this->position_current.cell = -1; /* Force an update */
     this->position_current.spu_channel = -1; /* Force an update */
@@ -708,33 +518,137 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
-  /* FIXME: Don't really need "cell", we only need vobu_start */
+
+  /* Check if the cell changed */  
   if( (this->position_current.cell != this->position_next.cell) ||
       (this->position_current.cell_restart != this->position_next.cell_restart) ||
-      (this->position_current.vobu_start != this->position_next.vobu_start) ||
-      (this->position_current.vobu_next != this->position_next.vobu_next) ) {
-    this->position_current.cell = this->position_next.cell;
-    this->position_current.cell_restart = this->position_next.cell_restart;
-    /* vobu_start changes when PGC or PG changes. */
-    this->position_current.vobu_start = this->position_next.vobu_start;
-    this->position_current.vobu_next = this->position_next.vobu_next;
-    /* FIXME: Need to set vobu_start, vobu_next */
-    this->vobu.vobu_start = this->position_next.vobu_start; 
-    /* vobu_next is use for mid cell resumes */
-    this->vobu.vobu_next = this->position_next.vobu_next; 
-    this->vobu.vobu_length = 0; 
-    this->vobu.blockN = this->vobu.vobu_length + 1; 
-    /* Make blockN > vobu_lenght to do expected_nav */
+      (this->position_current.cell_start != this->position_next.cell_start) ) {
+    
     (*event) = DVDNAV_CELL_CHANGE;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: CELL_CHANGE\n");
+#endif
     (*len) = 0;
+    
+    this->position_current.cell         = this->position_next.cell;
+    this->position_current.cell_restart = this->position_next.cell_restart;
+    this->position_current.cell_start   = this->position_next.cell_start;
+    this->position_current.block        = this->position_next.block;
+    
+    /* vobu info is used for mid cell resumes */
+    this->vobu.vobu_start               = this->position_next.cell_start + this->position_next.block;
+    this->vobu.vobu_next                = 0;
+    /* Make blockN > vobu_length to do expected_nav */
+    this->vobu.vobu_length = 0;
+    this->vobu.blockN      = 1;
+    
+    /* update the spu palette at least on PGC changes */
+    this->spu_clut_changed = 1;
+    this->position_current.spu_channel = -1; /* Force an update */
+    this->position_current.audio_channel = -1; /* Force an update */
+
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
  
- 
-  if (this->vobu.blockN > this->vobu.vobu_length) {
-    /* End of VOBU */
+  /* has the CLUT changed? */
+  if(this->spu_clut_changed) {
+    (*event) = DVDNAV_SPU_CLUT_CHANGE;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: SPU_CLUT_CHANGE\n");
+#endif
+    (*len) = 16 * sizeof(uint32_t);
+    memcpy(*buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
+    this->spu_clut_changed = 0;
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_OK;
+  }
 
+  /* has the SPU channel changed? */  
+  if(this->position_current.spu_channel != this->position_next.spu_channel) {
+    dvdnav_spu_stream_change_event_t stream_change;
+
+    (*event) = DVDNAV_SPU_STREAM_CHANGE;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE\n");
+#endif
+    (*len) = sizeof(dvdnav_spu_stream_change_event_t);
+    stream_change.physical_wide = vm_get_subp_active_stream(this->vm, 0);
+    stream_change.physical_letterbox = vm_get_subp_active_stream(this->vm, 1);
+    stream_change.physical_pan_scan = vm_get_subp_active_stream(this->vm, 2);
+    memcpy(*buf, &(stream_change), sizeof(dvdnav_spu_stream_change_event_t));
+    this->position_current.spu_channel = this->position_next.spu_channel;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_wide=%d\n",stream_change.physical_wide);
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_letterbox=%d\n",stream_change.physical_letterbox);
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_pan_scan=%d\n",stream_change.physical_pan_scan);
+#endif
+    if (stream_change.physical_wide != -1 &&
+        stream_change.physical_letterbox != -1 &&
+        stream_change.physical_pan_scan != -1) {
+#ifdef LOG_DEBUG
+      fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE returning S_OK\n");
+#endif
+      pthread_mutex_unlock(&this->vm_lock); 
+      return S_OK;
+    }
+  }
+
+  /* has the audio channel changed? */  
+  if(this->position_current.audio_channel != this->position_next.audio_channel) {
+    dvdnav_audio_stream_change_event_t stream_change;
+    
+    (*event) = DVDNAV_AUDIO_STREAM_CHANGE;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE\n");
+#endif
+    (*len) = sizeof(dvdnav_audio_stream_change_event_t);
+    stream_change.physical = vm_get_audio_active_stream( this->vm );
+    memcpy(*buf, &(stream_change), sizeof( dvdnav_audio_stream_change_event_t));
+    this->position_current.audio_channel = this->position_next.audio_channel;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+#endif
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_OK;
+  }
+     
+  /* Check the HIGHLIGHT flag */
+  if(this->position_current.button != this->position_next.button) {
+    dvdnav_highlight_event_t hevent;
+
+    (*event) = DVDNAV_HIGHLIGHT;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: HIGHLIGHT\n");
+#endif
+    (*len) = sizeof(hevent);
+    hevent.display = 1;
+    hevent.buttonN = this->position_next.button;
+    memcpy(*buf, &(hevent), sizeof(hevent));
+    this->position_current.button = this->position_next.button;
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_OK;
+  }
+
+  /* Check the STILLFRAME flag */
+  if(this->position_current.still != 0) {
+    dvdnav_still_event_t still_event;
+
+    (*event) = DVDNAV_STILL_FRAME;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: STILL_FRAME\n");
+#endif
+    (*len) = sizeof(dvdnav_still_event_t);
+    still_event.length = this->position_current.still;
+    memcpy(*buf, &(still_event), sizeof(dvdnav_still_event_t));
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_OK;
+  }
+
+  /* Have we reached the end of a VOBU? */
+  if (this->vobu.blockN >= this->vobu.vobu_length) {
+
+    /* Have we reached the end of a cell? */
     if(this->vobu.vobu_next == SRI_END_OF_CELL) {
       /* End of Cell from NAV DSI info */
 #ifdef LOG_DEBUG
@@ -743,58 +657,28 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
       this->position_current.still = this->position_next.still;
 
       if( this->position_current.still == 0 || this->skip_still ) {
-        vm_get_next_cell(this->vm);
-        vm_position_get(this->vm,&this->position_next);
-        /* FIXME: Need to set vobu_start, vobu_next */
-        this->position_current.still = 0; /* still gets activated at end of cell */
-        this->skip_still = 0;
-        this->position_current.cell = this->position_next.cell;
-        this->position_current.vobu_start = this->position_next.vobu_start;
-        this->position_current.vobu_next = this->position_next.vobu_next;
-        this->vobu.vobu_start = this->position_next.vobu_start; 
-        /* vobu_next is use for mid cell resumes */
-        this->vobu.vobu_next = this->position_next.vobu_next; 
-        this->vobu.vobu_length = 0; 
-        this->vobu.blockN = this->vobu.vobu_length + 1; 
-        /* Make blockN > vobu_next to do expected_nav */
-        /* update the spu palette on PGC changes */
-        this->spu_clut_changed = 1;
-        this->position_current.spu_channel = -1; /* Force an update */
-        this->position_current.audio_channel = -1; /* Force an update */;
-        (*event) = DVDNAV_CELL_CHANGE;
-        (*len) = 0;
-        pthread_mutex_unlock(&this->vm_lock); 
-        return S_OK;
-      } else {
-        dvdnav_still_event_t still_event;
-        still_event.length = this->position_current.still;
-        (*event) = DVDNAV_STILL_FRAME;
-        (*len) = sizeof(dvdnav_still_event_t);
-        memcpy(*buf, &(still_event), sizeof(dvdnav_still_event_t));
-        pthread_mutex_unlock(&this->vm_lock); 
-        return S_OK;
+        /* no active cell still -> get us to the next cell */
+	vm_get_next_cell(this->vm);
+	this->position_current.still = 0; /* still gets activated at end of cell */
+	this->skip_still = 0;
       }
-
-      /* Only set still after whole VOBU has been output. */
-      /*
-       if(this->position_next.still != 0) {
-	this->position_current.still = this->position_next.still;
-       }
-       */
-
+      /* handle related state changes in next iteration */
+      (*event) = DVDNAV_NOP;
+      (*len) = 0;
+      pthread_mutex_unlock(&this->vm_lock); 
+      return S_OK;
     }
-    /* Perform the jump if necessary (this is always a 
+
+    /* Perform remapping jump if necessary (this is always a 
      * VOBU boundary). */
+    if (this->vm->map) {
+      this->vobu.vobu_next = remap_block( this->vm->map,
+        this->vm->state.domain, this->vm->state.TTN_REG,
+        this->vm->state.pgN,
+        this->vobu.vobu_start, this->vobu.vobu_next);
+    }
 
-     if (this->vm->map) {
-       this->vobu.vobu_next = remap_block( this->vm->map,
-           this->vm->state.domain, this->vm->state.TTN_REG,
-           this->vm->state.pgN,
-           this->vobu.vobu_start, this->vobu.vobu_next);
-     }
-
-
-    /* result = DVDReadBlocks(this->file, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf); */
+    /* at the start of the next VOBU -> expecting NAV packet */
     result = dvdnav_read_cache_block(this->cache, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
 
     if(result <= 0) {
@@ -802,31 +686,29 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
       pthread_mutex_unlock(&this->vm_lock); 
       return S_ERR;
     }
-    /* Decode nav into pci and dsi. */
-    /* Then get next VOBU info. */
-    if(dvdnav_decode_packet(this, *buf, &this->dsi, &this->pci) == 0) {
+    /* Decode nav into pci and dsi. Then get next VOBU info. */
+    if(!dvdnav_decode_packet(this, *buf, &this->dsi, &this->pci)) {
       printerr("Expected NAV packet but none found.");
       pthread_mutex_unlock(&this->vm_lock); 
       return S_ERR;
     }
-    dvdnav_get_vobu(this, &this->dsi,&this->pci, &this->vobu); 
-    this->vobu.blockN=1;
-    /* FIXME: We need to update the vm state->blockN with which VOBU we are in.
-     *        This is so RSM resumes to the VOBU level and not just the CELL level.
-     *        This should be implemented with a new Public API call.
+    /* We need to update the vm state->blockN with which VOBU we are in.
+     * This is so RSM resumes to the VOBU level and not just the CELL level.
      */
-    /* We cache one past the end of the VOBU, 
-     * in the hope it might catch the next NAV packet as well.
-     * This reduces the amount of read commands sent to the DVD device.
-     * A cache miss will only happen for 3 reasons.
-     * 1) Seeking
-     * 2) Menu change
-     * 3) The next VOBU does not immeadiately follow the current one. E.g. Multi Angles, ILVU.
+    this->vm->state.blockN = this->vobu.vobu_start - this->position_current.cell_start;
+
+    dvdnav_get_vobu(this, &this->dsi, &this->pci, &this->vobu); 
+    this->vobu.blockN = 0;
+    /* Give the cache a hint about the size of next VOBU.
+     * This improves pre-caching, because the VOBU will almost certainly be read entirely.
      */
     dvdnav_pre_cache_blocks(this->cache, this->vobu.vobu_start+1, this->vobu.vobu_length+1);
     
     /* Successfully got a NAV packet */
     (*event) = DVDNAV_NAV_PACKET;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: NAV_PACKET\n");
+#endif
     (*len) = 2048; 
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
@@ -834,23 +716,60 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
   
   /* If we've got here, it must just be a normal block. */
   if(!this->file) {
-    printerr("Attempting to read without opening file");
+    printerr("Attempting to read without opening file.");
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
 
+  this->vobu.blockN++;
   result = dvdnav_read_cache_block(this->cache, this->vobu.vobu_start + this->vobu.blockN, 1, buf);
   if(result <= 0) {
     printerr("Error reading from DVD.");
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
-  this->vobu.blockN++;
-  (*len) = 2048;
   (*event) = DVDNAV_BLOCK_OK;
+  (*len) = 2048;
 
   pthread_mutex_unlock(&this->vm_lock); 
   return S_OK;
+}
+
+dvdnav_status_t dvdnav_get_title_string(dvdnav_t *this, const char **title_str) {
+  
+  if(!this || !title_str) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
+
+  (*title_str) = this->vm->dvd_name;
+  return S_OK;
+}
+
+uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
+  uint8_t         retval;
+  
+  if(!this)
+    return -1;
+  
+  pthread_mutex_lock(&this->vm_lock);
+  retval = (uint8_t)vm_get_video_aspect(this->vm);
+  pthread_mutex_unlock(&this->vm_lock);
+  
+  return retval;
+}
+
+uint8_t dvdnav_get_video_scale_permission(dvdnav_t *this) {
+  uint8_t         retval;
+  
+  if(!this)
+    return -1;
+  
+  pthread_mutex_lock(&this->vm_lock);
+  retval = (uint8_t)vm_get_video_scale_permission(this->vm);
+  pthread_mutex_unlock(&this->vm_lock);
+  
+  return retval;
 }
 
 uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *this, uint8_t stream) {
@@ -869,19 +788,6 @@ uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   return attr.lang_code;
 }
 
-int8_t dvdnav_get_audio_logical_stream(dvdnav_t *this, uint8_t audio_num) {
-  int8_t       retval;
-  
-  if(!this)
-    return -1;
-  
-  pthread_mutex_lock(&this->vm_lock); 
-  retval = NCLK_dvdnav_get_audio_logical_stream(this, audio_num);
-  pthread_mutex_unlock(&this->vm_lock); 
-
-  return retval;
-}
-
 uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   subp_attr_t  attr;
   
@@ -898,16 +804,54 @@ uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   return attr.lang_code;
 }
 
+int8_t dvdnav_get_audio_logical_stream(dvdnav_t *this, uint8_t audio_num) {
+  int8_t       retval;
+  
+  if(!this)
+    return -1;
+  
+  pthread_mutex_lock(&this->vm_lock);
+  if (!this->vm->state.pgc) {
+    pthread_mutex_unlock(&this->vm_lock); 
+    return -1;
+  }
+  retval = vm_get_audio_stream(this->vm, audio_num);
+  pthread_mutex_unlock(&this->vm_lock); 
+
+  return retval;
+}
+
 int8_t dvdnav_get_spu_logical_stream(dvdnav_t *this, uint8_t subp_num) {
   int8_t       retval;
 
   if(!this)
     return -1;
 
-  pthread_mutex_lock(&this->vm_lock); 
-  retval = NCLK_dvdnav_get_spu_logical_stream(this, subp_num);
-  pthread_mutex_unlock(&this->vm_lock); 
+  pthread_mutex_lock(&this->vm_lock);
+  if (!this->vm->state.pgc) {
+    pthread_mutex_unlock(&this->vm_lock); 
+    return -1;
+  }
+  retval = vm_get_subp_stream(this->vm, subp_num, 0);
+  pthread_mutex_unlock(&this->vm_lock);
 
+  return retval;
+}
+
+int8_t dvdnav_get_active_audio_stream(dvdnav_t *this) {
+  int8_t        retval;
+
+  if(!this)
+    return -1;
+  
+  pthread_mutex_lock(&this->vm_lock); 
+  if (!this->vm->state.pgc) {
+    pthread_mutex_unlock(&this->vm_lock); 
+    return -1;
+  }
+  retval = vm_get_audio_active_stream(this->vm);
+  pthread_mutex_unlock(&this->vm_lock); 
+  
   return retval;
 }
 
@@ -918,98 +862,110 @@ int8_t dvdnav_get_active_spu_stream(dvdnav_t *this) {
     return -1;
   
   pthread_mutex_lock(&this->vm_lock); 
-  retval = NLCK_dvdnav_get_active_spu_stream(this);
+  if (!this->vm->state.pgc) {
+    pthread_mutex_unlock(&this->vm_lock); 
+    return -1;
+  }
+  retval = vm_get_subp_active_stream(this->vm, 0);
   pthread_mutex_unlock(&this->vm_lock); 
+  
+  return retval;
+}
+
+static int8_t dvdnav_is_domain(dvdnav_t *this, domain_t domain) {
+  int8_t        retval;
+  
+  if (!this || !this->started)
+    return -1;
+  
+  pthread_mutex_lock(&this->vm_lock);
+  retval = (this->vm->state.domain == domain);
+  pthread_mutex_unlock(&this->vm_lock);
   
   return retval;
 }
 
 /* First Play domain. (Menu) */
 int8_t dvdnav_is_domain_fp(dvdnav_t *this) {
-  return _dvdnav_is_domain(this, FP_DOMAIN);
+  return dvdnav_is_domain(this, FP_DOMAIN);
 }
 /* Video management Menu domain. (Menu) */
 int8_t dvdnav_is_domain_vmgm(dvdnav_t *this) {
-  return _dvdnav_is_domain(this, VMGM_DOMAIN);
+  return dvdnav_is_domain(this, VMGM_DOMAIN);
 }
 /* Video Title Menu domain (Menu) */
 int8_t dvdnav_is_domain_vtsm(dvdnav_t *this) {
-  return _dvdnav_is_domain(this, VTSM_DOMAIN);
+  return dvdnav_is_domain(this, VTSM_DOMAIN);
 }
 /* Video Title domain (playing movie). */
 int8_t dvdnav_is_domain_vts(dvdnav_t *this) { 
-  return _dvdnav_is_domain(this, VTS_DOMAIN);
+  return dvdnav_is_domain(this, VTS_DOMAIN);
 }
 
-/* Generally delegate angle information handling to 
- * VM */
+/* Generally delegate angle information handling to VM */
 dvdnav_status_t dvdnav_angle_change(dvdnav_t *this, int angle) {
   int num, current;
   
   if(!this) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
 
-  if(dvdnav_get_angle_info(this, &current, &num) != S_OK) {
-    printerr("Error getting angle info");
-    return S_ERR;
-  }
-  
+  pthread_mutex_lock(&this->vm_lock);
+  vm_get_angle_info(this->vm, &current, &num);
   /* Set angle SPRM if valid */
   if((angle > 0) && (angle <= num)) {
     this->vm->state.AGL_REG = angle;
   } else {
-    printerr("Passed an invalid angle number");
+    printerr("Passed an invalid angle number.");
+    pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
-
-  return S_OK;
-}
-/* FIXME: change order of current_angle, number_of_angles */
-dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *this, int* current_angle,
-				     int *number_of_angles) {
-  if(!this || !this->vm) {
-    return S_ERR;
-  }
-
-  if(!current_angle || !number_of_angles) {
-    printerr("Passed a NULL pointer");
-    return S_ERR;
-  }
-
-  vm_get_angle_info(this->vm, number_of_angles, current_angle);
+  pthread_mutex_unlock(&this->vm_lock);
 
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
-				     int *number_of_angles) {
-  if(!this || !this->vm) {
+dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *this, int *current_angle,
+				      int *number_of_angles) {
+  if(!this || !current_angle || !number_of_angles) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
-  *current_angle=this->position_next.cell;
+
+  pthread_mutex_lock(&this->vm_lock);
+  vm_get_angle_info(this->vm, current_angle, number_of_angles);
+  pthread_mutex_unlock(&this->vm_lock);
+
   return S_OK;
-} 
+}
 
 pci_t* dvdnav_get_current_nav_pci(dvdnav_t *this) {
-  if(!this || !this->vm) return 0;
+  if(!this) return 0;
   return &this->pci;
 }
 
 dsi_t* dvdnav_get_current_nav_dsi(dvdnav_t *this) {
-  if(!this || !this->vm) return 0;
+  if(!this) return 0;
   return &this->dsi;
 }
 
 uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
-  if(!this || !this->vm) {
-    return S_ERR;
-  }
+  if(!this) return -1;
   return this->position_next.still;
 }
 
 /*
  * $Log$
+ * Revision 1.40  2003/02/20 15:32:15  mroi
+ * big libdvdnav cleanup, quoting the ChangeLog:
+ *   * some bugfixes
+ *   * code cleanup
+ *   * build process polishing
+ *   * more sensible event order in get_next_block to ensure useful event delivery
+ *   * VOBU level resume
+ *   * fixed: seeking in a multiangle feature briefly showed the wrong angle
+ *
  * Revision 1.39  2002/10/23 11:38:09  mroi
  * port Stephen's comment fixing to avoid problems when syncing xine-lib's copy of
  * libdvdnav

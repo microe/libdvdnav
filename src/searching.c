@@ -25,46 +25,52 @@
 #include "config.h"
 #endif
 
-#include <dvdnav.h>
+#include <assert.h>
+
 #include "dvdnav_internal.h"
 
 #include "vm.h"
 #include <dvdread/nav_types.h>
 
+/*
+#define LOG_DEBUG
+*/
+
 /* Searching API calls */
 
 dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 				   unsigned long int time) {
-/* Time search the current PGC based on the xxx table */
+  /* FIXME: Time search the current PGC based on the xxx table */
   return S_OK;
 }
 
 /* Scan the ADMAP for a particular block number. */
 /* Return placed in vobu. */
 /* Returns error status */
-
-dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto_block, int32_t *vobu) {
-  /* FIXME:Need to handle seeking outside current cell. */
+/* FIXME: Maybe need to handle seeking outside current cell. */
+static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto_block, int32_t *vobu) {
   vobu_admap_t *admap = NULL;
+
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: Seeking to target %u ...\n", seekto_block);
+#endif
   *vobu = -1;
-  fprintf(MSG_OUT, "libdvdnav: Seeking to target %u ...\n",
-              seekto_block);
 
   /* Search through the VOBU_ADMAP for the nearest VOBU
    * to the target block */
   switch(domain) {
-    case FP_DOMAIN:
-    case VMGM_DOMAIN:
-      admap = this->vm->vmgi->menu_vobu_admap;
-      break;
-    case VTSM_DOMAIN:
-      admap = this->vm->vtsi->menu_vobu_admap;
-      break;
-    case VTS_DOMAIN:
-      admap = this->vm->vtsi->vts_vobu_admap;
-      break;
-    default:
-      fprintf(MSG_OUT, "libdvdnav: Error: Unknown domain for seeking seek.\n");
+  case FP_DOMAIN:
+  case VMGM_DOMAIN:
+    admap = this->vm->vmgi->menu_vobu_admap;
+    break;
+  case VTSM_DOMAIN:
+    admap = this->vm->vtsi->menu_vobu_admap;
+    break;
+  case VTS_DOMAIN:
+    admap = this->vm->vtsi->vts_vobu_admap;
+    break;
+  default:
+    fprintf(MSG_OUT, "libdvdnav: Error: Unknown domain for seeking.\n");
   }
   if(admap) {
     int32_t address = 0;
@@ -85,7 +91,6 @@ dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto
       } else {
         vobu_start = next_vobu;
       }
-
       address ++;
     }
     if(found) {
@@ -101,65 +106,67 @@ dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto
 }
 
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
-				   unsigned long int offset, int origin) {
-/* FIXME: Implement */
-
+				     unsigned long int offset, int origin) {
   uint32_t target = 0;
   uint32_t length = 0;
-  uint32_t first_cell_nr, last_cell_nr, cell_nr, fnd_cell_nr;
+  uint32_t first_cell_nr, last_cell_nr, cell_nr;
   int found;
-  cell_playback_t *cell, *fnd_cell;
+  cell_playback_t *cell;
   dvd_state_t *state;
   dvdnav_status_t result;
 
-  if((!this) || (!this->vm) || (!this->started))
-    return -1;
+  if(this->position_current.still != 0) {
+    printerr("Cannot seek in a still frame.");
+    return S_ERR;
+  }
   
-  state = &(this->vm->state);
-  if((!state) || (!state->pgc) )
-    return -1;
-   
-  if(this->position_current.still != 0)
-    /* Cannot do seeking in a still frame. */
-    return -1;
-
-  pthread_mutex_lock(&this->vm_lock);
   result = dvdnav_get_position(this, &target, &length);
-  fprintf(MSG_OUT, "libdvdnav: FIXME: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
-  fprintf(MSG_OUT, "libdvdnav: FIXME: Before cellN=%u blockN=%u\n" ,
-      state->cellN,
-      state->blockN);
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
+  fprintf(MSG_OUT, "libdvdnav: Before cellN=%u blockN=%u\n", state->cellN, state->blockN);
+#endif
   if(!result) {
-    pthread_mutex_unlock(&this->vm_lock);
-    return -1;
+    return S_ERR;
   }
  
+  pthread_mutex_lock(&this->vm_lock);
+  state = &(this->vm->state);
+  if(!state->pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+
   switch(origin) {
    case SEEK_SET:
     if(offset > length) {
+      printerr("Request to seek behind end.");
       pthread_mutex_unlock(&this->vm_lock);
-      return -1;
+      return S_ERR;
     }
     target = offset;
     break;
    case SEEK_CUR:
     if(target + offset > length) {
+      printerr("Request to seek behind end.");
       pthread_mutex_unlock(&this->vm_lock);
-      return -1;
+      return S_ERR;
     }
     target += offset;
     break;
    case SEEK_END:
     if(length - offset < 0) {
+      printerr("Request to seek before start.");
       pthread_mutex_unlock(&this->vm_lock);
-      return -1;
+      return S_ERR;
     }
     target = length - offset;
     break;
    default:
     /* Error occured */
+    printerr("Illegal seek mode.");
     pthread_mutex_unlock(&this->vm_lock);
-    return -1;
+    return S_ERR;
   }
 
   /* First find closest cell number in program */
@@ -170,83 +177,89 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     last_cell_nr = state->pgc->nr_of_cells;
   }
     
-  found = 0; target += state->pgc->cell_playback[first_cell_nr-1].first_sector;
-  fnd_cell_nr = last_cell_nr + 1;
+  found = 0;
+  target += state->pgc->cell_playback[first_cell_nr-1].first_sector;
   for(cell_nr = first_cell_nr; (cell_nr <= last_cell_nr) && !found; cell_nr ++) {
     cell =  &(state->pgc->cell_playback[cell_nr-1]);
     if((cell->first_sector <= target) && (cell->last_sector >= target)) {
+      found = 1;
       state->cellN = cell_nr;
       state->blockN = 0;
-      state->cell_restart++; 
-      found = 1;
-      fnd_cell_nr = cell_nr;
-      fnd_cell = cell;
+      state->cell_restart++;
     }
   }
 
-  if(fnd_cell_nr <= last_cell_nr) {
+  if(found) {
     int32_t vobu, start;
-    dvdnav_status_t status;
+#ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: Seeking to cell %i from choice of %i to %i\n",
-	   fnd_cell_nr, first_cell_nr, last_cell_nr);
-    status = dvdnav_scan_admap(this, state->domain, target, &vobu);
-    /* 
-     * Clut does not actually change,
-     * but as the decoders have been closed then opened,
-     * A new clut has to be sent.
-     */
-    start =(state->pgc->cell_playback[state->cellN - 1].first_sector); 
-    fprintf(MSG_OUT, "libdvdnav: FIXME: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
+	    state->cellN, first_cell_nr, last_cell_nr);
+#endif
+    dvdnav_scan_admap(this, state->domain, target, &vobu);
+    start = state->pgc->cell_playback[state->cellN - 1].first_sector;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
       state->cellN,
       state->blockN,
       target,
       vobu,
       start);
-    state->blockN = vobu - start; 
-    fprintf(MSG_OUT, "libdvdnav: FIXME: After vobu=%x start=%x blockN=%x\n" ,
+#endif
+    state->blockN = vobu - start;
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: After vobu=%x start=%x blockN=%x\n" ,
       vobu,
       start,
       state->blockN);
+#endif
+    this->vm->hop_channel += HOP_SEEK;
     pthread_mutex_unlock(&this->vm_lock);
-    return target;
-  } else {
-    fprintf(MSG_OUT, "libdvdnav: Error when seeking, asked to seek outside program\n");
+    return S_OK;
   }
-
+  
+  fprintf(MSG_OUT, "libdvdnav: Error when seeking, asked to seek outside program\n");
   fprintf(MSG_OUT, "libdvdnav: FIXME: Implement seeking to location %u\n", target); 
-
+  printerr("Error when seeking.");
   pthread_mutex_unlock(&this->vm_lock);
-  return -1;
+  return S_ERR;
 }
 
 dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int part) {
-
-  if((!this) || (!this->vm) )
-    return S_ERR;
-
-  return S_OK;
+  int title, old_part;
+  
+  if (dvdnav_current_title_info(this, &title, &old_part) == S_OK)
+    return dvdnav_part_play(this, title, part);
+  return S_ERR;
 }
 
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
-  dvd_state_t *state;
 
-  if((!this) || (!this->vm) )
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
-
-  state = &(this->vm->state);
-  if((!state) || (!state->pgc) )
-    return S_ERR;
-
+  }
+  
   pthread_mutex_lock(&this->vm_lock);
+  if(!this->vm->state.pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+
+#ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: previous chapter\n");
-  if (!vm_prev_pg(this->vm)) {
-    fprintf(MSG_OUT, "libdvdnav: prev chapter failed.\n");
+#endif
+  if (!vm_jump_prev_pg(this->vm)) {
+    fprintf(MSG_OUT, "libdvdnav: previous chapter failed.\n");
+    printerr("Skip to previous chapter failed.");
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
   this->position_current.still = 0;
   this->vm->hop_channel++;
+#ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
+#endif
   pthread_mutex_unlock(&this->vm_lock);
 
   return S_OK;
@@ -254,70 +267,96 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
 
 dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 
-  if((!this) || (!this->vm) )
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
+  }
     
-  fprintf(MSG_OUT, "libdvdnav: top chapter. NOP.\n");
-  
-  return S_OK;
-}
-
-dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
-  dvd_state_t *state;
-
-  if((!this) || (!this->vm) )
-    return S_ERR;
-
-  state = &(this->vm->state);
-  if((!state) || (!state->pgc) )
-    return S_ERR;
-
   pthread_mutex_lock(&this->vm_lock);
-  fprintf(MSG_OUT, "libdvdnav: next chapter\n");
-  if (!vm_next_pg(this->vm)) {
-    fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
+  if(!this->vm->state.pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: top chapter\n");
+#endif
+  if (!vm_jump_top_pg(this->vm)) {
+    fprintf(MSG_OUT, "libdvdnav: top chapter failed.\n");
+    printerr("Skip to top chapter failed.");
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
   this->position_current.still = 0;
   this->vm->hop_channel++;
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: top chapter done\n");
+#endif
+  pthread_mutex_unlock(&this->vm_lock);
+
+  return S_OK;
+}
+
+dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
+
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
+
+  pthread_mutex_lock(&this->vm_lock);
+  if(!this->vm->state.pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: next chapter\n");
+#endif
+  if (!vm_jump_next_pg(this->vm)) {
+    fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
+    printerr("Skip to next chapter failed.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  this->position_current.still = 0;
+  this->vm->hop_channel++;
+#ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: next chapter done\n");
+#endif
   pthread_mutex_unlock(&this->vm_lock);
 
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
-  dvd_state_t *state;
-
-  if((!this) || (!this->vm) )
-    return S_ERR;
-
-  pthread_mutex_lock(&this->vm_lock); 
-  state = &(this->vm->state);
-  if (vm_menu_call(this->vm, menu, 0))
-    this->vm->hop_channel++;
-  pthread_mutex_unlock(&this->vm_lock); 
-  return S_OK;
-}
-
-static char __title_str[] = "DVDNAV";
-
-dvdnav_status_t dvdnav_get_title_string(dvdnav_t *this, char **title_str) {
-  if(!this)
-   return S_ERR;
-
-  if(!title_str) {
-    printerr("Passed a NULL pointer");
+  
+  if(!this) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
 
-  (*title_str) = __title_str;
-
-  return S_OK;
+  pthread_mutex_lock(&this->vm_lock);
+  if(!this->vm->state.pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+  
+  if (vm_jump_menu(this->vm, menu)) {
+    this->vm->hop_channel++;
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_OK;
+  } else {
+    printerr("No such menu.");
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_ERR;
+  }
 }
 
-dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int* pos,
+dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
 				    unsigned int *len) {
   uint32_t cur_sector;
   uint32_t first_cell_nr;
@@ -325,24 +364,32 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int* pos,
   cell_playback_t *first_cell;
   cell_playback_t *last_cell;
   dvd_state_t *state;
-  if((!this) || (!this->vm) )
-   return 0;
-  
-  state = &(this->vm->state);
-  if((!state) || (!state->pgc) )
-   return 0;
-   
-  /* Sanity check */
-  if(state->pgN > state->pgc->nr_of_programs) {
-    return 0;
+
+  if(!this || !pos || !len) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
   }
-  
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return S_ERR;
+  }
+
+  pthread_mutex_lock(&this->vm_lock);
+  state = &(this->vm->state);
+  if(!state->pgc) {
+    printerr("No current PGC.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+
   /* Get current sector */
   cur_sector = this->vobu.vobu_start + this->vobu.blockN;
 
   /* Find start cell of program. */
   first_cell_nr = state->pgc->program_map[state->pgN-1];
   first_cell = &(state->pgc->cell_playback[first_cell_nr-1]);
+  
+  /* Find end cell of program */
   if(state->pgN < state->pgc->nr_of_programs) {
     last_cell_nr = state->pgc->program_map[state->pgN] - 1;
   } else {
@@ -352,8 +399,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int* pos,
 
   *pos= cur_sector - first_cell->first_sector;
   *len= last_cell->last_sector - first_cell->first_sector;
-  /* fprintf(MSG_OUT, "libdvdnav: searching:current pos=%u length=%u\n",*pos,*len); */
-
+  pthread_mutex_unlock(&this->vm_lock);
 
   return S_OK;
 }
@@ -367,18 +413,18 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
   cell_playback_t *first_cell;
   cell_playback_t *last_cell;
   dvd_state_t *state;
-  if((!this) || (!this->vm) )
-   return S_ERR;
-  
-  state = &(this->vm->state);
-  if((!state) || (!state->pgc) )
-   return S_ERR;
-   
-  /* Sanity check */
-  if(state->pgN > state->pgc->nr_of_programs) {
+
+  if(!this || !pos || !len) {
+    printerr("Passed a NULL pointer.");
     return S_ERR;
   }
-  
+
+  state = &(this->vm->state);
+  if(!state->pgc) {
+    printerr("No current PGC.");
+    return S_ERR;
+  }
+
   /* Get current sector */
   cur_sector = this->vobu.vobu_start + this->vobu.blockN;
 
@@ -393,5 +439,3 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
   
   return S_OK;
 }
-
-

@@ -1,18 +1,13 @@
-
-CFLAGS = @GLOBAL_CFLAGS@ @THREAD_CFLAGS@ -I$(top_srcdir)/src/
-
-LDFLAGS = @LDFLAGS@ -L$(top_srcdir)/src/
+AM_CFLAGS = -I$(top_srcdir)/src/
 
 noinst_PROGRAMS = menus
 
-AM_CFLAGS=-I$(top_srcdir)/src/
-
 menus_SOURCES = menus.c
-menus_LDFLAGS=-L$(top_srcdir)/src/
+menus_LDFLAGS = -L$(top_srcdir)/src/
 menus_LDADD = $(top_builddir)/src/libdvdnav.la
 
 debug:
-	@$(MAKE) CFLAGS="$(CFLAGS) $(DEBUG_CFLAGS)"
+	@$(MAKE) CFLAGS="$(DEBUG_CFLAGS)"
 
 install-debug: debug
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
