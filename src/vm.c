@@ -358,7 +358,38 @@ int vm_position_get(vm_t *vm, vm_position_t *position) {
   position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
   position->vobu_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
   position->vobu_next = (vm->state).blockN;
-  /* position->vobu_next = 0; Just for now */
+
+  /* still already detrmined or not at PGC end */
+  if (position->still || (vm->state).cellN < (vm->state).pgc->nr_of_cells)
+    return 1;
+  /* handle PGC stills */
+  if ((vm->state).pgc->still_time) {
+    position->still = (vm->state).pgc->still_time;
+    return 1;
+  }
+  /* This is a rough fix for some strange still situations on some strange DVDs.
+   * There are discs (like the German "Back to the Future" RC2) where the only
+   * indication of a still is a cell playback time higher than the time the frames
+   * in this cell actually take to play (like 1 frame with 1 minute playback time).
+   * On the said BTTF disc, for these cells last_sector and last_vobu_start_sector
+   * are equal and the cells are very short, so we abuse these conditions to
+   * detect such discs. I consider these discs broken, so the fix is somewhat
+   * broken, too. */
+  if (((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector ==
+       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_vobu_start_sector) &&
+      ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
+       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 200)) {
+    int time;
+    time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0xf0) * 36000;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0x0f) * 3600;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0xf0) * 600;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0x0f) * 60;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0xf0) * 10;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0x0f) * 1;
+    if (time > 0xff) time = 0xff;
+    position->still = time;
+  }
+  
   return 1;
 }
 
@@ -1988,6 +2019,12 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.38  2002/11/22 17:14:26  mroi
+ * warning: ugly fix ahead! (see comment in the code for details)
+ * But I hate it when DVDs do not work with libdvdnav and after checking a bunch of
+ * other DVDs it seems that this fix is unlikely to break anything else, so I
+ * decided to commit it. "Back to the Future" menus are working fine now.
+ *
  * Revision 1.37  2002/10/23 11:38:09  mroi
  * port Stephen's comment fixing to avoid problems when syncing xine-lib's copy of
  * libdvdnav
