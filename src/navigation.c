@@ -51,6 +51,12 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int *titles) {
     return S_ERR;
   }
 
+  if(!this->started) {
+    /* Start the VM */
+    vm_start(this->vm);
+    this->started = 1;
+  }
+
   (*titles) = vm_get_vmgi(this->vm)->tt_srpt->nr_of_srpts;
 
   return S_OK;
