@@ -177,11 +177,17 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   dvdnav_t *this;
   
   /* Create a new structure */
+  fprintf(MSG_OUT, "libdvdnav: Using dvdnav version from http://dvd.sf.net\n");
+
+  /* FIXME: We malloc() here, but if an error occurs inside dvdnav_open(),
+   * we return but never free() it.
+   */
   (*dest) = NULL;
   this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
   if(!this)
    return S_ERR;
   memset(this, 0, (sizeof(dvdnav_t) ) ); /* Make sure this structure is clean */
+  (*dest) = this;
 
   pthread_mutex_init(&this->vm_lock, NULL);
   /* Initialise the error string */
@@ -208,16 +214,9 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   if (this->file) DVDCloseFile(this->file);
   this->file = NULL;
     
-  //if(!this->started) {
-  //  /* Start the VM */
-  //  vm_start(this->vm);
-  //  this->started = 1;
-  //}
-
   /* Start the read-ahead cache. */
   this->cache = dvdnav_read_cache_new(this);
   
-  (*dest) = this;
   return S_OK;
 }
 
@@ -287,14 +286,6 @@ dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
   fprintf(MSG_OUT, "libdvdnav: clearing dvdnav\n");
 #endif
   result=dvdnav_clear(this);
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: starting vm\n");
-#endif
-//  if(!this->started) {
-//    /* Start the VM */
-//    vm_start(this->vm);
-//    this->started = 1;
-//  }
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: unlocking\n");
 #endif
@@ -999,6 +990,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.32  2002/08/31 02:50:27  jcdutton
+ * Improve some debug messages.
+ * Add some comments about dvdnav_open memory leaks.
+ *
  * Revision 1.31  2002/08/27 19:15:08  mroi
  * more consistent console output
  *

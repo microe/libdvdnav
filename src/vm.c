@@ -42,9 +42,9 @@
 #include "vm.h"
 #include "dvdnav_internal.h"
 
-/*
+
 #define STRICT
-*/
+
 
 /* Local prototypes */
 
@@ -1158,17 +1158,18 @@ static link_t process_command(vm_t *vm, link_t link_values)
 {
   /* FIXME $$$ Move this to a separate function? */
   vm->badness_counter++;
-  if (vm->badness_counter > 1) fprintf(MSG_OUT, "libdvdnav: **** process_command re-entered %d*****\n",vm->badness_counter);
+  if (vm->badness_counter > 1) fprintf(MSG_OUT, "libdvdnav: **** WARNING: process_command re-entered %d*****\n",vm->badness_counter);
   while(link_values.command != PlayThis) {
     
 #ifdef TRACE
+    fprintf(MSG_OUT, "libdvdnav: Before printout starts:\n");
     vmPrint_LINK(link_values);
     
     fprintf(MSG_OUT, "libdvdnav: Link values %i %i %i %i\n", link_values.command, 
 	    link_values.data1, link_values.data2, link_values.data3);
      
-    fprintf(MSG_OUT, "libdvdnav: Before:");
     vm_print_current_domain_state(vm);
+    fprintf(MSG_OUT, "libdvdnav: Before printout ends.\n");
 #endif
     
     switch(link_values.command) {
@@ -1500,8 +1501,9 @@ static link_t process_command(vm_t *vm, link_t link_values)
     }
 
 #ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: After:");
+  fprintf(MSG_OUT, "libdvdnav: After printout starts:\n");
   vm_print_current_domain_state(vm);
+  fprintf(MSG_OUT, "libdvdnav: After printout ends.\n");
 #endif
     
   }
@@ -1824,6 +1826,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.29  2002/08/31 02:50:27  jcdutton
+ * Improve some debug messages.
+ * Add some comments about dvdnav_open memory leaks.
+ *
  * Revision 1.28  2002/08/29 05:33:54  jcdutton
  * Slight changes to help debugging.
  *
