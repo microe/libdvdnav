@@ -16,7 +16,7 @@ libdvdnav_la_LDFLAGS = $(THREAD_LIBS) \
 #	-release $(DVDNAV_MAJOR).$(DVDNAV_MINOR).$(DVDNAV_SUB)
 
 include_HEADERS = dvdnav.h dvdnav_events.h dvd_types.h \
-        nav_read.h dvd_reader.h ifo_types.h nav_types.h
+        nav_read.h nav_print.h dvd_reader.h ifo_types.h nav_types.h
 
 noinst_HEADERS = decoder.h dvdnav_internal.h vm.h vmcmd.h \
 	read_cache.h remap.h
