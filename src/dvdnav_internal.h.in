@@ -146,6 +146,7 @@ struct dvdnav_s {
   int spu_clut_changed;           /* The SPU CLUT changed */ 
   int started;                    /* vm_start has been called? */
   int use_read_ahead;             /* 1 - use read-ahead cache, 0 - don't */
+  int pgc_based;                  /* positioning works PGC based instead of PG based */
   
   /* VM */
   vm_t *vm;

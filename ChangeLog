@@ -7,6 +7,7 @@ libdvdnav (0.1.6) unstable; urgency=low
   * fixed detection of current PTT to not assume a 1:1 mapping between PTTs and PGs
   * releasing stills when jumping to menu fixes some state inconsistencies
   * do not assume PGs to be physically layed out in sequence on the disc
+  * optional PGC based seeking
 
 libdvdnav (0.1.5) unstable; urgency=low
   * some bugfixes

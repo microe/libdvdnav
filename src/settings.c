@@ -101,3 +101,23 @@ dvdnav_status_t dvdnav_audio_language_select(dvdnav_t *this, char *code) {
 dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *this, char *code) {
   return set_language_register(this, code, 18);
 }
+
+dvdnav_status_t dvdnav_set_PGC_positioning_flag(dvdnav_t *this, int pgc) {
+  if(!this) {
+    printerr("Passed a NULL this pointer.");
+    return S_ERR;
+  }
+
+  this->pgc_based = pgc;
+  return S_OK;
+}
+
+dvdnav_status_t dvdnav_get_PGC_positioning_flag(dvdnav_t *this, int *flag) {
+  if(!this || !flag) {
+    printerr("Passed a NULL this pointer.");
+    return S_ERR;
+  }
+
+  (*flag) = this->pgc_based;
+  return S_OK;
+}

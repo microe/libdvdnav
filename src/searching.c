@@ -168,14 +168,19 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     return S_ERR;
   }
 
-  /* First find closest cell number in program */
-  first_cell_nr = state->pgc->program_map[state->pgN-1];
-  if(state->pgN < state->pgc->nr_of_programs) {
-    last_cell_nr = state->pgc->program_map[state->pgN] - 1;
-  } else {
+  if (this->pgc_based) {
+    first_cell_nr = 1;
     last_cell_nr = state->pgc->nr_of_cells;
+  } else {
+    /* Find start cell of program. */
+    first_cell_nr = state->pgc->program_map[state->pgN-1];
+    /* Find end cell of program */
+    if(state->pgN < state->pgc->nr_of_programs)
+      last_cell_nr = state->pgc->program_map[state->pgN] - 1;
+    else
+      last_cell_nr = state->pgc->nr_of_cells;
   }
-    
+
   found = 0;
   for(cell_nr = first_cell_nr; (cell_nr <= last_cell_nr) && !found; cell_nr ++) {
     cell =  &(state->pgc->cell_playback[cell_nr-1]);
@@ -382,8 +387,6 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
   uint32_t first_cell_nr;
   uint32_t last_cell_nr;
   cell_playback_t *cell;
-  cell_playback_t *first_cell;
-  cell_playback_t *last_cell;
   dvd_state_t *state;
 
   if(!this || !pos || !len) {
@@ -406,18 +409,19 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
   /* Get current sector */
   cur_sector = this->vobu.vobu_start + this->vobu.blockN;
 
-  /* Find start cell of program. */
-  first_cell_nr = state->pgc->program_map[state->pgN-1];
-  first_cell = &(state->pgc->cell_playback[first_cell_nr-1]);
-  
-  /* Find end cell of program */
-  if(state->pgN < state->pgc->nr_of_programs) {
-    last_cell_nr = state->pgc->program_map[state->pgN] - 1;
-  } else {
+  if (this->pgc_based) {
+    first_cell_nr = 1;
     last_cell_nr = state->pgc->nr_of_cells;
+  } else {
+    /* Find start cell of program. */
+    first_cell_nr = state->pgc->program_map[state->pgN-1];
+    /* Find end cell of program */
+    if(state->pgN < state->pgc->nr_of_programs)
+      last_cell_nr = state->pgc->program_map[state->pgN] - 1;
+    else
+      last_cell_nr = state->pgc->nr_of_cells;
   }
-  last_cell = &(state->pgc->cell_playback[last_cell_nr-1]);
-  
+
   *pos = -1;
   *len = 0;
   for (cell_nr = first_cell_nr; cell_nr <= last_cell_nr; cell_nr++) {
