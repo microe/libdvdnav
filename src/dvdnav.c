@@ -51,6 +51,7 @@ static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
 
   memset(&this->pci,0,sizeof(this->pci));
   memset(&this->dsi,0,sizeof(this->dsi));
+  this->last_cmd_nav_lbn = 0;
 
   /* Set initial values of flags */
   this->position_current.still = 0;
@@ -778,6 +779,10 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
      * This improves pre-caching, because the VOBU will almost certainly be read entirely.
      */
     dvdnav_pre_cache_blocks(this->cache, this->vobu.vobu_start+1, this->vobu.vobu_length+1);
+    
+    /* release NAV menu filter, when we reach the same NAV packet again */
+    if (this->last_cmd_nav_lbn == this->pci.pci_gi.nv_pck_lbn)
+      this->last_cmd_nav_lbn = 0;
     
     /* Successfully got a NAV packet */
     (*event) = DVDNAV_NAV_PACKET;

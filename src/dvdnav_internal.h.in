@@ -139,6 +139,7 @@ struct dvdnav_s {
   /* NAV data */
   pci_t pci;
   dsi_t dsi;
+  uint32_t last_cmd_nav_lbn;      /* detects when a command is issued on an already left NAV */
   
   /* Flags */
   int skip_still;                 /* Set when skipping a still */
