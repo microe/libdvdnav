@@ -448,9 +448,9 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
       }
     }
     this->position_current.hop_channel = this->position_next.hop_channel;
-    /* Make blockN > vobu_length to do expected_nav */
+    /* Make blockN == vobu_length to do expected_nav */
     this->vobu.vobu_length = 0;
-    this->vobu.blockN      = 1;
+    this->vobu.blockN      = 0;
     this->sync_wait        = 0;
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
@@ -570,9 +570,9 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     /* vobu info is used for mid cell resumes */
     this->vobu.vobu_start               = this->position_next.cell_start + this->position_next.block;
     this->vobu.vobu_next                = 0;
-    /* Make blockN > vobu_length to do expected_nav */
+    /* Make blockN == vobu_length to do expected_nav */
     this->vobu.vobu_length = 0;
-    this->vobu.blockN      = 1;
+    this->vobu.blockN      = 0;
     
     /* update the spu palette at least on PGC changes */
     this->spu_clut_changed = 1;
@@ -980,6 +980,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.45  2003/03/15 20:18:50  mroi
+ * start blockN from 0
+ *
  * Revision 1.44  2003/03/14 18:49:28  mroi
  * less overwhelming TRACE info
  *
