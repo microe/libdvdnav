@@ -27,7 +27,7 @@
 
 #include <inttypes.h>
 #include <dvdread/ifo_types.h> /*  Only for vm_cmd_t  */
-#include "decoder.h"
+#include "dvdnav_internal.h"
 
 #ifdef TRACE
 void vmPrint_mnemonic(vm_cmd_t *command);

@@ -26,10 +26,7 @@
 #endif
 
 #include <assert.h>
-
 #include "dvdnav_internal.h"
-
-#include "vm.h"
 
 /*
 #define LOG_DEBUG

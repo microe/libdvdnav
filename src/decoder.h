@@ -29,6 +29,7 @@
 #include <sys/time.h>
 
 #include <dvdread/ifo_types.h> /*  vm_cmd_t */
+#include "dvdnav_internal.h"
 
 /* link command types */
 typedef enum {

@@ -28,9 +28,6 @@
 #include "config.h"
 #endif
 
-#include "dvdnav.h"
-#include "vm.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -44,9 +41,13 @@
 #include <dvdread/ifo_read.h>
 #include <dvdread/ifo_types.h>
 
-
 /* Uncomment for VM command tracing */
 /* #define TRACE */
+
+#include "decoder.h"
+#include "dvdnav.h"
+#include "vm.h"
+#include "vmcmd.h"
 
 /* where should libdvdnav write its messages (stdout/stderr) */
 #define MSG_OUT stdout

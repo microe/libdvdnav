@@ -31,7 +31,6 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "vmcmd.h"
 #include "dvdnav_internal.h"
 
 

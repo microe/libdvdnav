@@ -32,8 +32,6 @@
 #include <string.h>  /* For memset */
 #include <dvdread/ifo_types.h> /* vm_cmd_t */
 #include <assert.h>
-#include "vmcmd.h"
-#include "decoder.h"
 #include "dvdnav_internal.h"
 
 uint32_t vm_getbits(command_t *command, int start, int count) {

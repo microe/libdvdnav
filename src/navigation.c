@@ -27,8 +27,6 @@
 
 #include "dvdnav_internal.h"
 
-#include "vm.h"
-
 /* Navigation API calls */
 
 dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {

@@ -40,9 +40,6 @@
 #include <dvdread/ifo_types.h>
 #include <dvdread/ifo_read.h>
 
-#include "decoder.h"
-#include "vmcmd.h"
-#include "vm.h"
 #include "dvdnav_internal.h"
 
 /*
@@ -69,6 +66,7 @@ static int process_command(vm_t *vm,link_t link_values);
 
 /* Set */
 static int  set_TT(vm_t *vm, int tt);
+static int  set_PTT(vm_t *vm, int tt, int ptt);
 static int  set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn);
 static int  set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part);
 static int  set_FP_PGC(vm_t *vm);
@@ -481,13 +479,13 @@ int vm_jump_cell_block(vm_t *vm, int cell, int block) {
 }
 
 int vm_jump_title_part(vm_t *vm, int title, int part) {
-  int vtsN;
-
-  vtsN = vm->vmgi->tt_srpt->title[title - 1].title_set_nr;
-
-  if(!set_VTS_PTT(vm, vtsN, title, part))
+  if(!set_PTT(vm, title, part))
     return 0;
-  process_command(vm, play_PGC_PG(vm, (vm->state).pgN));
+  /* Some DVDs do not want us to jump directly into a title and have
+   * PGC pre commands taking us back to some menu. Since we do not like that,
+   * we do not execute PGC pre commands but directly play the PG. */
+  /* process_command(vm, play_PGC_PG(vm, (vm->state).pgN)); */
+  process_command(vm, play_PG(vm));
   return 1;
 }
 
@@ -1517,10 +1515,13 @@ static int process_command(vm_t *vm, link_t link_values) {
 /* Set functions */
 
 static int set_TT(vm_t *vm, int tt) {  
+  return set_PTT(vm, tt, 1);
+}
+
+static int set_PTT(vm_t *vm, int tt, int ptt) {
   assert(tt <= vm->vmgi->tt_srpt->nr_of_srpts);
-  (vm->state).TTN_REG = tt;
-  return set_VTS_TT(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
-		    vm->vmgi->tt_srpt->title[tt - 1].vts_ttn);
+  return set_VTS_PTT(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
+		     vm->vmgi->tt_srpt->title[tt - 1].vts_ttn, ptt);
 }
 
 static int set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn) {
@@ -1807,6 +1808,11 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.49  2003/03/27 15:12:22  mroi
+ * reorganize mutual header inclusion to fix warnings when compiling with TRACE defined
+ * fix vm_jump_title_part to use correct title number (up to now the number was
+ * considered to be VTS-relative, which it is not)
+ *
  * Revision 1.48  2003/03/26 14:37:23  mroi
  * I should get a brain and learn how to handle BCD...
  * also fixing a possible mis-jump with angled cells

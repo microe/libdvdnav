@@ -26,9 +26,8 @@
 #ifndef VM_H_INCLUDED
 #define VM_H_INCLUDED
 
-#include "decoder.h"
 #include "remap.h"
-#include <dvd_types.h>
+#include "dvdnav_internal.h"
 
 /* DOMAIN enum */
 

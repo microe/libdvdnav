@@ -27,8 +27,6 @@
 
 #include "dvdnav_internal.h"
 
-#include "vm.h"
-
 /* Characteristics/setting API calls */
 
 dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int *region) {
