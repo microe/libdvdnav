@@ -186,7 +186,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   }
 
   if(fnd_cell_nr <= last_cell_nr) {
-    int32_t vobu, start, blockN;
+    int32_t vobu, start; //, blockN;
     dvdnav_status_t status;
     fprintf(stderr,"Seeking to cell %i from choice of %i to %i\n",
 	   fnd_cell_nr, first_cell_nr, last_cell_nr);

@@ -55,7 +55,6 @@ static link_t process_command(vm_t *vm,link_t link_values);
 
 static void ifoOpenNewVTSI(vm_t *vm,dvd_reader_t *dvd, int vtsN);
 static pgcit_t* get_PGCIT(vm_t *vm);
-static int get_video_aspect(vm_t *vm);
 
 /* Can only be called when in VTS_DOMAIN */
 static int get_TT(vm_t *vm,int tt);
@@ -549,7 +548,7 @@ int vm_get_audio_stream(vm_t *vm, int audioN)
 int vm_get_subp_stream(vm_t *vm, int subpN)
 {
   int streamN = -1;
-  int source_aspect = get_video_aspect(vm);
+  int source_aspect = vm_get_video_aspect(vm);
   
   if((vm->state).domain == VTSM_DOMAIN 
      || (vm->state).domain == VMGM_DOMAIN
@@ -1520,7 +1519,7 @@ static int get_PGCN(vm_t *vm)
   return -1; /*  error */
 }
 
-static int get_video_aspect(vm_t *vm)
+int vm_get_video_aspect(vm_t *vm)
 {
   int aspect = 0;
   
@@ -1619,6 +1618,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.14  2002/04/23 12:34:39  f1rmb
+ * Why rewrite vm function, use it instead (this remark is for me, of course ;-) ).
+ * Comment unused var, shut compiler warnings.
+ *
  * Revision 1.13  2002/04/23 02:12:27  jcdutton
  * Re-implemented seeking.
  *

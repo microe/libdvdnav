@@ -145,6 +145,7 @@ void vm_get_subp_info(vm_t *vm, int *num_avail, int *current);
 subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN);
 audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN);
 void vm_get_video_res(vm_t *vm, int *width, int *height);
+int vm_get_video_aspect(vm_t *vm);
 
 #endif /* VM_HV_INCLUDED */
 
