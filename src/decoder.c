@@ -587,7 +587,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   fprintf(MSG_OUT, "libdvdnav: --------------------------------------------\n");
   fprintf(MSG_OUT, "libdvdnav: Single stepping commands\n");
 #endif
-  
+  i = 0; 
   while(i < num_commands && total < 100000) {
     int32_t line;
     
