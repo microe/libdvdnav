@@ -10,9 +10,10 @@ libdvdnav_la_LDFLAGS = $(DVDREAD_LIBS) $(THREAD_LIBS) \
 #	-release $(DVDNAV_MAJOR).$(DVDNAV_MINOR).$(DVDNAV_SUB)
 
 include_HEADERS = decoder.h dvdnav.h dvdnav_events.h \
-	dvdnav_internal.h vm.h vmcmd.h read_cache.h dvd_types.h remap.h
+	dvdnav_internal.h vm.h vmcmd.h read_cache.h dvd_types.h \
+	remap.h nav_types.h
 
-EXTRA_DIST = README.MAP FELLOWSHIP.map
+EXTRA_DIST = README.MAP FELLOWSHIP.map nav_types.patch
 
 ###
 # Install header files (default=$includedir/xine)
