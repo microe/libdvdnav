@@ -15,6 +15,8 @@ libdvdnav (0.1.1-1) unstable; urgency=low
 
   * New upstream version. (closes: #148495)
   * Include TODO
+  * Fix config.h problem
+  * Threaded cache
 
  -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Sat,  1 Jun 2002 17:47:59 +0200
 
@@ -50,6 +52,7 @@ libdvdnav (0.0.1-1) unstable; urgency=low
 libdvdnav (0.0.1) unstable; urgency=low
 
   * Initial release.
+  * Split from xine-dvdnav
 
  -- rjw57 <rjw57@hermes.cam.ac.uk>  Tue, 12 Mar 2002 19:41:13 +0000
 
