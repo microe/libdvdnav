@@ -24,6 +24,10 @@
 #ifndef DVDNAV_INTERNAL_H_INCLUDED
 #define DVDNAV_INTERNAL_H_INCLUDED
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dvdnav.h"
 #include "vm.h"
 
