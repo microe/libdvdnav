@@ -29,6 +29,7 @@
 #endif
 
 #include <sys/types.h>
+#include <inttypes.h>
 
 /**
  * The DVD access interface.

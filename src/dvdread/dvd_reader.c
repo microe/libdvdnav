@@ -31,6 +31,22 @@
 #include <unistd.h>
 #include <limits.h>
 #include <dirent.h>
+
+/* misc win32 helpers */
+#ifdef WIN32
+/* replacement gettimeofday implementation */
+#include <sys/timeb.h>
+static inline int gettimeofday( struct timeval *tv, void *tz )
+{
+  struct timeb t;
+  ftime( &t );
+  tv->tv_sec = t.time;
+  tv->tv_usec = t.millitm * 1000;
+  return 0;
+}
+#include <io.h> /* read() */
+#define lseek64 _lseeki64
+#endif
  
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__bsdi__)|| defined(__DARWIN__)
 #define SYS_BSD 1
@@ -50,10 +66,6 @@
 #include "md5.h"
 
 #define DEFAULT_UDF_CACHE_LEVEL 1
-
-#ifdef _MSC_VER
-#define fchdir chdir
-#endif
 
 struct dvd_reader_s {
     /* Basic information. */
@@ -386,6 +398,9 @@ dvd_reader_t *DVDOpen( const char *ppath )
 		return 0;
 	}
 
+#ifndef WIN32 /* don't have fchdir, and getcwd( NULL, ... ) is strange */
+              /* Also WIN32 does not have symlinks, so we don't need this bit of code. */
+
 	/* Resolve any symlinks and get the absolut dir name. */
 	{
 	    char *new_path;
@@ -402,7 +417,7 @@ dvd_reader_t *DVDOpen( const char *ppath )
 		}
 	    }
 	}
-	
+#endif	
 	/**
 	 * If we're being asked to open a directory, check if that directory
 	 * is the mountpoint for a DVD-ROM which we can use instead.

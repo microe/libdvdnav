@@ -24,13 +24,18 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#else
+/* Only needed on MINGW at the moment */
+#include "dlfcn.c"
+#endif
 
 #include "dvd_reader.h"
 #include "dvd_input.h"
 
 
-#ifndef _MSC_VER
+#ifndef WIN32
 #define LIBDVDCSS_NAME = "libdvdcss.so.2"
 #else
 #define LIBDVDCSS_NAME = "libdvdcss.dll"
@@ -172,7 +177,7 @@ static dvd_input_t file_open(const char *target)
   }
   
   /* Open the device */
-#ifndef _MSC_VER
+#ifndef WIN32
   dev->fd = open(target, O_RDONLY | O_EXCL);
 #else
   dev->fd = open(target, O_RDONLY | O_BINARY);
@@ -290,7 +295,7 @@ int dvdinput_setup(void)
 #else
   /* dlopening libdvdcss */
 
-#ifndef _MSC_VER
+#ifndef WIN32
   dvdcss_library = dlopen("libdvdcss.so.2", RTLD_LAZY);
 #else
   dvdcss_library = dlopen("libdvdcss.dll", RTLD_LAZY);

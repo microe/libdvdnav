@@ -7,7 +7,7 @@ AM_CPPFLAGS = -DDVDNAV_COMPILE -I$(top_srcdir)/src/vm
 noinst_LTLIBRARIES = libdvdread.la
 
 libdvdread_la_SOURCES = dvd_reader.c nav_read.c ifo_read.c \
-	dvd_input.c dvd_udf.c md5.c nav_print.c ifo_print.c
+	dvd_input.c dvd_udf.c md5.c nav_print.c ifo_print.c 
 
 libdvdread_la_LIBADD = $(DYNAMIC_LD_LIBS)
 
