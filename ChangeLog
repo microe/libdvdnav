@@ -4,6 +4,7 @@ libdvdnav (0.1.10)
   * detect zero stilltime still cells inside PGCs, not only at the end
     (fixes "Red Dragon" RC2 scene selection)
   * PGC stills seem to work, assertion removed
+  * fix rare race condition after Exit commands
 
 libdvdnav (0.1.9)
   * libdvdnav does not depend on libdvdread any more. It has it's own version.
