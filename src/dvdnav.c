@@ -976,8 +976,23 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
   return S_OK;
 } 
 
+dsi_t* dvdnav_get_current_nav_dsi(dvdnav_t *this) {
+  if(!this || !this->vm) return 0;
+  return &this->dsi;
+}
+
+uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
+  if(!this || !this->vm) {
+    return S_ERR;
+  }
+  return this->position_next.still;
+}
+
 /*
  * $Log$
+ * Revision 1.28  2002/07/25 14:42:33  richwareham
+ * Patch from aschultz@cs.uni-magdeburg.de to allow for still-frame 'peek-ahead'
+ *
  * Revision 1.27  2002/07/12 15:46:44  mroi
  * use new memcopy'less read ahead cache
  *

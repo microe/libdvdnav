@@ -503,6 +503,16 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *self, int* button);
 pci_t* dvdnav_get_current_nav_pci(dvdnav_t *self);
 
 /**
+ * Returns the DSI structure associated
+ * with the current position.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ *
+ * \sa dsi_t (in <tt>libdvdread</tt>)
+ */
+dsi_t* dvdnav_get_current_nav_dsi(dvdnav_t *self);
+
+/**
  * Get the area associated with a certain button.
  *
  * \param nav_pci Pointer to the PCI structure you may have got via
@@ -802,6 +812,13 @@ dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
  */
 dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *self, int* current_angle,
 				     int *number_of_angles);
+
+/**
+ * Returns the still time status from the next cell
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ */
+uint32_t dvdnav_get_next_still_flag(dvdnav_t *self);
 
 /**
  * @}
