@@ -103,10 +103,19 @@ struct read_cache_s {
 /*
 #define READ_CACHE_TRACE 0
 */
-#if READ_CACHE_TRACE
-#define dprintf(fmt, args...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , ## args);
+
+#ifdef __GNUC__
+# if READ_CACHE_TRACE
+#  define dprintf(fmt, args...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , ## arg
+# else
+#  define dprintf(fmt, args...) /* Nowt */
+# endif
 #else
-#define dprintf(fmt, args...) /* Nowt */
+# if READ_CACHE_TRACE
+#  define dprintf(fmt, ...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , __VA_ARGS_
+# else
+#  define dprintf(fmt, ...) /* Nowt */
+# endif
 #endif
 
 #if _MULTITHREAD_

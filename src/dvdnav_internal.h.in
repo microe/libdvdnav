@@ -160,7 +160,11 @@ struct dvdnav_s {
 
 /** USEFUL MACROS **/
 
+#ifdef __GNUC__
 #define printerrf(format, args...) snprintf(this->err_str, MAX_ERR_LEN, format, ## args);
+#else
+#define printerrf(...) snprintf(this->err_str, MAX_ERR_LEN, __VA_ARGS__);
+#endif
 #define printerr(str) strncpy(this->err_str, str, MAX_ERR_LEN);
 /* Save my typing */
 
