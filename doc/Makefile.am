@@ -1,4 +1,4 @@
-EXTRA_DIST = doxy.conf mainpage.cpp tutorial.cpp
+EXTRA_DIST = doxy.conf mainpage.cpp tutorial.cpp dvd_structures
 
 docs: doxy.conf
 	@if test x"$(DOXYGEN)" != "xno"; then \

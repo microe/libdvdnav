@@ -1,0 +1,67 @@
+This is some rather basic information on the organizational structures of
+a DVD. I collected this info over time from various sources, the most
+valuable being an article in the German c't computer magazine.
+Some of the info might be wrong according to the DVD standard (which I do
+not know), but they are practically proven in libdvdnav.
+
+						Michael Roitzsch
+
+
+1. physical structure - MPEG stream level
+   - blocks, sectors
+       * smallest addressable unit on disc
+   - GOP (group of pictures)
+       * contains multiple sectors
+       * smallest self-contained MPEG unit
+   - VOBU (video object unit)
+       * contains multiple GOPs + audio and SPU blocks + NAV packet
+       * smallest unit in seek and resume operations, always starts with a
+         NAV packet used for menu button highlight and command information
+         and to detect PTS discontinuities
+   - ILVU (interleaved video unit)
+       * contains multiple VOBUs (ususally only one)
+       * blocking multiple VOBUs of multiple interleaved MPEG streams for
+         multiangle features
+   - VOB (video object)
+       * contains multiple ILVUs (usually quite a lot)
+       * one of the files on the disc
+2. navigational structure - logical playback control
+   - Cell
+       * smallest unit which is layed out in sequence physically
+       * points to a first and last VOBU
+       * smallest unit to execute VM commands (cell_post commands)
+       * smallest unit accesible by VM commands (apart from LinkRSM)
+   - PG (program)
+       * points to a Cell
+       * usually the mapping between PG and Cells is 1:1, but not always
+       * units for user skip operations
+       * currently unit for seeking too
+   - PGC (program chain)
+       * contains multiple programs and cells
+       * logical playback chain
+       * VM commands at start and stop (PGC_pre and PGC_post commands)
+       * might be used for seeking
+3. title structure - high level navigation
+   - PTT (part of title track)
+       * points to a PG in a PGC
+       * usually what you select in a "chapter menu" are parts
+       * usually the mapping between PTT and PG is 1:1, but not always
+   - TT (title track)
+       * contains multiple PTTs
+       * logical partitioning of the content
+         (multiple episodes of a TV series on one DVD: one TT per episode)
+   - VTS (video title set)
+       * contains multiple TTs
+       * high level partitioning of the content (movie / bonus material)
+4. domain structure - bringing it all together
+   - FP (first play)
+       * one special PGC in the VMGM domain run on start of the disc
+   - VMGM (video manager menu) - file video_ts.{vob,ifo,bup}
+       * the menu which allows you to select between title sets
+       * contains a set of PGCs
+   - VTSM (video title set menu) - file vts_<vtsN>_0.{vob,ifo,bup}
+       * the menu which allows you to select between the TTs of a VTS
+       * contains a set of PGCs
+   - VTS (video title set) - files vts_<vtsN>_[1-9].vob
+       * regular playback
+       * contains one VTS and a set of PGCs
