@@ -513,21 +513,35 @@ int vm_go_up(vm_t *vm)
 
 int vm_next_pg(vm_t *vm)
 {
-  /*  Do we need to get a updated pgN value first? */
-  (vm->state).pgN += 1; 
-  return vm_top_pg(vm);
+  if((vm->state).pgN >= (vm->state).pgc->nr_of_programs) {
+    /* last program -> move to first program of next PGC */
+    if ((vm->state).pgc->next_pgc_nr != 0 && set_PGC(vm, (vm->state).pgc->next_pgc_nr) == 0) {
+      vm_jump_prog(vm, 1);
+      return 1;
+    }
+    /* something failed, try to move to the cell after the last */
+    (vm->state).cellN = (vm->state).pgc->nr_of_cells;
+    vm_get_next_cell(vm);
+    return 1;
+  } else {
+    vm_jump_prog(vm, (vm->state).pgN + 1);
+    return 1;
+  }
 }
 
 int vm_prev_pg(vm_t *vm)
 {
-  /*  Do we need to get a updated pgN value first? */
-  (vm->state).pgN -= 1;
-  if((vm->state).pgN == 0) {
-    /*  Check for previous PGCN ?  */
-    (vm->state).pgN = 1;
-    /*  return 0; */
+  if ((vm->state).pgN <= 1) {
+    /* first program -> move to last program of previous PGC */
+    if ((vm->state).pgc->prev_pgc_nr != 0 && set_PGC(vm, (vm->state).pgc->prev_pgc_nr) == 0) {
+      vm_jump_prog(vm, (vm->state).pgc->nr_of_programs);
+      return 1;
+    }
+    return 0;
+  } else {
+    vm_jump_prog(vm, (vm->state).pgN - 1);
+    return 1;
   }
-  return vm_top_pg(vm);
 }
 
 /* Get the current title and part from the current playing position. */
@@ -2031,6 +2045,17 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.42  2003/01/13 13:33:45  mroi
+ * slightly improved logic of program skipping:
+ * previous program:
+ * -> if PG > 1, jump to PG - 1
+ * -> otherwise, if prev_PGC is set, jump to last PG of prev_PGC
+ * -> otherwise fail
+ * next program:
+ * -> if PG < last_PG, jump to PG + 1
+ * -> otherwise, if next_PGC is set, jump to first PG of next_PGC
+ * -> otherwise, move to last Cell of current PG and ask the VM for the next Cell
+ *
  * Revision 1.41  2003/01/06 19:59:28  mroi
  * implement LinkNoLink
  * (in this whole lot of DVDs I watched with libdvdnav, Disney's

@@ -238,14 +238,12 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
     return S_ERR;
 
   pthread_mutex_lock(&this->vm_lock);
-  /* Make sure this is not the first chapter */
-  if(state->pgN <= 1 ) {
-    fprintf(MSG_OUT, "libdvdnav: at first chapter. prev chapter failed.\n");
+  fprintf(MSG_OUT, "libdvdnav: previous chapter\n");
+  if (!vm_prev_pg(this->vm)) {
+    fprintf(MSG_OUT, "libdvdnav: prev chapter failed.\n");
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
-  fprintf(MSG_OUT, "libdvdnav: previous chapter\n");
-  vm_jump_prog(this->vm, state->pgN - 1);
   this->position_current.still = 0;
   this->vm->hop_channel++;
   fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
@@ -275,14 +273,11 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
     return S_ERR;
 
   pthread_mutex_lock(&this->vm_lock);
-  /* Make sure this is not the last chapter */
-  if(state->pgN >= state->pgc->nr_of_programs) {
-    fprintf(MSG_OUT, "libdvdnav: at last chapter. jumping to end of last cell.\n");
-    this->vm->state.cellN = this->vm->state.pgc->nr_of_cells;
-    vm_get_next_cell(this->vm);
-  } else {
-    fprintf(MSG_OUT, "libdvdnav: next chapter\n");
-    vm_jump_prog(this->vm, state->pgN + 1);
+  fprintf(MSG_OUT, "libdvdnav: next chapter\n");
+  if (!vm_next_pg(this->vm)) {
+    fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
   }
   this->position_current.still = 0;
   this->vm->hop_channel++;
