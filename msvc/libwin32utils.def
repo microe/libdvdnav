@@ -225,3 +225,5 @@ dlclose
 dlsym
 dlopen
 dlerror
+
+optind

@@ -54,6 +54,11 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Desc=Create libdvdnav Install Files
+PostBuild_Cmds=scripts\libdvdnav_install.bat Release
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "libdvdnav - Win32 Debug"
 
@@ -83,6 +88,11 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"Debug\libdvdnav\libdvdnav.lib"
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Desc=Create libdvdnav Install Files
+PostBuild_Cmds=scripts\libdvdnav_install.bat Debug
+# End Special Build Tool
 
 !ENDIF 
 
@@ -116,14 +126,6 @@ SOURCE=..\src\dvdnav.c
 # Begin Source File
 
 SOURCE=..\src\highlight.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\ifo_print.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\ifo_read.c
 # End Source File
 # Begin Source File
 

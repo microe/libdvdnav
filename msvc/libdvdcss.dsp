@@ -54,6 +54,11 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 /machine:IX86
 # ADD LINK32 /machine:IX86
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Desc=Create libdvdcss Install
+PostBuild_Cmds=scripts\libdvdcss_intstall.bat Release
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "libdvdcss - Win32 Debug"
 
@@ -82,6 +87,11 @@ LINK32=link.exe
 # ADD BASE LINK32 /machine:IX86
 # ADD LINK32 /dll /machine:IX86 /out:"Debug/bin/libdvdcss.dll"
 # SUBTRACT LINK32 /pdb:none
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Desc=Create libdvdcss Install
+PostBuild_Cmds=scripts\libdvdcss_intstall.bat Debug
+# End Special Build Tool
 
 !ENDIF 
 
