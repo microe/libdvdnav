@@ -430,7 +430,11 @@ int dvdnav_get_vobu(dsi_t* nav_dsi, pci_t* nav_pci, int angle, dvdnav_vobu_t* vo
   }
   return 1;
 }
-
+/* This is the main get_next_block function which actually gets the media stream video and audio etc.
+ * The use of this function is optional, with the application programmer
+ * free to implement their own version of this function
+ * FIXME: Make the function calls from here public API calls.
+ */
 dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
  				      int *event, int *len) {
   dvd_state_t *state;
@@ -730,7 +734,10 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     }
     dvdnav_get_vobu(&this->dsi,&this->pci, 0, &this->vobu); 
     this->vobu.blockN=1;
-
+    /* FIXME: We need to update the vm state->blockN with which VOBU we are in.
+     *        This is so RSM resumes to the VOBU level and not just the CELL level.
+     *        This should be implemented with a new Public API call.
+     */
     dvdnav_pre_cache_blocks(this, this->vobu.vobu_start+1, this->vobu.vobu_length);
     
     /* Successfully got a NAV packet */
@@ -901,6 +908,10 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.14  2002/04/23 13:26:08  jcdutton
+ * Add some comments, FIXMEs.
+ * The main point being that dvdnav_get_next_block is almost in a state where it can be optional whether the application programmer uses it, or implements their own version of the function. That is been the main reason for the re-write of this function recently.
+ *
  * Revision 1.13  2002/04/23 12:55:40  jcdutton
  * Removed un-needed variables.
  * General Clean up.
