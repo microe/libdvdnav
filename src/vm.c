@@ -444,11 +444,11 @@ void vm_position_get(vm_t *vm, vm_position_t *position) {
     int time;
     int size = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
 	       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
-    time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0xf0) * 36000;
+    time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   >> 4  ) * 36000;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0x0f) * 3600;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0xf0) * 600;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute >> 4  ) * 600;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.minute & 0x0f) * 60;
-    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0xf0) * 10;
+    time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second >> 4  ) * 10;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.second & 0x0f) * 1;
     if (size / time > 30)
       /* datarate is too high, it might be a very short, but regular cell */
@@ -474,7 +474,9 @@ int vm_jump_pg(vm_t *vm, int pg) {
 int vm_jump_cell_block(vm_t *vm, int cell, int block) {
   (vm->state).cellN = cell;
   process_command(vm, play_Cell(vm));
-  (vm->state).blockN = block;
+  /* play_Cell can jump to a different cell in case of angles */
+  if ((vm->state).cellN == cell)
+    (vm->state).blockN = block;
   return 1;
 }
 
@@ -1805,6 +1807,10 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.48  2003/03/26 14:37:23  mroi
+ * I should get a brain and learn how to handle BCD...
+ * also fixing a possible mis-jump with angled cells
+ *
  * Revision 1.47  2003/03/24 16:42:59  mroi
  * determine correct PG and PTT numbers when seeking across PG boundaries
  *

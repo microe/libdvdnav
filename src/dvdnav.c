@@ -210,14 +210,16 @@ static int64_t dvdnav_convert_time(dvd_time_t *time) {
   int64_t result;
   int frames;
   
-  result  = (time->hour    & 0xf0) * 10 * 60 * 60 * 90000;
+  result  = (time->hour    >> 4  ) * 10 * 60 * 60 * 90000;
   result += (time->hour    & 0x0f)      * 60 * 60 * 90000;
-  result += (time->minute  & 0xf0)      * 10 * 60 * 90000;
+  result += (time->minute  >> 4  )      * 10 * 60 * 90000;
   result += (time->minute  & 0x0f)           * 60 * 90000;
-  result += (time->second  & 0xf0)           * 10 * 90000;
+  result += (time->second  >> 4  )           * 10 * 90000;
   result += (time->second  & 0x0f)                * 90000;
-  frames  = (time->frame_u & 0x30)                * 10   ;
-  frames += (time->frame_u & 0x0f)                       ;
+  
+  frames  = ((time->frame_u & 0x30) >> 4) * 10;
+  frames += ((time->frame_u & 0x0f)     )     ;
+  
   if (time->frame_u & 0x80)
     result += frames * 3000;
   else
@@ -1016,6 +1018,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.47  2003/03/26 14:37:22  mroi
+ * I should get a brain and learn how to handle BCD...
+ * also fixing a possible mis-jump with angled cells
+ *
  * Revision 1.46  2003/03/25 12:46:26  mroi
  * - new event on cell changes to report program and cell number and some time info
  * - get rid of memcopies in event handling
