@@ -712,8 +712,8 @@ int vm_get_subp_stream(vm_t *vm, int subpN, int mode) {
     }
   }
   
- if((vm->state).domain != VTS_DOMAIN && streamN == -1)
-   streamN = 0;
+  if((vm->state).domain != VTS_DOMAIN && streamN == -1)
+    streamN = 0;
 
   /* FIXME: Should also check in vtsi/vmgi status what kind of stream it is. */
   return streamN;
