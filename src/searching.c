@@ -177,6 +177,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     if((cell->first_sector <= target) && (cell->last_sector >= target)) {
       state->cellN = cell_nr;
       state->blockN = 0;
+      state->cell_restart++; 
       found = 1;
       fnd_cell_nr = cell_nr;
       fnd_cell = cell;
