@@ -202,7 +202,7 @@ int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ {
   (vm->state).vtsN = -1;
   
   if (vm->dvd && dvdroot) {
-    // a new dvd device has been requested
+    /* a new dvd device has been requested */
     vm_stop(vm);
   }
   if (!vm->dvd) {
@@ -284,7 +284,7 @@ int vm_position_get(vm_t *vm, vm_position_t *position) {
   position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
   position->vobu_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
   position->vobu_next = (vm->state).blockN;
-//  position->vobu_next = 0; /* Just for now */
+  /* position->vobu_next = 0; Just for now */
   return 1;
 }
 
@@ -794,7 +794,7 @@ static void saveRSMinfo(vm_t *vm, int cellN, int blockN)
   (vm->state).rsm_vtsN = (vm->state).vtsN;
   (vm->state).rsm_pgcN = get_PGCN(vm);
   
-  /* assert((vm->state).rsm_pgcN == (vm->state).TT_PGCN_REG); // for VTS_DOMAIN */
+  /* assert((vm->state).rsm_pgcN == (vm->state).TT_PGCN_REG);  for VTS_DOMAIN */
   
   for(i = 0; i < 5; i++) {
     (vm->state).rsm_regs[i] = (vm->state).registers.SPRM[4 + i];
@@ -928,7 +928,7 @@ static link_t play_PG(vm_t *vm)
     fprintf(stderr, "(vm->state).pgN (%i) == pgc->nr_of_programs + 1 (%i)\n", 
 	    (vm->state).pgN, (vm->state).pgc->nr_of_programs + 1);
 #endif
-    //assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1);
+    /*assert((vm->state).pgN == (vm->state).pgc->nr_of_programs + 1);*/
     return play_PGC_post(vm);
   }
   
@@ -1319,7 +1319,6 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* Jump to VTS Title Domain */
       /* Only allowed from the First Play domain(PGC) */
       /* or the Video Manager domain (VMG) */
-      //fprintf(stderr,"****** JumpTT is Broken, please fix me!!! ****\n");
       assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
       if(get_TT(vm,link_values.data1) == -1)
 	assert(0);
@@ -1484,7 +1483,6 @@ static int find_TT(vm_t *vm, int vtsN, int vts_ttn) {
 
 static int get_TT(vm_t *vm, int tt)
 {  
-  //fprintf(stderr,"****** get_TT is Broken, please fix me!!! ****\n");
   assert(tt <= vm->vmgi->tt_srpt->nr_of_srpts);
   
   (vm->state).TTN_REG = tt;
@@ -1498,15 +1496,17 @@ static int get_VTS_TT(vm_t *vm, int vtsN, int vts_ttn)
 {
   fprintf(stderr, "get_VTS_TT called, testing!!! vtsN=%d, vts_ttn=%d\n", vtsN, vts_ttn);
   return get_VTS_PTT(vm, vtsN, vts_ttn, 1);
-  //pgcN = get_ID(vm, vts_ttn); /*  This might return -1 */
-  //assert(pgcN != -1);
+  /* pgcN = get_ID(vm, vts_ttn);  This might return -1 */
+  /*
+  assert(pgcN != -1);
 
-  //(vm->state).TTN_REG = find_TT(*vm, vtsN, vts_ttn);
-  //(vm->state).VTS_TTN_REG = vts_ttn;
-  //(vm->state).vtsN = 
+  (vm->state).TTN_REG = find_TT(*vm, vtsN, vts_ttn);
+  (vm->state).VTS_TTN_REG = vts_ttn;
+  (vm->state).vtsN = 
+  */
   /* Any other registers? */
   
-  //return get_PGC(vm, pgcN);
+  /* return get_PGC(vm, pgcN); */
 }
 
 
@@ -1719,6 +1719,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.19  2002/06/04 13:35:16  richwareham
+ * Removed more C++ style comments
+ *
  * Revision 1.18  2002/05/30 19:25:08  richwareham
  * Another small fix
  *

@@ -505,7 +505,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   }
 
   /* Check the STILLFRAME flag */
-  //FIXME: Still cell, not still frame 
+  /* FIXME: Still cell, not still frame  */
   if(this->position_current.still != 0) {
     dvdnav_still_event_t still_event;
 
@@ -731,9 +731,11 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
       }
 
       /* Only set still after whole VOBU has been output. */
-      //if(this->position_next.still != 0) {
-//	this->position_current.still = this->position_next.still;
-      //}
+      /*
+       if(this->position_next.still != 0) {
+	this->position_current.still = this->position_next.still;
+       }
+       */
 
     }
     /* Perform the jump if necessary (this is always a 
@@ -929,6 +931,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.20  2002/06/04 13:35:16  richwareham
+ * Removed more C++ style comments
+ *
  * Revision 1.19  2002/05/30 23:15:14  richwareham
  * First draft of removing HAVE_DVDREAD9
  *
