@@ -156,6 +156,8 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int title, int part) {
     return S_ERR;
   }
   retval = vm_jump_title_part(this->vm, title, part);
+  if (retval)
+    this->vm->hop_channel++;
   pthread_mutex_unlock(&this->vm_lock);
 
   return retval ? S_OK : S_ERR;

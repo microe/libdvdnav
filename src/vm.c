@@ -471,6 +471,13 @@ int vm_jump_pg(vm_t *vm, int pg) {
   return 1;
 }
 
+int vm_jump_cell_block(vm_t *vm, int cell, int block) {
+  (vm->state).cellN = cell;
+  process_command(vm, play_Cell(vm));
+  (vm->state).blockN = block;
+  return 1;
+}
+
 int vm_jump_title_part(vm_t *vm, int title, int part) {
   int vtsN;
 
@@ -479,7 +486,6 @@ int vm_jump_title_part(vm_t *vm, int title, int part) {
   if(!set_VTS_PTT(vm, vtsN, title, part))
     return 0;
   process_command(vm, play_PGC_PG(vm, (vm->state).pgN));
-  vm->hop_channel++;
   return 1;
 }
 
@@ -1799,6 +1805,9 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.47  2003/03/24 16:42:59  mroi
+ * determine correct PG and PTT numbers when seeking across PG boundaries
+ *
  * Revision 1.46  2003/03/15 20:21:44  mroi
  * - do not rely on 1:1 mappings between PTTs and PGs
  * - fix get_PGCN for cases where get_PGCIT returns NULL

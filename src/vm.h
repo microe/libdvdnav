@@ -139,6 +139,7 @@ void vm_get_next_cell(vm_t *vm);
 
 /* Jumping - all these return 1, if a hop has been performed */
 int vm_jump_pg(vm_t *vm, int pg);
+int vm_jump_cell_block(vm_t *vm, int cell, int block);
 int vm_jump_title_part(vm_t *vm, int title, int part);
 int vm_jump_top_pg(vm_t *vm);
 int vm_jump_next_pg(vm_t *vm);

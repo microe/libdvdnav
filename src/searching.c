@@ -77,7 +77,7 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t
     int found = 0;
 
     /* Search through ADMAP for best sector */
-    vobu_start = 0x3fffffff;
+    vobu_start = SRI_END_OF_CELL;
     /* FIXME: Implement a faster search algorithm */
     while((!found) && ((address<<2) < admap->last_byte)) {
       next_vobu = admap->vobu_start_sectors[address];
@@ -120,10 +120,6 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   }
   
   result = dvdnav_get_position(this, &target, &length);
-#ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
-  fprintf(MSG_OUT, "libdvdnav: Before cellN=%u blockN=%u\n", state->cellN, state->blockN);
-#endif
   if(!result) {
     return S_ERR;
   }
@@ -135,6 +131,10 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
+  fprintf(MSG_OUT, "libdvdnav: Before cellN=%u blockN=%u\n", state->cellN, state->blockN);
+#endif
 
   switch(origin) {
    case SEEK_SET:
@@ -167,7 +167,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
-
+  
   if (this->pgc_based) {
     first_cell_nr = 1;
     last_cell_nr = state->pgc->nr_of_cells;
@@ -196,31 +196,27 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   }
 
   if(found) {
-    int32_t vobu, start;
+    int32_t vobu;
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: Seeking to cell %i from choice of %i to %i\n",
 	    cell_nr, first_cell_nr, last_cell_nr);
 #endif
-    dvdnav_scan_admap(this, state->domain, target, &vobu);
-
-    start         = state->pgc->cell_playback[cell_nr-1].first_sector;
-    state->blockN = vobu - start;
-    state->cellN  = cell_nr;
-    state->cell_restart++;
+    if (dvdnav_scan_admap(this, state->domain, target, &vobu) == S_OK) {
+      int32_t start = state->pgc->cell_playback[cell_nr-1].first_sector;
+      
+      if (vm_jump_cell_block(this->vm, cell_nr, vobu - start)) {
 #ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
-      state->cellN,
-      state->blockN,
-      target,
-      vobu,
-      start);
+        fprintf(MSG_OUT, "libdvdnav: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
+          state->cellN, state->blockN, target, vobu, start);
 #endif
-    this->vm->hop_channel += HOP_SEEK;
-    pthread_mutex_unlock(&this->vm_lock);
-    return S_OK;
+        this->vm->hop_channel += HOP_SEEK;
+        pthread_mutex_unlock(&this->vm_lock);
+        return S_OK;
+      }
+    }
   }
   
-  fprintf(MSG_OUT, "libdvdnav: Error when seeking, asked to seek outside program\n");
+  fprintf(MSG_OUT, "libdvdnav: Error when seeking\n");
   fprintf(MSG_OUT, "libdvdnav: FIXME: Implement seeking to location %u\n", target); 
   printerr("Error when seeking.");
   pthread_mutex_unlock(&this->vm_lock);
