@@ -90,17 +90,19 @@ typedef struct {
   dvd_read_domain_t new_domain; /*!< The new domain */
 } dvdnav_vts_change_event_t;
 
-/* FIXME: These are unused. */
-#if 0
 /**
  * Structure providing information on DVDNAV_CELL_CHANGE events.
  */
 typedef struct {
-  cell_playback_t *old_cell; /*!< The old cell (or NULL if this is 
-				  the first cell) */
-  cell_playback_t *new_cell; /*!< The cell_playback_t for the new cell */
+  int     cellN;       /*!< The new cell number */
+  int     pgN;         /*!< The current program number */
+  int64_t cell_length; /*!< The length of the current cell in PTS ticks */
+  int64_t pg_length;   /*!< The length of the current program in PTS ticks */
+  int64_t pgc_length;  /*!< The length of the current program chain in PTS ticks */
 } dvdnav_cell_change_event_t;
 
+/* FIXME: These are unused. */
+#if 0
 /**
  * Structure providing information on DVDNAV_NAV_PACKET events.
  */

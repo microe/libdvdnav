@@ -69,8 +69,11 @@ typedef struct vm_position_s {
   int32_t  angle_channel; /* angle channel to use */
   int32_t  audio_channel; /* audio channel to use */
   int32_t  hop_channel;   /* channel hopping. E.g menu button pressed */
+#if 0
+  /* currently unused */
   int32_t  title;         /* title number */
   int32_t  chapter;       /* chapter number */
+#endif
   int32_t  cell;          /* cell number */
   int32_t  cell_restart;  /* get cell to restart */
   int32_t  cell_start;    /* sector number of start of current cell in use */
