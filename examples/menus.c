@@ -92,8 +92,6 @@ int check_packet(uint8_t *p, pci_t* pci, dsi_t* dsi) {
 
     /* We should now have a DSI packet. */
     if(p[6] == 0x01) {
-      int num=0, current=0;
-
       nPacketLen = p[4] << 8 | p[5];
       p += 6;
       /* dprint("NAV DSI packet\n");  */
@@ -169,8 +167,6 @@ int main(int argc, char **argv) {
       break;
      case DVDNAV_STILL_FRAME: 
        {
-	dvdnav_still_event_t *still_event = (dvdnav_still_event_t*)(buf);
-
 	printf("Skipping still frame\n");
 	dvdnav_still_skip(dvdnav);
        }

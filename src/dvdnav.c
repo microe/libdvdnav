@@ -142,26 +142,15 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   this->file = NULL;
   this->open_vtsN = -1;
   this->open_domain = -1;
-  this->cell = NULL;
-  this->jmp_blockN=0;
-  this->jmp_vobu_start=0;
-  this->seekto_block=0;
 
   memset(&this->pci,0,sizeof(this->pci));
   memset(&this->dsi,0,sizeof(this->dsi));
 
   /* Set initial values of flags */
-  this->expecting_nav_packet = 1;
-  this->at_soc = 1;
   this->position_current.still = 0;
   this->skip_still = 0;
-  this->jumping = 0;
-  this->seeking = 0;
   this->stop = 0;
-  this->highlight_changed = 0;
   this->spu_clut_changed = 0;
-  this->spu_stream_changed = 0;
-  this->audio_stream_changed = 0;
   this->started=0;
   // this->use_read_ahead
 
@@ -376,8 +365,6 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
 
     /* We should now have a DSI packet. */
     if(p[6] == 0x01) {
-      //int num=0, current=0;
-
       nPacketLen = p[4] << 8 | p[5];
       p += 6;
       /* dprint("NAV DSI packet\n");  */
@@ -402,8 +389,6 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
  * PCI is used for only non-seemless angle stuff
  */ 
 int dvdnav_get_vobu(dsi_t* nav_dsi, pci_t* nav_pci, int angle, dvdnav_vobu_t* vobu) {
-  //  int num=0, current=0;
-
   vobu->vobu_start = nav_dsi->dsi_gi.nv_pck_lbn; /* Absolute offset from start of disk */
   vobu->vobu_length = nav_dsi->dsi_gi.vobu_ea; /* Relative offset from vobu_start */
      
@@ -426,8 +411,6 @@ int dvdnav_get_vobu(dsi_t* nav_dsi, pci_t* nav_pci, int angle, dvdnav_vobu_t* vo
     uint32_t next = nav_pci->nsml_agli.nsml_agl_dsta[angle-1];
 
     if(next != 0) {
-      //int dir = 0;
-
       if(next & 0x80000000) {
         vobu->vobu_next =  - (next & 0x3fffffff);
       } else {
@@ -580,7 +563,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
       hevent.display = 0;
       status = S_OK;
     }
-    this->highlight_changed = 0;
     this->position_current.button = this->position_next.button;
     
     if (status) {
@@ -678,7 +660,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     this->vobu.vobu_length = 0; 
     this->vobu.blockN = this->vobu.vobu_length + 1; 
     /* Make blockN > vobu_lenght to do expected_nav */
-    this->expecting_nav_packet = 1;
     (*event) = DVDNAV_CELL_CHANGE;
     (*len) = 0;
     pthread_mutex_unlock(&this->vm_lock); 
@@ -688,9 +669,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
  
   if (this->vobu.blockN > this->vobu.vobu_length) {
     /* End of VOBU */
-    //dvdnav_nav_packet_event_t nav_event;
-
-    this->expecting_nav_packet = 1;
 
     if(this->vobu.vobu_next == SRI_END_OF_CELL) {
       /* End of Cell from NAV DSI info */
@@ -713,7 +691,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
         this->vobu.vobu_length = 0; 
         this->vobu.blockN = this->vobu.vobu_length + 1; 
         /* Make blockN > vobu_next to do expected_nav */
-        this->expecting_nav_packet = 1;
         (*event) = DVDNAV_CELL_CHANGE;
         (*len) = 0;
         pthread_mutex_unlock(&this->vm_lock); 
@@ -753,7 +730,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     }
     dvdnav_get_vobu(&this->dsi,&this->pci, 0, &this->vobu); 
     this->vobu.blockN=1;
-    this->expecting_nav_packet = 0;
 
     dvdnav_pre_cache_blocks(this, this->vobu.vobu_start+1, this->vobu.vobu_length);
     
@@ -925,6 +901,10 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.13  2002/04/23 12:55:40  jcdutton
+ * Removed un-needed variables.
+ * General Clean up.
+ *
  * Revision 1.12  2002/04/23 12:34:39  f1rmb
  * Why rewrite vm function, use it instead (this remark is for me, of course ;-) ).
  * Comment unused var, shut compiler warnings.

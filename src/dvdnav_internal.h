@@ -124,28 +124,15 @@ struct dvdnav_s {
   vm_position_t position_next;
   vm_position_t position_current;
   dvdnav_vobu_t vobu;  
-  cell_playback_t *cell;
-  uint32_t jmp_blockN;
-  uint32_t jmp_vobu_start;
-  uint32_t seekto_block;
 
   /* NAV data */
   pci_t pci;
   dsi_t dsi;
   
   /* Flags */
-  int expecting_nav_packet;
-  int at_soc;      /* Are we at the start of a cell? */
-  int still_frame; /* >=0 send still frame event with len still_frame
-                    * -1 don't send event. */
   int skip_still;  /* Set when skipping a still */
-  int jumping;     /* non-zero if we are in the process of jumping */
-  int seeking;     /* non-zero if we are in the process of seeking */
   int stop;        /* Are we stopped? (note not paused, actually stopped) */
-  int highlight_changed; /* The highlight changed */
   int spu_clut_changed; /* The SPU CLUT changed */ 
-  int spu_stream_changed; /* The SPU STREAM changed */ 
-  int audio_stream_changed; /* The AUDIO STREAM changed */ 
   int started; /* vm_start has been called? */
   int use_read_ahead; /* 1 - use read-ahead cache, 0 - don't */
   /* VM */
@@ -155,10 +142,6 @@ struct dvdnav_s {
   /* Highlight */
   int hli_state;  /* State of highlight 0 - disabled, 1 - selected,
 		 2 - activated */
-  uint16_t hli_bbox[4]; /* Highlight bounding box */
-  uint32_t hli_clut; /* Highlight palette */
-  uint32_t hli_pts;  /* Highlight PTS for matching with SPU packet. */
-  uint32_t hli_buttonN;  /* Button number for SPU decoder. */
   /* Read-ahead cache. */
   uint8_t      *cache_buffer;
   int32_t      cache_start_sector; /* -1 means cache invalid */
@@ -169,9 +152,6 @@ struct dvdnav_s {
   /* Errors */
   char err_str[MAX_ERR_LEN];
 };
-
-/* Common things we do everytime we do a jump */
-void dvdnav_do_post_jump(dvdnav_t *self);
 
 /** USEFUL MACROS **/
 

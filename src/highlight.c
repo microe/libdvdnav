@@ -170,7 +170,7 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
 
 dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
   int button;
-  btni_t *button_ptr;
+  btni_t *button_ptr = NULL;
   
   if(!this) 
    return S_ERR;
@@ -186,36 +186,21 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
-  
-  /* Now get the current button's info */
-  if((button_ptr = __get_current_button(this)) == NULL) {
-    printerr("Error fetching information on current button.");
-    pthread_mutex_unlock(&this->vm_lock); 
-    return S_ERR;
-  }
-
-  /* And set the palette */
-  if(button_ptr->btn_coln != 0) {
-    this->hli_clut = 
-     this->pci.hli.btn_colit.btn_coli[button_ptr->btn_coln-1][1];
-  } else {
-    this->hli_clut = 0;
-  }
-
+  /* FIXME: The button command should really be passed in the API instead. */ 
+  button_ptr = __get_current_button(this);
   /* Finally, make the VM execute the appropriate code and
    * scedule a jump */
   fprintf(stderr, "libdvdnav: Evaluating Button Activation commands.\n");
   if(vm_eval_cmd(this->vm, &(button_ptr->cmd)) == 1) {
-    /* Cammand caused a jump */
-    dvdnav_do_post_jump(this);
+    /* Command caused a jump */
+    this->vm->hop_channel++;
+    this->position_current.still = 0;
   }
-  this->vm->hop_channel++; 
   pthread_mutex_unlock(&this->vm_lock); 
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
-  btni_t *button_ptr;
   
   if(!this) {
    printerrf("Unable to select button number %i as this state bad",
@@ -233,34 +218,9 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
   }
   this->vm->state.HL_BTNN_REG = (button << 10);
 
-  /* Now get the current button's info */
-  if((button_ptr = __get_current_button(this)) == NULL) {
-    printerr("Error fetching information on current button.");
-    return S_ERR;
-  }
-
-  this->hli_bbox[0] = button_ptr->x_start;
-  this->hli_bbox[1] = button_ptr->y_start;
-  this->hli_bbox[2] = button_ptr->x_end;
-  this->hli_bbox[3] = button_ptr->y_end;
   this->hli_state = 1; /* Selected */
 
-  if(button_ptr->btn_coln != 0) {
-    this->hli_clut = 
-     this->pci.hli.btn_colit.btn_coli[button_ptr->btn_coln-1][0];
-  } else {
-    this->hli_clut = 0;
-  }
-  this->hli_pts = this->pci.hli.hl_gi.hli_s_ptm;
-  this->hli_buttonN = button;
 //  this->position_current.button = -1; /* Force Highligh change */
-#ifdef BUTTON_TESTING
-  fprintf(stderr,"highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
-	       button_ptr->x_start, button_ptr->y_start,
-	       button_ptr->x_end, button_ptr->y_end,
-	       1,
-	       button);
-#endif
 
   return S_OK;
 }

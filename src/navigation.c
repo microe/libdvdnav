@@ -32,17 +32,6 @@
 
 /* Navigation API calls */
 
-/* Common things we do everytime we do a jump */
-void dvdnav_do_post_jump(dvdnav_t *this) {
-  dvd_state_t *state = &(this->vm->state);
-  cell_playback_t *cell = &(state->pgc->cell_playback[state->cellN - 1]);
-
-  this->jmp_blockN = 0; /* FIXME: Should this be different? */
-  this->jmp_vobu_start = cell->first_sector;
-  this->jumping = 1;
-  this->position_current.still = 0;
-}
-
 dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
   if(!this)
    return S_ERR;
@@ -98,10 +87,6 @@ dvdnav_status_t dvdnav_title_play(dvdnav_t *this, int title) {
   
   vm_start_title(this->vm, title);
 
-  /* this->expecting_nav_packet = 1; */
-
-  dvdnav_do_post_jump(this);
-
   return S_OK;
 }
 
@@ -133,10 +118,6 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int title, int part) {
    
   vm_jump_prog(this->vm, part);
   
-   /* this->expecting_nav_packet = 1; */
-
-  dvdnav_do_post_jump(this);
-
   return S_OK;
 }
 
@@ -175,8 +156,6 @@ dvdnav_status_t dvdnav_go_up(dvdnav_t *this) {
 
   /* A nice easy function... delegate to the VM */
   vm_go_up(this->vm);
-
-  dvdnav_do_post_jump(this);
 
   return S_OK;
 }

@@ -186,7 +186,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   }
 
   if(fnd_cell_nr <= last_cell_nr) {
-    int32_t vobu, start; //, blockN;
+    int32_t vobu, start;
     dvdnav_status_t status;
     fprintf(stderr,"Seeking to cell %i from choice of %i to %i\n",
 	   fnd_cell_nr, first_cell_nr, last_cell_nr);
@@ -235,7 +235,6 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
   }
   fprintf(stderr,"dvdnav: previous chapter\n");
   vm_jump_prog(this->vm, state->pgN - 1);
-  dvdnav_do_post_jump(this);
   this->vm->hop_channel++;
   fprintf(stderr,"dvdnav: previous chapter done\n");
 
@@ -259,7 +258,6 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
   }
   fprintf(stderr,"dvdnav: next chapter\n");
   vm_jump_prog(this->vm, state->pgN + 1);
-  dvdnav_do_post_jump(this);
   this->vm->hop_channel++;
   fprintf(stderr,"dvdnav: next chapter done\n");
 
@@ -272,7 +270,6 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   pthread_mutex_lock(&this->vm_lock); 
   state = &(this->vm->state);
   vm_menu_call(this->vm, menu, 0); 
-  dvdnav_do_post_jump(this);
   pthread_mutex_unlock(&this->vm_lock); 
   return S_OK;
 }
