@@ -61,7 +61,7 @@ typedef int dvdnav_status_t;
  *   dest     -- Pointer to a dvdnav_t pointer to fill in.
  *   path     -- Any libdvdread acceptable path
  */
-dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path); 
+dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path); 
 
 /**
  * Closes a dvdnav_t previously opened with dvdnav_open(), freeing any 

@@ -105,7 +105,7 @@ int vm_start_title(vm_t *vm, int tt);
 int vm_jump_prog(vm_t *vm, int pr);
 
 /* Other calls */
-int vm_reset(vm_t *vm, const char *dvdroot); /*  , register_t regs); */
+int vm_reset(vm_t *vm, char *dvdroot); /*  , register_t regs); */
 int vm_start(vm_t *vm);
 int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd);
 int vm_get_next_cell(vm_t *vm);
