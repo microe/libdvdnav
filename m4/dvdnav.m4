@@ -52,7 +52,7 @@ AC_ARG_ENABLE(dvdnavtest,
      fi
   fi
 
-  min_dvdnav_version=ifelse([$1], ,0.5.0,$1)
+  min_dvdnav_version=ifelse([$1], ,0.0.0,$1)
   if test "x$enable_dvdnavtest" != "xyes" ; then
     AC_MSG_CHECKING([for DVDNAV-LIB version >= $min_dvdnav_version])
   else
@@ -96,7 +96,34 @@ main ()
 
   system ("touch conf.dvdnavtest");
 
-  return 0;
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = (char *) strdup("$min_dvdnav_version");
+  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &sub) != 3) {
+     printf("%s, bad version string\n", "$min_dvdnav_version");
+     exit(1);
+   }
+
+  if (($dvdnav_config_major_version > major) ||
+     (($dvdnav_config_major_version == major) && ($dvdnav_config_minor_version > minor)) ||
+     (($dvdnav_config_major_version == major) && ($dvdnav_config_minor_version == minor) && ($dvdnav_config_sub_version >= sub))) {
+    return 0;
+  } else {
+    printf("\n*** An old version of libdvdnav (%d.%d.%d) was found.\n",
+      $dvdnav_config_major_version, $dvdnav_config_minor_version, $dvdnav_config_sub_version);
+    printf("*** You need a version of libdvdnav newer than %d.%d.%d. The latest version of\n",
+      major, minor, sub);
+    printf("*** libdvdnav is always available from:\n");
+    printf("***        http://dvd.sourceforge.net\n");
+    printf("***\n");
+    printf("*** If you have already installed a sufficiently new version, this error\n");
+    printf("*** probably means that the wrong copy of the dvdnav-config shell script is\n");
+    printf("*** being found. The easiest way to fix this is to remove the old version\n");
+    printf("*** of libdvdnav, but you can also set the DVDNAV_CONFIG environment to point to the\n");
+    printf("*** correct copy of dvdnav-config. (In this case, you will have to\n");
+    printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
+    printf("*** so that the correct libraries are found at run-time))\n");
+  }
+  return 1;
 }
 ],, no_dvdnav=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
