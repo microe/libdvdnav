@@ -541,6 +541,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
 	res = -1;
       break;
     case 5: /*  Compare -> (Set and Link Sub-Instruction) */
+      /* FIXME: These are wrong. Need to be updated from vmcmd.c */
       cond = eval_if_version_4(&command);
       eval_set_version_2(&command, cond);
       res = eval_link_subins(&command, cond, return_values);
@@ -548,6 +549,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
 	res = -1;
       break;
     case 6: /*  Compare -> Set, allways Link Sub-Instruction */
+      /* FIXME: These are wrong. Need to be updated from vmcmd.c */
       cond = eval_if_version_4(&command);
       eval_set_version_2(&command, cond);
       res = eval_link_subins(&command, /*True*/ 1, return_values);
