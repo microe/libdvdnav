@@ -453,7 +453,7 @@ int vm_resume(vm_t *self)
 int vm_get_audio_stream(vm_t *self, int audioN)
 {
   int streamN = -1;
-  printf("dvdnav:vm.c:get_audio_stream audioN=%d\n",audioN); 
+  fprintf(stderr,"dvdnav:vm.c:get_audio_stream audioN=%d\n",audioN); 
   if((self->state).domain == VTSM_DOMAIN 
      || (self->state).domain == VMGM_DOMAIN
      || (self->state).domain == FP_DOMAIN) {
@@ -1522,8 +1522,11 @@ static pgcit_t* get_PGCIT(vm_t *self) {
 
 /*
  * $Log$
- * Revision 1.1  2002/03/12 19:45:55  richwareham
- * Initial revision
+ * Revision 1.2  2002/04/01 18:56:28  richwareham
+ * Added initial example programs directory and make sure all debug/error output goes to stderr.
+ *
+ * Revision 1.1.1.1  2002/03/12 19:45:55  richwareham
+ * Initial import
  *
  * Revision 1.18  2002/01/22 16:56:49  jcdutton
  * Fix clut after seeking.

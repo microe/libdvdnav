@@ -106,10 +106,10 @@ dvdnav_status_t dvdnav_close(dvdnav_t *self) {
     printerr("Passed a NULL pointer");
     return S_ERR;
   }
-  printf("dvdnav:close:called\n");
+  fprintf(stderr,"dvdnav:close:called\n");
   if (self->file) {
     DVDCloseFile(self->file);
-    printf("dvdnav:close:file closing\n");
+    fprintf(stderr,"dvdnav:close:file closing\n");
     self->file = NULL;
   }
 
@@ -119,7 +119,7 @@ dvdnav_status_t dvdnav_close(dvdnav_t *self) {
   }
   if (self->file) {
     DVDCloseFile(self->file);
-    printf("dvdnav:close2:file closing\n");
+    fprintf(stderr,"dvdnav:close2:file closing\n");
     self->file = NULL;
   }
   pthread_mutex_destroy(&self->vm_lock);
@@ -143,7 +143,7 @@ dvdnav_status_t dvdnav_path(dvdnav_t *self, char** path) {
 char* dvdnav_err_to_string(dvdnav_t *self) {
   if(!self) {
     /* Shold this be "passed a NULL pointer?" */
-    return NULL;
+    return "Hey! You gave me a NULL pointer you naughty person!";
   }
   
   return self->err_str;
@@ -165,7 +165,7 @@ int dvdnav_check_packet(dvdnav_t *self, uint8_t *p) {
 
 
   if (p==NULL) {
-    printf("Passed a NULL pointer.\n");
+    fprintf(stderr,"Passed a NULL pointer.\n");
     return 0;
   }
 
@@ -198,7 +198,7 @@ int dvdnav_check_packet(dvdnav_t *self, uint8_t *p) {
   /* we should now have a PES packet here */
 
   if (p[0] || p[1] || (p[2] != 1)) {
-    printf("demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
+    fprintf(stderr,"demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
     return 0;
   }
 
@@ -329,11 +329,11 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
 
   if(self->spu_clut_changed) {
     (*event) = DVDNAV_SPU_CLUT_CHANGE;
-    printf("libdvdnav:SPU_CLUT_CHANGE\n");
+    fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE\n");
     (*len) = sizeof(dvdnav_still_event_t);
     memcpy(buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
     self->spu_clut_changed = 0;
-    printf("libdvdnav:SPU_CLUT_CHANGE returning S_OK\n");
+    fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE returning S_OK\n");
     pthread_mutex_unlock(&self->vm_lock); 
     return S_OK;
   }
@@ -341,12 +341,12 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
   if(self->spu_stream_changed) {
     dvdnav_stream_change_event_t stream_change;
     (*event) = DVDNAV_SPU_STREAM_CHANGE;
-    printf("libdvdnav:SPU_STREAM_CHANGE\n");
+    fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE\n");
     (*len) = sizeof(dvdnav_stream_change_event_t);
     stream_change.physical= vm_get_subp_active_stream( self->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
     self->spu_stream_changed = 0;
-    printf("libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+    fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
     pthread_mutex_unlock(&self->vm_lock); 
     return S_OK;
   }
@@ -354,12 +354,12 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
   if(self->audio_stream_changed) {
     dvdnav_stream_change_event_t stream_change;
     (*event) = DVDNAV_AUDIO_STREAM_CHANGE;
-    printf("libdvdnav:AUDIO_STREAM_CHANGE\n");
+    fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE\n");
     (*len) = sizeof(dvdnav_stream_change_event_t);
     stream_change.physical= vm_get_audio_active_stream( self->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
     self->audio_stream_changed = 0;
-    printf("libdvdnav:AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+    fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
     pthread_mutex_unlock(&self->vm_lock); 
     return S_OK;
   }
@@ -508,7 +508,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
       /* FIXME:Need to handle seeking outside current cell. */
       vobu_admap_t *admap = NULL;
 	
-      printf("Seeking to target %u ...\n",
+      fprintf(stderr,"Seeking to target %u ...\n",
               self->seekto_block);
 
       /* Search through the VOBU_ADMAP for the nearest VOBU
@@ -531,7 +531,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
           admap = self->vm->vtsi->vts_vobu_admap;
           break;
         default:
-          printf("Error: Unknown domain for seeking seek.\n");
+          fprintf(stderr,"Error: Unknown domain for seeking seek.\n");
       }
 
       if(admap) {
@@ -566,13 +566,13 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
           pthread_mutex_unlock(&self->vm_lock); 
           return S_OK;
         } else {
-          printf("Could not locate block\n");
+          fprintf(stderr,"Could not locate block\n");
           return -1;
         }
       }
     }   
     if(self->jumping) {
-      printf("doing jumping\n");
+      fprintf(stderr,"doing jumping\n");
       self->vobu_start = self->jmp_vobu_start;
       self->blockN = self->jmp_blockN;
       self->jumping = 0;
@@ -603,9 +603,9 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
     nav_event.dsi = &(self->dsi);
 
     (*event) = DVDNAV_NAV_PACKET;
-    //memcpy(buf, &(nav_event), sizeof(dvdnav_nav_packet_event_t));
-    //(*len) = sizeof(dvdnav_nav_packet_event_t);
-    (*len) = 2048;
+    /* memcpy(buf, &(nav_event), sizeof(dvdnav_nav_packet_event_t));
+    (*len) = sizeof(dvdnav_nav_packet_event_t); */
+    (*len) = 2048; 
     pthread_mutex_unlock(&self->vm_lock); 
     return S_OK;
   }
@@ -931,8 +931,11 @@ dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
 
 /*
  * $Log$
- * Revision 1.1  2002/03/12 19:45:57  richwareham
- * Initial revision
+ * Revision 1.2  2002/04/01 18:56:28  richwareham
+ * Added initial example programs directory and make sure all debug/error output goes to stderr.
+ *
+ * Revision 1.1.1.1  2002/03/12 19:45:57  richwareham
+ * Initial import
  *
  * Revision 1.28  2002/02/02 23:26:20  richwareham
  * Restored title selection

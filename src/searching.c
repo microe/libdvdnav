@@ -125,7 +125,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
   }
 
   if(fnd_cell_nr <= last_cell_nr) {
-    printf("Seeking to cell %i from choice of %i to %i\n",
+    fprintf(stderr,"Seeking to cell %i from choice of %i to %i\n",
 	   fnd_cell_nr, first_cell_nr, last_cell_nr);
     self->seekto_block = target;
     self->seeking = 1;
@@ -148,7 +148,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
 
 
 
-  printf("FIXME: Implement seeking to location %u\n", target); 
+  fprintf(stderr,"FIXME: Implement seeking to location %u\n", target); 
 
 //  self->seekto_block=target;
 //  self->seeking = 1;
@@ -167,20 +167,20 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *self) {
   /* Make sure this is not the first chapter */
   
   if(state->pgN <= 1 ) {
-    printf("dvdnav: at first chapter. prev chapter failed.\n");
+    fprintf(stderr,"dvdnav: at first chapter. prev chapter failed.\n");
     return S_ERR;
   }
-  printf("dvdnav: previous chapter\n");
+  fprintf(stderr,"dvdnav: previous chapter\n");
   vm_jump_prog(self->vm, state->pgN - 1);
   dvdnav_do_post_jump(self);
-  printf("dvdnav: previous chapter done\n");
+  fprintf(stderr,"dvdnav: previous chapter done\n");
 
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *self) {
 
-  printf("dvdnav: top chapter. NOP.\n");
+  fprintf(stderr,"dvdnav: top chapter. NOP.\n");
   
   return S_OK;
 }
@@ -190,13 +190,13 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *self) {
   state = &(self->vm->state);
   /* Make sure this is not the last chapter */
   if(state->pgN >= state->pgc->nr_of_programs) {
-    printf("dvdnav: at last chapter. next chapter failed.\n");
+    fprintf(stderr,"dvdnav: at last chapter. next chapter failed.\n");
     return S_ERR;
   }
-  printf("dvdnav: next chapter\n");
+  fprintf(stderr,"dvdnav: next chapter\n");
   vm_jump_prog(self->vm, state->pgN + 1);
   dvdnav_do_post_jump(self);
-  printf("dvdnav: next chapter done\n");
+  fprintf(stderr,"dvdnav: next chapter done\n");
 
   return S_OK;
 }

@@ -182,7 +182,7 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *self, int button) {
    return S_ERR;
   }
  
-  printf("Button select %i\n", button); 
+  fprintf(stderr,"Button select %i\n", button); 
   
   /* Set the highlight SPRM if the passed button was valid*/
   if((button <= 0) || (button > self->pci.hli.hl_gi.btn_ns)) {
@@ -214,7 +214,7 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *self, int button) {
   self->hli_buttonN = button;
   self->highlight_changed = 1;
 #ifdef BUTTON_TESTING
-  printf("highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
+  fprintf(stderr,"highlight.c:Highlight area is (%u,%u)-(%u,%u), display = %i, button = %u\n",
 	       button_ptr->x_start, button_ptr->y_start,
 	       button_ptr->x_end, button_ptr->y_end,
 	       1,

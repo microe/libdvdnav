@@ -192,6 +192,7 @@ dnl
 AC_OUTPUT([
 Makefile 
 src/Makefile
+examples/Makefile
 misc/Makefile
 misc/dvdnav-config
 m4/Makefile

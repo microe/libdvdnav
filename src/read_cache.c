@@ -83,7 +83,7 @@ int dvdnav_read_cache_block( dvdnav_t *self, int sector, size_t block_count, uin
     return result;
   }
   
-  printf("DVD read cache miss! sector=%d, start=%d\n", sector, self->cache_start_sector); 
+  fprintf(stderr,"DVD read cache miss! sector=%d, start=%d\n", sector, self->cache_start_sector); 
   result = DVDReadBlocks( self->file, sector, block_count, buf);
   return result;
 }
