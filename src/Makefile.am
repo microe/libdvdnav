@@ -21,7 +21,8 @@ libdvdnav_la_LIBADD = $(THREAD_LIBS) \
 
 libdvdnav_la_LDFLAGS = \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
-        -export-symbols-regex "(^dvdnav.*|^nav.*|^ifo.*|^DVD.*)"
+#  libtool 1.4.3 seems to be broken so -export-symbols-regex does not work. 
+#        -export-symbols-regex "(^dvdnav.*|^nav.*|^ifo.*|^DVD.*)"
 #	-release $(DVDNAV_MAJOR).$(DVDNAV_MINOR).$(DVDNAV_SUB)
 
 include_HEADERS = dvdnav.h dvdnav_events.h dvd_types.h
