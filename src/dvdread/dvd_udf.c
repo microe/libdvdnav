@@ -113,6 +113,8 @@ struct pvd_t {
 struct lbudf {
   uint32_t lb;
   uint8_t *data;
+  /* needed for proper freeing */
+  uint8_t *data_base;
 };
 
 struct icbmap {
@@ -147,6 +149,9 @@ void FreeUDFCache(void *cache)
     return;
   }
   if(c->lbs) {
+    int n;
+    for(n = 0; n < c->lb_num; n++)
+      free(c->lbs[n].data_base);
     free(c->lbs);
   }
   if(c->maps) {
@@ -263,7 +268,8 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
     for(n = 0; n < c->lb_num; n++) {
       if(c->lbs[n].lb == nr) {
        /* replace with new data */
-       c->lbs[n].data = *(uint8_t **)data;
+       c->lbs[n].data_base = ((uint8_t **)data)[0];
+       c->lbs[n].data = ((uint8_t **)data)[1];
        c->lbs[n].lb = nr;
        return 1;
       }
@@ -279,7 +285,8 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
       c->lb_num = 0;
       return 0;
     }
-    c->lbs[n].data = *(uint8_t **)data;
+    c->lbs[n].data_base = ((uint8_t **)data)[0];
+    c->lbs[n].data = ((uint8_t **)data)[1];
     c->lbs[n].lb = nr;
     break;
   case MapCache:
@@ -563,7 +570,12 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
 		  dir_lba * DVD_VIDEO_LB_LEN);
 	}
 	*/
-	SetUDFCache(device, LBUDFCache, lbnum, &cached_dir);
+	{
+	  uint8_t *data[2];
+	  data[0] = cached_dir_base;
+	  data[1] = cached_dir;
+	  SetUDFCache(device, LBUDFCache, lbnum, data);
+	}
       } else {
 	in_cache = 1;
       }
