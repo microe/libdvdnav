@@ -66,6 +66,20 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *self, int *titles) {
   return S_OK;
 }
 
+dvdnav_status_t dvdnav_get_number_of_programs(dvdnav_t *self, int *programs) {
+  if(!self)
+   return S_ERR;
+
+  if(!programs) {
+    printerr("Passed a NULL pointer");
+    return S_ERR;
+  }
+
+  (*programs) = self->vm->state.pgc->nr_of_programs;
+
+  return S_OK;
+}
+
 dvdnav_status_t dvdnav_title_play(dvdnav_t *self, int title) {
   int num_titles;
 

@@ -24,6 +24,10 @@
 #ifndef DVDNAV_H_INCLUDED
 #define DVDNAV_H_INCLUDED
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Defines the various events and dvdnav_event_t */
 #include "dvdnav_events.h"
 
@@ -145,6 +149,11 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
  * Returns the number of titles on the disk in titles.
  */
 dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *self, int *titles);
+
+/**
+ * Returns the number of programs within the current title in programs.
+ */
+dvdnav_status_t dvdnav_get_number_of_programs(dvdnav_t *self, int *programs);
 
 /**
  * If we are currently in a still-frame, skip it.
@@ -459,6 +468,7 @@ int8_t dvdnav_spu_logical_to_physical(dvdnav_t *self, uint8_t logical);
 int8_t dvdnav_audio_physical_to_logical(dvdnav_t *self, uint8_t physical);
 int8_t dvdnav_spu_physical_to_logical(dvdnav_t *self, uint8_t physical);
 
+
 /* Following functions returns:
  *  -1 on failure,
  *   1 if condition is true,
@@ -473,6 +483,10 @@ int8_t dvdnav_is_domain_vmgm(dvdnav_t *self);
 int8_t dvdnav_is_domain_vtsm(dvdnav_t *self);
 /* Video Title domain (playing movie). */
 int8_t dvdnav_is_domain_vts(dvdnav_t *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DVDNAV_H_INCLUDED */
 
