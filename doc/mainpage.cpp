@@ -4,6 +4,9 @@
 
 \section intro Introduction
 
+This reference is not maintained. See the README file for pointers on
+current documentation.
+
 This reference documentation is intended to both provide a comprehensive reference to
 the <tt>libdvdnav</tt> DVD navigation library and a brief introduction to the library
 for new users.
