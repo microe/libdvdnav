@@ -665,7 +665,7 @@ int vm_get_audio_stream(vm_t *vm, int audioN) {
     audioN = 0;
   
   if(audioN < 8) {
-    /* Is there any contol info for this logical stream */ 
+    /* Is there any control info for this logical stream */ 
     if((vm->state).pgc->audio_control[audioN] & (1<<15)) {
       streamN = ((vm->state).pgc->audio_control[audioN] >> 8) & 0x07;  
     }
@@ -1749,8 +1749,10 @@ static int get_PGCN(vm_t *vm) {
   
   if (pgcit) {
     while(pgcN <= pgcit->nr_of_pgci_srp) {
-      if(pgcit->pgci_srp[pgcN - 1].pgc == (vm->state).pgc)
+      if(pgcit->pgci_srp[pgcN - 1].pgc == (vm->state).pgc) {
+	assert((vm->state).pgcN == pgcN);
 	return pgcN;
+      }
       pgcN++;
     }
   }
