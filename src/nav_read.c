@@ -261,51 +261,59 @@ void navRead_PCI(pci_t *pci, unsigned char *buffer) {
 
 void navRead_DSI(dsi_t *dsi, unsigned char *buffer) {
   int i;
-
-  CHECK_VALUE(sizeof(dsi_t) == DSI_BYTES - 1); // -1 for substream id
-  
-  memcpy(dsi, buffer, sizeof(dsi_t));
-
-  /* Endian conversions */
+  getbits_state_t state;
+  if (getbits_init(&state, buffer)) assert(0); /* Passed NULL pointers */
 
   /* dsi dsi gi */
-  B2N_32(dsi->dsi_gi.nv_pck_scr);
-  B2N_32(dsi->dsi_gi.nv_pck_lbn);
-  B2N_32(dsi->dsi_gi.vobu_ea);
-  B2N_32(dsi->dsi_gi.vobu_1stref_ea);
-  B2N_32(dsi->dsi_gi.vobu_2ndref_ea);
-  B2N_32(dsi->dsi_gi.vobu_3rdref_ea);
-  B2N_16(dsi->dsi_gi.vobu_vob_idn);
+  dsi->dsi_gi.nv_pck_scr = getbits(&state, 32 );
+  dsi->dsi_gi.nv_pck_lbn = getbits(&state, 32 );
+  dsi->dsi_gi.vobu_ea = getbits(&state, 32 );
+  dsi->dsi_gi.vobu_1stref_ea = getbits(&state, 32 );
+  dsi->dsi_gi.vobu_2ndref_ea = getbits(&state, 32 );
+  dsi->dsi_gi.vobu_3rdref_ea = getbits(&state, 32 );
+  dsi->dsi_gi.vobu_vob_idn = getbits(&state, 16 );
+  dsi->dsi_gi.zero1 = getbits(&state, 8 );
+  dsi->dsi_gi.vobu_c_idn = getbits(&state, 8 );
+  dsi->dsi_gi.c_eltm.hour   = getbits(&state, 8 );
+  dsi->dsi_gi.c_eltm.minute = getbits(&state, 8 );
+  dsi->dsi_gi.c_eltm.second = getbits(&state, 8 );
+  dsi->dsi_gi.c_eltm.frame_u = getbits(&state, 8 );
 
   /* dsi sml pbi */
-  B2N_16(dsi->sml_pbi.category);
-  B2N_32(dsi->sml_pbi.ilvu_ea);
-  B2N_32(dsi->sml_pbi.ilvu_sa);
-  B2N_16(dsi->sml_pbi.size);
-  B2N_32(dsi->sml_pbi.vob_v_s_s_ptm);
-  B2N_32(dsi->sml_pbi.vob_v_e_e_ptm);
+  dsi->sml_pbi.category = getbits(&state, 16 );
+  dsi->sml_pbi.ilvu_ea = getbits(&state, 32 );
+  dsi->sml_pbi.ilvu_sa = getbits(&state, 32 );
+  dsi->sml_pbi.size = getbits(&state, 16 );
+  dsi->sml_pbi.vob_v_s_s_ptm = getbits(&state, 32 );
+  dsi->sml_pbi.vob_v_e_e_ptm = getbits(&state, 32 );
+  for(i = 0; i < 8; i++) {
+    dsi->sml_pbi.vob_a[i].stp_ptm1 = getbits(&state, 32 );
+    dsi->sml_pbi.vob_a[i].stp_ptm2 = getbits(&state, 32 );
+    dsi->sml_pbi.vob_a[i].gap_len1 = getbits(&state, 32 );
+    dsi->sml_pbi.vob_a[i].gap_len2 = getbits(&state, 32 );
+  }
 
   /* dsi sml agli */
   for(i = 0; i < 9; i++) {
-    B2N_32(dsi->sml_agli.data[ i ].address);
-    B2N_16(dsi->sml_agli.data[ i ].size);
+    dsi->sml_agli.data[ i ].address = getbits(&state, 32 );
+    dsi->sml_agli.data[ i ].size = getbits(&state, 16 );
   }
 
   /* dsi vobu sri */
-  B2N_32(dsi->vobu_sri.next_video);
+  dsi->vobu_sri.next_video = getbits(&state, 32 );
   for(i = 0; i < 19; i++)
-    B2N_32(dsi->vobu_sri.fwda[i]);
-  B2N_32(dsi->vobu_sri.next_vobu);
-  B2N_32(dsi->vobu_sri.prev_vobu);
+    dsi->vobu_sri.fwda[i] = getbits(&state, 32 );
+  dsi->vobu_sri.next_vobu = getbits(&state, 32 );
+  dsi->vobu_sri.prev_vobu = getbits(&state, 32 );
   for(i = 0; i < 19; i++)
-    B2N_32(dsi->vobu_sri.bwda[i]);
-  B2N_32(dsi->vobu_sri.prev_video);
+    dsi->vobu_sri.bwda[i] = getbits(&state, 32 );
+  dsi->vobu_sri.prev_video = getbits(&state, 32 );
 
   /* dsi synci */
   for(i = 0; i < 8; i++)
-    B2N_16(dsi->synci.a_synca[i]);
+    dsi->synci.a_synca[i] = getbits(&state, 16 );
   for(i = 0; i < 32; i++)
-    B2N_32(dsi->synci.sp_synca[i]);
+    dsi->synci.sp_synca[i] = getbits(&state, 32 );
 
   
   /* Asserts */
