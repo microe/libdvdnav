@@ -1,11 +1,11 @@
 Source: libdvdnav
 Section: libs
 Priority: optional
-Maintainer: Philipp Matthias Hahn <pmhahn@titan.lahn.de>
+Maintainer: Philipp Matthias Hahn <pmhahn@debian.org>
 Standards-Version: 3.5.6
 Build-Depends: debhelper (>> 3.0.0), libdvdread2-dev
 
-Package: libdvdnav0
+Package: libdvdnav1
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}
@@ -18,7 +18,7 @@ Description: The DVD navigation library
 Package: libdvdnav-dev
 Section: devel
 Architecture: any
-Depends: libdvdnav0 (= ${Source-Version}), libdvdread2-dev
+Depends: libdvdnav1 (= ${Source-Version}), libdvdread2-dev
 Description: The DVD navigation library, development package
  This is the DVD navigation library, which provides an interface
  to the advanced features of DVDs, like menus, navigation, etc.
