@@ -344,6 +344,7 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
+  vm_t *try_vm;
   
   if(!this) {
     printerr("Passed a NULL pointer.");
@@ -357,12 +358,18 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
     return S_ERR;
   }
   
-  if (vm_jump_menu(this->vm, menu)) {
+  /* make a copy of current VM and try to navigate the copy to the menu */
+  try_vm = vm_new_copy(this->vm);
+  if (vm_jump_menu(try_vm, menu) && !try_vm->stopped) {
+    /* merge changes on success */
+    vm_merge(this->vm, try_vm);
+    vm_free_copy(try_vm);
     this->vm->hop_channel++;
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   } else {
-    printerr("No such menu.");
+    vm_free_copy(try_vm);
+    printerr("No such menu or menu not reachable.");
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
