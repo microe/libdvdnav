@@ -175,7 +175,9 @@ static void nav_print_BTNIT(btni_t *btni_table, int btngr_ns, int btn_ns) {
           fprintf(MSG_OUT, "libdvdnav: %02x ", btni->cmd.bytes[k]);
         }
         fprintf(MSG_OUT, "| ");
+#ifdef TRACE
         vm_print_mnemonic(&btni->cmd);
+#endif
         fprintf(MSG_OUT, "\n");
       }
     }
@@ -223,10 +225,14 @@ static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
     printerr("Passed a NULL pointer.");
     return S_ERR;
   }
+  if(!pci->hli.hl_gi.hli_ss) {
+    printerr("Not in a menu.");
+    return S_ERR;
+  }
 
   button = this->vm->state.HL_BTNN_REG >> 10;
 #ifdef BUTTON_TESTING
-  nav_print_PCI(&(this->pci));
+  nav_print_PCI(pci);
 #endif
   
   return &(pci->hli.btnit[button-1]);
@@ -312,9 +318,12 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t *nav_pci , int32_t button, int32
 #ifdef BUTTON_TESTING
   fprintf(MSG_OUT, "libdvdnav: Button get_highlight_area %i\n", button);
 #endif
-
+  
+  if(!nav_pci->hli.hl_gi.hli_ss)
+    return S_ERR;
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns))
     return S_ERR;
+
 
   button_ptr = &nav_pci->hli.btnit[button-1];
 
@@ -348,6 +357,10 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
     printerr("Passed a NULL pointer.");
     return S_ERR;
   }
+  if(!pci->hli.hl_gi.hli_ss) {
+    printerr("Not in a menu.");
+    return S_ERR;
+  }
 
   pthread_mutex_lock(&this->vm_lock); 
 
@@ -355,12 +368,12 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
 
   if((button <= 0) || (button > pci->hli.hl_gi.btn_ns)) {
     /* Special code to handle still menus with no buttons.
-     * the navigation is expected to report to the appicatino that a STILL is
+     * The navigation is expected to report to the application that a STILL is
      * underway. In turn, the application is supposed to report to the user
-     * that the playback is pause. The user is then expected to undo the pause.
+     * that the playback is paused. The user is then expected to undo the pause,
      * ie: hit play. At that point, the navigation should release the still and
      * go to the next Cell.
-     * Explanation by Mathieu Lavage <mathieu_lacage@realmagic.fr>
+     * Explanation by Mathieu Lacage <mathieu_lacage@realmagic.fr>
      * Code added by jcdutton.
      */
     if (this->position_current.still != 0) {
@@ -426,6 +439,10 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int button) {
     printerr("Passed a NULL pointer.");
     return S_ERR;
   }
+  if(!pci->hli.hl_gi.hli_ss) {
+    printerr("Not in a menu.");
+    return S_ERR;
+  }
  
 #ifdef BUTTON_TESTING
   fprintf(MSG_OUT, "libdvdnav: Button select %i\n", button); 
@@ -452,11 +469,15 @@ dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, pci_t *pci,
 
 dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int x, int y) {
   int button, cur_button;
-  uint32_t best,dist;
-  int mx,my,dx,dy,d;
+  int best,dist,d;
+  int mx,my,dx,dy;
 
   if(!this) {
     printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
+  if(!pci->hli.hl_gi.hli_ss) {
+    printerr("Not in a menu.");
     return S_ERR;
   }
 

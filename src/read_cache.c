@@ -90,7 +90,7 @@ struct read_cache_s {
   read_cache_chunk_t  chunk[READ_CACHE_CHUNKS];
   int                 current;
   int                 freeing;  /* is set to one when we are about to dispose the cache */
-  int                 read_ahead_size;
+  uint32_t            read_ahead_size;
   int                 read_ahead_incr;
   int                 last_sector;
   pthread_mutex_t     lock;

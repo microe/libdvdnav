@@ -44,7 +44,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 /* Return placed in vobu. */
 /* Returns error status */
 /* FIXME: Maybe need to handle seeking outside current cell. */
-static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto_block, int32_t *vobu) {
+static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int domain, uint32_t seekto_block, uint32_t *vobu) {
   vobu_admap_t *admap = NULL;
 
 #ifdef LOG_DEBUG
@@ -69,8 +69,8 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t
     fprintf(MSG_OUT, "libdvdnav: Error: Unknown domain for seeking.\n");
   }
   if(admap) {
-    int32_t address = 0;
-    int32_t vobu_start, next_vobu;
+    uint32_t address = 0;
+    uint32_t vobu_start, next_vobu;
     int found = 0;
 
     /* Search through ADMAP for best sector */
@@ -369,7 +369,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
         return S_OK;
     }
   }
-  if (menu == DVD_MENU_Escape) menu = DVD_MENU_Title;
+  if (menu == DVD_MENU_Escape) menu = DVD_MENU_Root;
  
   if (vm_jump_menu(try_vm, menu) && !try_vm->stopped) {
     /* merge changes on success */
@@ -390,9 +390,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
 dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
 				    unsigned int *len) {
   uint32_t cur_sector;
-  uint32_t cell_nr;
-  uint32_t first_cell_nr;
-  uint32_t last_cell_nr;
+  int cell_nr, first_cell_nr, last_cell_nr;
   cell_playback_t *cell;
   dvd_state_t *state;
 
@@ -441,7 +439,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
     *len += cell->last_sector - cell->first_sector + 1;
   }
   
-  assert(*pos != -1);
+  assert((signed)*pos != -1);
 
   pthread_mutex_unlock(&this->vm_lock);
 

@@ -37,7 +37,7 @@
  * (see dvdnav_menu_call())
  */
 typedef enum {
-  /* When used in VTS domain, DVD_MENU_Escape behaves like DVD_MENU_Title,
+  /* When used in VTS domain, DVD_MENU_Escape behaves like DVD_MENU_Root,
    * but from within a menu domain, DVD_MENU_Escape resumes playback. */
   DVD_MENU_Escape     = 0,
   DVD_MENU_Title      = 2,
