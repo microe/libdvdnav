@@ -35,13 +35,11 @@
 #include "vmcmd.h"
 #include "decoder.h"
 
-/*  Fix theses two.. pass as parameters instead. */
-static registers_t *state;
-
 typedef struct
 {
   uint64_t instruction;
   uint64_t examined;
+  registers_t *registers;
 } command_t;
 
 static uint32_t new_bits(command_t* command, int32_t start, int32_t count);
@@ -69,11 +67,11 @@ static uint32_t new_bits(command_t *command, int32_t start, int32_t count) {
 
 /* Eval register code, can either be system or general register.
    SXXX_XXXX, where S is 1 if it is system register. */
-static uint16_t eval_reg(uint8_t reg) {
+static uint16_t eval_reg(command_t* command, uint8_t reg) {
   if(reg & 0x80) {
-    return state->SPRM[reg & 0x1f]; /*  FIXME max 24 not 32 */
+    return command->registers->SPRM[reg & 0x1f]; /*  FIXME max 24 not 32 */
   } else {
-    return state->GPRM[reg & 0x0f];
+    return command->registers->GPRM[reg & 0x0f];
   }
 }
 
@@ -84,7 +82,7 @@ static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t byte) 
   if(imm) { /*  immediate */
     return new_bits(command, (byte*8), 16);
   } else {
-    return eval_reg(new_bits(command, ((byte + 1)*8), 8));
+    return eval_reg(command, new_bits(command, ((byte + 1)*8), 8));
   }
 }
 
@@ -96,7 +94,7 @@ uint16_t eval_reg_or_data_2(command_t* command, int32_t imm, int32_t byte) {
   if(imm) /* immediate */
     return new_bits(command, ((byte*8)+1), 7);
   else
-    return state->GPRM[new_bits(command, ((byte*8)+4), 4)];
+    return command->registers->GPRM[new_bits(command, ((byte*8)+4), 4)];
 }
 
 
@@ -129,7 +127,7 @@ static int32_t eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
 static int32_t eval_if_version_1(command_t* command) {
   uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(new_bits(command, 24, 8)), 
+    return eval_compare(op, eval_reg(command, new_bits(command, 24, 8)), 
                             eval_reg_or_data(command, new_bits(command, 8, 1), 4));
   }
   return 1;
@@ -140,8 +138,8 @@ static int32_t eval_if_version_1(command_t* command) {
 static int32_t eval_if_version_2(command_t* command) {
   uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(new_bits(command, 48, 8)), 
-                            eval_reg(new_bits(command, 56, 8)));
+    return eval_compare(op, eval_reg(command, new_bits(command, 48, 8)), 
+                            eval_reg(command, new_bits(command, 56, 8)));
   }
   return 1;
 }
@@ -151,7 +149,7 @@ static int32_t eval_if_version_2(command_t* command) {
 static int32_t eval_if_version_3(command_t* command) {
   uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(new_bits(command, 16, 8)), 
+    return eval_compare(op, eval_reg(command, new_bits(command, 16, 8)), 
                             eval_reg_or_data(command, new_bits(command, 8, 1), 6));
   }
   return 1;
@@ -163,7 +161,7 @@ static int32_t eval_if_version_3(command_t* command) {
 static int32_t eval_if_version_4(command_t* command) {
   uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(new_bits(command, 12, 4)), 
+    return eval_compare(op, eval_reg(command, new_bits(command, 12, 4)), 
                             eval_reg_or_data(command, new_bits(command, 8, 1), 4));
   }
   return 1;
@@ -191,7 +189,7 @@ static int32_t eval_special_instruction(command_t* command, int32_t cond) {
       if(cond) {
 	/*  This always succeeds now, if we want real parental protection */
 	/*  we need to ask the user and have passwords and stuff. */
-	state->SPRM[13] = level;
+	command->registers->SPRM[13] = level;
       }
       return cond ? line : 0;
   }
@@ -330,7 +328,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
         if(new_bits(command, ((2 + i)*8), 1)) {
           data = eval_reg_or_data_2(command, new_bits(command, 3, 1), 2 + i);
           if(cond) {
-            state->SPRM[i] = data;
+            command->registers->SPRM[i] = data;
           }
         }
       }
@@ -339,8 +337,8 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       data = eval_reg_or_data(command, new_bits(command, 3, 1), 2);
       data2 = new_bits(command, 40, 8); /*  ?? size */
       if(cond) {
-	state->SPRM[9] = data; /*  time */
-	state->SPRM[10] = data2; /*  pgcN */
+	command->registers->SPRM[9] = data; /*  time */
+	command->registers->SPRM[10] = data2; /*  pgcN */
       }
       break;
     case 3: /*  Mode: Counter / Register + Set */
@@ -348,19 +346,19 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       data2 = new_bits(command, 44, 4);
       if(new_bits(command, 40, 1)) {
 	fprintf(stderr, "Detected SetGPRMMD Counter!! This is unsupported.\n");
-	state->GPRM_mode[data2] = 1;
+	command->registers->GPRM_mode[data2] = 1;
       } else {
 	fprintf(stderr, "Detected ResetGPRMMD Counter!! This is unsupported.\n");
-	state->GPRM_mode[data2] = 0;
+	command->registers->GPRM_mode[data2] = 0;
       }
       if(cond) {
-	state->GPRM[data2] = data;
+	command->registers->GPRM[data2] = data;
       }
       break;
     case 6: /*  Set system reg 8 (Highlighted button) */
       data = eval_reg_or_data(command, new_bits(command, 3, 1), 4); /*  Not system reg!! */
       if(cond) {
-	state->SPRM[8] = data;
+	command->registers->SPRM[8] = data;
       }
       break;
   }
@@ -375,53 +373,53 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
    Sets the register given to the value indicated by op and data.
    For the swap case the contents of reg is stored in reg2.
 */
-static void eval_set_op(int32_t op, int32_t reg, int32_t reg2, int32_t data) {
+static void eval_set_op(command_t* command, int32_t op, int32_t reg, int32_t reg2, int32_t data) {
   const int32_t shortmax = 0xffff;
   int32_t     tmp; 
   switch(op) {
     case 1:
-      state->GPRM[reg] = data;
+      command->registers->GPRM[reg] = data;
       break;
     case 2: /* SPECIAL CASE - SWAP! */
-      state->GPRM[reg2] = state->GPRM[reg];
-      state->GPRM[reg] = data;
+      command->registers->GPRM[reg2] = command->registers->GPRM[reg];
+      command->registers->GPRM[reg] = data;
       break;
     case 3:
-      tmp = state->GPRM[reg] + data;
+      tmp = command->registers->GPRM[reg] + data;
       if(tmp > shortmax) tmp = shortmax;
-      state->GPRM[reg] = (uint16_t)tmp;
+      command->registers->GPRM[reg] = (uint16_t)tmp;
       break;
     case 4:
-      tmp = state->GPRM[reg] - data;
+      tmp = command->registers->GPRM[reg] - data;
       if(tmp < 0) tmp = 0;
-      state->GPRM[reg] = (uint16_t)tmp;
+      command->registers->GPRM[reg] = (uint16_t)tmp;
       break;
     case 5:
-      tmp = state->GPRM[reg] * data;
+      tmp = command->registers->GPRM[reg] * data;
       if(tmp >= shortmax) tmp = shortmax;
-      state->GPRM[reg] = (uint16_t)tmp;
+      command->registers->GPRM[reg] = (uint16_t)tmp;
       break;
     case 6:
       if (data != 0) {
-       state->GPRM[reg] /= data;
+       command->registers->GPRM[reg] /= data;
       } else {
-       state->GPRM[reg] =  0; /* Avoid that divide by zero! */
+       command->registers->GPRM[reg] =  0; /* Avoid that divide by zero! */
       }
       break;
     case 7:
-      state->GPRM[reg] %= data;
+      command->registers->GPRM[reg] %= data;
       break;
     case 8: /* SPECIAL CASE - RND! */
-      state->GPRM[reg] = (uint16_t) ((float) data * rand()/(RAND_MAX+1.0));
+      command->registers->GPRM[reg] = (uint16_t) ((float) data * rand()/(RAND_MAX+1.0));
       break;
     case 9:
-      state->GPRM[reg] &= data;
+      command->registers->GPRM[reg] &= data;
       break;
     case 10:
-      state->GPRM[reg] |= data;
+      command->registers->GPRM[reg] |= data;
       break;
     case 11:
-      state->GPRM[reg] ^= data;
+      command->registers->GPRM[reg] ^= data;
       break;
   }
 }
@@ -434,7 +432,7 @@ static void eval_set_version_1(command_t* command, int32_t cond) {
   uint16_t data = eval_reg_or_data(command, new_bits(command, 3, 1), 4);
 
   if(cond) {
-    eval_set_op(op, reg, reg2, data);
+    eval_set_op(command, op, reg, reg2, data);
   }
 }
 
@@ -447,7 +445,7 @@ static void eval_set_version_2(command_t* command, int32_t cond) {
   uint16_t data = eval_reg_or_data(command, new_bits(command, 3, 1), 2);
 
   if(cond) {
-    eval_set_op(op, reg, reg2, data);
+    eval_set_op(command, op, reg, reg2, data);
   }
 }
 
@@ -455,7 +453,7 @@ static void eval_set_version_2(command_t* command, int32_t cond) {
 /* Evaluate a command
    returns row number of goto, 0 if no goto, -1 if link.
    Link command in return_values */
-static int32_t eval_command(uint8_t *bytes, link_t *return_values) {
+static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *return_values) {
   int32_t cond, res = 0;
   command_t command;
   command.instruction =( (uint64_t) bytes[0] << 56 ) |
@@ -467,6 +465,7 @@ static int32_t eval_command(uint8_t *bytes, link_t *return_values) {
         ( (uint64_t) bytes[6] <<  8 ) |
           (uint64_t) bytes[7] ;
   command.examined = 0;
+  command.registers = registers;
   memset(return_values, 0, sizeof(link_t));
 
   switch(new_bits(&command, 0, 3)) { /* three first old_bits */
@@ -546,8 +545,6 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   int32_t i = 0;
   int32_t total = 0;
   
-  state = registers; /*  TODO FIXME */
-
 #ifdef TRACE
   /*  DEBUG */
   fprintf(stderr, "libdvdnav: Registers before transaction\n");
@@ -570,7 +567,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
 #ifdef TRACE
     if(1) vmPrint_CMD(i, &commands[i]);
 #endif
-    line = eval_command(&commands[i].bytes[0], return_values);
+    line = eval_command(&commands[i].bytes[0], registers, return_values);
     
     if (line < 0) { /*  Link command */
 #ifdef TRACE
