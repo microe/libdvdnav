@@ -71,3 +71,12 @@ dvdnav_is_domain_vts
 dvdnav_set_PGC_positioning_flag
 dvdnav_get_number_of_parts
 dvdnav_reset
+
+;------------------------------------------------------------
+; timer exports
+
+gettimeofday
+setitimer
+pause
+sleep
+nanosleep

@@ -38,9 +38,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwin32utils
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -66,7 +63,7 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name libdvdcss
+    Project_Dep_Name libdvdnav
     End Project Dependency
 }}}
 
@@ -81,7 +78,7 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name libdvdcss
+    Project_Dep_Name libdvdnav
     End Project Dependency
 }}}
 
