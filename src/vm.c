@@ -571,9 +571,7 @@ int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd) {
 
 int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   vts_ptt_srpt_t *vts_ptt_srpt;
-  int title   = (vm->state).TTN_REG;
-  int part    = (vm->state).PTTN_REG;
-  int vts_ttn = (vm->state).VTS_TTN_REG;
+  int title, part = 0, vts_ttn;
   int found;
   int16_t pgcN, pgN;
 
@@ -584,10 +582,17 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   found = 0;
   for (vts_ttn = 0; (vts_ttn < vts_ptt_srpt->nr_of_srpts) && !found; vts_ttn++) {
     for (part = 0; (part < vts_ptt_srpt->title[vts_ttn].nr_of_ptts) && !found; part++) {
-      if ((vts_ptt_srpt->title[vts_ttn].ptt[part].pgcn == pgcN) &&
-          (vts_ptt_srpt->title[vts_ttn].ptt[part].pgn  == pgN )) {
-        found = 1;
-        break;
+      if (vts_ptt_srpt->title[vts_ttn].ptt[part].pgcn == pgcN) {
+	if (vts_ptt_srpt->title[vts_ttn].ptt[part].pgn  == pgN) {
+	  found = 1;
+          break;
+	}
+	if (part > 0 && vts_ptt_srpt->title[vts_ttn].ptt[part].pgn > pgN &&
+	    vts_ptt_srpt->title[vts_ttn].ptt[part - 1].pgn < pgN) {
+	  part--;
+	  found = 1;
+	  break;
+	}
       }
     }
     if (found) break;
@@ -595,6 +600,11 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   vts_ttn++;
   part++;
   
+  if (!found) {
+    fprintf(MSG_OUT, "libdvdnav: chapter NOT FOUND!\n");
+    return 0;
+  }
+
   title = get_TT(vm, vm->state.vtsN, vts_ttn);
 
 #ifdef TRACE
@@ -604,12 +614,8 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
              title, part,
              vts_ptt_srpt->title[vts_ttn-1].ptt[part-1].pgcn ,
              vts_ptt_srpt->title[vts_ttn-1].ptt[part-1].pgn );
-  } else {
-    fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
   }
 #endif
-  if (!title)
-    return 0;
   *title_result = title;
   *part_result = part;
   return 1;
@@ -620,10 +626,6 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
  */
 int vm_get_audio_stream(vm_t *vm, int audioN) {
   int streamN = -1;
-
-#ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: vm.c:get_audio_stream audioN=%d\n",audioN);
-#endif
 
   if((vm->state).domain != VTS_DOMAIN)
     audioN = 0;
@@ -958,7 +960,7 @@ static link_t play_PGC_post(vm_t *vm) {
      - just go to next PGC
        (This is what happens if you fall of the end of the post_cmds)
      - or an error (are there more cases?) */
-  if((vm->state).pgc->command_tbl &&
+  if((vm->state).pgc->command_tbl && (vm->state).pgc->command_tbl->nr_of_post &&
      vmEval_CMD((vm->state).pgc->command_tbl->post_cmds,
 		(vm->state).pgc->command_tbl->nr_of_post, 
 		&(vm->state).registers, &link_values)) {
@@ -1704,16 +1706,16 @@ static int get_PGCN(vm_t *vm) {
   int pgcN = 1;
 
   pgcit = get_PGCIT(vm);
-  assert(pgcit != NULL);
   
-  while(pgcN <= pgcit->nr_of_pgci_srp) {
-    if(pgcit->pgci_srp[pgcN - 1].pgc == (vm->state).pgc)
-      return pgcN;
-    pgcN++;
+  if (pgcit) {
+    while(pgcN <= pgcit->nr_of_pgci_srp) {
+      if(pgcit->pgci_srp[pgcN - 1].pgc == (vm->state).pgc)
+	return pgcN;
+      pgcN++;
+    }
   }
   fprintf(MSG_OUT, "libdvdnav: get_PGCN failed. Was trying to find pgcN in domain %d\n", 
          (vm->state).domain);
-  /* assert(0);*/ 
   return 0; /*  error */
 }
 
@@ -1797,6 +1799,10 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.46  2003/03/15 20:21:44  mroi
+ * - do not rely on 1:1 mappings between PTTs and PGs
+ * - fix get_PGCN for cases where get_PGCIT returns NULL
+ *
  * Revision 1.45  2003/03/14 18:47:51  mroi
  * - fix vm copying when the vtsN has not yet been set
  * - change still detection heuristics
