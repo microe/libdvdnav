@@ -1608,21 +1608,24 @@ static int get_ID(vm_t *vm, int id)
   pgcit = get_PGCIT(vm);
   assert(pgcit != NULL);
   fprintf(MSG_OUT, "libdvdnav: ** Searching for menu (0x%x) entry PGC\n", id);
-  
+
+  /* Force high bit set. */
+  id |=0x80;
   /* Get menu/title */
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
-    if((pgcit->pgci_srp[i].entry_id & 0x7f) == id) {
-      assert((pgcit->pgci_srp[i].entry_id & 0x80) == 0x80);
+    if( (pgcit->pgci_srp[i].entry_id) == id) {
       pgcN = i + 1;
+      fprintf(MSG_OUT, "libdvdnav: Found menu.\n");
       return pgcN;
     }
   }
-  fprintf(MSG_OUT, "libdvdnav: ** No such id/menu (%d) entry PGC\n", id);
+  fprintf(MSG_OUT, "libdvdnav: ** No such id/menu (0x%02x) entry PGC\n", id & 0x7f);
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
-    fprintf(MSG_OUT, "libdvdnav: Available menus: 0x%x\n",
-                     pgcit->pgci_srp[i].entry_id);
+    if ( (pgcit->pgci_srp[i].entry_id & 0x80) == 0x80) {
+      fprintf(MSG_OUT, "libdvdnav: Available menus: 0x%x\n",
+                     pgcit->pgci_srp[i].entry_id & 0x7f);
+    }
   }
-  assert(0); /* Use assert for now, until the error is handled. */
   return -1; /*  error */
 }
 
@@ -1639,7 +1642,6 @@ static int set_PGC(vm_t *vm, int pgcN)
   assert(pgcit != NULL); /*  ?? Make this return -1 instead */
   if(pgcN < 1 || pgcN > pgcit->nr_of_pgci_srp) {
     fprintf(MSG_OUT, "libdvdnav:  ** No such pgcN = %d\n", pgcN);
-    assert(0);
     return -1; /* error */
   }
   
@@ -1817,6 +1819,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.27  2002/08/29 04:01:43  jcdutton
+ * Remove an assert() so that user initiated jumps to particlar menus does not seg fault if
+ * the menu requested does not exist.
+ *
  * Revision 1.26  2002/08/27 19:15:08  mroi
  * more consistent console output
  *
