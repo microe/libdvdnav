@@ -153,6 +153,12 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int title, int part) {
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
+  if((part < 1) || (part > this->vm->vmgi->tt_srpt->title[title-1].nr_of_ptts)) {
+    printerr("Part out of range.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
+
   retval = vm_jump_title_part(this->vm, title, part);
   if (retval)
     this->vm->hop_channel++;
