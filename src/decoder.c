@@ -51,7 +51,7 @@ static registers_t *state;
 /* Get count bits of command from byte and bit position. */
 static uint32_t bits(int byte, int bit, int count) {
   uint32_t val = 0;
-  int bit_mask;
+  uint8_t bit_mask;
   
   while(count--) {
     if(bit > 7) {
@@ -350,9 +350,10 @@ static bool eval_system_set(int cond, link_t *return_values) {
       data2 = bits(5, 4, 4);
       if(bits(5, 0, 1)) {
 	fprintf(stderr, "Detected SetGPRMMD Counter!! This is unsupported.\n");
-	assert(0);
+	state->GPRM_mode[data2] = 1;
       } else {
-	;
+	fprintf(stderr, "Detected ResetGPRMMD Counter!! This is unsupported.\n");
+	state->GPRM_mode[data2] = 0;
       }
       if(cond) {
 	state->GPRM[data2] = data;
@@ -540,34 +541,33 @@ int vmEval_CMD(vm_cmd_t commands[], int num_commands,
 
 #ifdef TRACE
   /*  DEBUG */
+  fprintf(stderr, "libdvdnav: Registers before transaction\n");
+  vmPrint_registers( registers );
   if(1) {
     int i;
-    fprintf(stderr, "   #   ");
-    for(i = 0; i < 24; i++)
-    fprintf(stderr, " %2d |", i);
-    fprintf(stderr, "\nSRPMS: ");
-    for(i = 0; i < 24; i++)
-      fprintf(stderr, "%04x|", state->SPRM[i]);
-    fprintf(stderr, "\nGRPMS: ");
-    for(i = 0; i < 16; i++)
-      fprintf(stderr, "%04x|", state->GPRM[i]);
-    fprintf(stderr, "\n");
-  }
-  if(1) {
-    int i;
+    fprintf(stderr, "libdvdnav: Full list of commands to execute\n");
     for(i = 0; i < num_commands; i++)
       vmPrint_CMD(i, &commands[i]);
     fprintf(stderr, "--------------------------------------------\n");
   } /*  end DEBUG */
+  if (1) {
+    fprintf(stderr, "libdvdnav: Single stepping commands\n");
+  }
 #endif
   
   while(i < num_commands && total < 100000) {
     int line;
     
-    if(0) vmPrint_CMD(i, &commands[i]);
+#ifdef TRACE
+    if(1) vmPrint_CMD(i, &commands[i]);
+#endif
     line = eval_command(&commands[i].bytes[0], return_values);
     
     if (line < 0) { /*  Link command */
+#ifdef TRACE
+      fprintf(stderr, "libdvdnav: Registers after transaction\n");
+      vmPrint_registers( registers );
+#endif
       fprintf(stderr, "eval: Doing Link/Jump/Call\n"); 
       return 1;
     }
@@ -581,6 +581,10 @@ int vmEval_CMD(vm_cmd_t commands[], int num_commands,
   }
   
   memset(return_values, 0, sizeof(link_t));
+#ifdef TRACE
+  fprintf(stderr, "libdvdnav: Registers after transaction\n");
+  vmPrint_registers( registers );
+#endif
   return 0;
 }
 
@@ -705,3 +709,20 @@ void vmPrint_LINK(link_t value) {
     break;
   }
  }
+
+void vmPrint_registers( registers_t *registers ) {
+  int i;
+  fprintf(stderr, "   #   ");
+  for(i = 0; i < 24; i++)
+    fprintf(stderr, " %2d |", i);
+  fprintf(stderr, "\nSRPMS: ");
+  for(i = 0; i < 24; i++)
+    fprintf(stderr, "%04x|", registers->SPRM[i]);
+  fprintf(stderr, "\nGRPMS: ");
+  for(i = 0; i < 16; i++)
+    fprintf(stderr, "%04x|", registers->GPRM[i]);
+  fprintf(stderr, "\nGmode: ");
+  for(i = 0; i < 16; i++)
+    fprintf(stderr, "%04x|", registers->GPRM_mode[i]);
+  fprintf(stderr, "\n");
+}

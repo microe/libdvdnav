@@ -46,10 +46,10 @@
 static void saveRSMinfo(vm_t *vm,int cellN, int blockN);
 static int set_PGN(vm_t *vm);
 static link_t play_PGC(vm_t *vm);
+static link_t play_PGC_post(vm_t *vm);
 static link_t play_PG(vm_t *vm);
 static link_t play_Cell(vm_t *vm);
 static link_t play_Cell_post(vm_t *vm);
-static link_t play_PGC_post(vm_t *vm);
 static link_t process_command(vm_t *vm,link_t link_values);
 
 static void ifoOpenNewVTSI(vm_t *vm,dvd_reader_t *dvd, int vtsN);
@@ -165,6 +165,7 @@ int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ {
   /*  Setup State */
   memset((vm->state).registers.SPRM, 0, sizeof(uint16_t)*24);
   memset((vm->state).registers.GPRM, 0, sizeof((vm->state).registers.GPRM));
+  memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
   (vm->state).registers.SPRM[0] = ('e'<<8)|'n'; /*  Player Menu Languange code */
   (vm->state).AST_REG = 15; /*  15 why? */
   (vm->state).SPST_REG = 62; /*  62 why? */
@@ -957,6 +958,7 @@ static link_t play_PGC_post(vm_t *vm)
     link_t link_next_pgc = {LinkNextPGC, 0, 0, 0};
     fprintf(stderr, "** Fell of the end of the pgc, continuing in NextPGC\n");
     assert((vm->state).pgc->next_pgc_nr != 0);
+    /* Should end up in the STOP_DOMAIN if next_pgc is 0. */
     return link_next_pgc;
   }
 }
@@ -983,12 +985,13 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      fprintf(stderr, "libdvdnav in trouble...LinkNoLink - CRASHING!!!\n");
+      fprintf(stderr, "libdvdnav: FIXME: in trouble...LinkNoLink - CRASHING!!!\n");
       assert(0);
       
     case LinkTopC:
-      /* Link to Top?? Cell */
+      /* Link to Top?? Cell. What is TopC */
       /* BUTTON number:data1 */
+      fprintf(stderr, "libdvdnav: FIXME: LinkTopC. What is LinkTopC?\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_Cell(vm);
@@ -998,7 +1001,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      (vm->state).cellN += 1; /* FIXME: What if cellN becomes > nr_of_cells? */
+      (vm->state).cellN += 1; /* if cellN becomes > nr_of_cells? it is handled in play_Cell() */
       link_values = play_Cell(vm);
       break;
     case LinkPrevC:
@@ -1006,13 +1009,14 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      (vm->state).cellN -= 1; /*  FIXME: What if cellN becomes < 1? */
+      (vm->state).cellN -= 1; /*  If cellN becomes < 1? it is handled in play_Cell() */
       link_values = play_Cell(vm);
       break;
       
     case LinkTopPG:
       /* Link to Top Program */
       /* BUTTON number:data1 */
+      fprintf(stderr, "libdvdnav: FIXME: LinkTopPG. What is LinkTopPG?\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       /*  Does pgN always contain the current value? */
@@ -1041,6 +1045,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
     case LinkTopPGC:
       /* Link to Top Program Chain */
       /* BUTTON number:data1 */
+      fprintf(stderr, "libdvdnav: FIXME: LinkTopPGC. What is LinkTopPGC?\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PGC(vm);
@@ -1078,6 +1083,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
     case LinkTailPGC:
       /* Link to Tail??? Program Chain */
       /* BUTTON number:data1 */
+      fprintf(stderr, "libdvdnav: FIXME: LinkTailPGC. What is LinkTailPGC?\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PGC_post(vm);
@@ -1159,7 +1165,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
       
     case Exit:
-      fprintf(stderr, "libdvdnav in trouble...Link Exit - CRASHING!!!\n");
+      fprintf(stderr, "libdvdnav: FIXME:in trouble...Link Exit - CRASHING!!!\n");
       assert(0); /*  What should we do here?? */
       
     case JumpTT:
@@ -1177,7 +1183,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* Only allowed from the VTS Menu Domain(VTSM) */
       /* or the Video Title Set Domain(VTS) */
       assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
-      /* FIXME: Should be able to use get_VTS_PTT here */
+      fprintf(stderr, "libdvdnav: FIXME: Should be able to use get_VTS_PTT here.\n"); 
       if(get_VTS_TT(vm,(vm->state).vtsN, link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
@@ -1549,6 +1555,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.6  2002/04/09 15:19:07  jcdutton
+ * Added some debug info, to hopefully help in tracking bugs in libdvdnav.
+ *
  * Revision 1.5  2002/04/07 19:35:54  jcdutton
  * Added some comments into the code.
  *

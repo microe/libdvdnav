@@ -146,9 +146,9 @@ static uint32_t bits(int byte, int bit, int count) {
 
 static void print_system_reg(uint16_t reg) {
   if(reg < sizeof(system_reg_abbr_table) / sizeof(char *))
-    fprintf(stderr, system_reg_table[reg]);
+    fprintf(stderr, "%s (SRPM:%d)", system_reg_table[reg], reg);
   else
-    fprintf(stderr, " WARNING: Unknown system register ");
+    fprintf(stderr, " WARNING: Unknown system register ( reg=%d ) ", reg);
 }
 
 static void print_reg(uint8_t reg) {
@@ -518,3 +518,5 @@ void vmPrint_CMD(int row, vm_cmd_t *command) {
   vmPrint_mnemonic(command);
   fprintf(stderr, "\n");
 }
+
+

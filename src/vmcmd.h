@@ -28,6 +28,7 @@
 #include "config.h"
 #include <inttypes.h>
 #include <dvdread/ifo_types.h> /*  Only for vm_cmd_t  */
+#include "decoder.h"
 
 void vmPrint_mnemonic(vm_cmd_t *command);
 void vmPrint_CMD(int row, vm_cmd_t *command);

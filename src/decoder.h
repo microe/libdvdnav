@@ -85,13 +85,13 @@ typedef struct {
 typedef struct {
   uint16_t SPRM[24];
   uint16_t GPRM[16];
-  /* Need to have some thing to indicate normal/counter mode for every GPRM */
-  /* int GPRM_mode[16]; */
+  uint8_t  GPRM_mode[16];  /* Need to have some thing to indicate normal/counter mode for every GPRM */
 } registers_t;
 
 int vmEval_CMD(vm_cmd_t commands[], int num_commands, 
 	       registers_t *registers, link_t *return_values);
 
 void vmPrint_LINK(link_t value);
+void vmPrint_registers( registers_t *registers );
 
 #endif /* DECODER_H_INCLUDED */

@@ -163,7 +163,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *self) {
 
   /* Finally, make the VM execute the appropriate code and
    * scedule a jump */
-
+  fprintf(stderr, "libdvdnav: Evaluating Button Activation commands.\n");
   if(vm_eval_cmd(self->vm, &(button_ptr->cmd)) == 1) {
     /* Cammand caused a jump */
     dvdnav_do_post_jump(self);
