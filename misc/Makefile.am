@@ -1,4 +1,4 @@
-EXTRA_DIST = dvdnav-config.in
+EXTRA_DIST = dvdnav-config.in libdvdnav.spec.in libdvdnav.spec
 
 bin_SCRIPTS = dvdnav-config
 
