@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2001, 2002, 2003 Billy Biggs <vektor@dumbterm.net>,
- *                                Håkan Hjort <d95hjort@dtek.chalmers.se>,
- *                                Björn Englund <d4bjorn@dtek.chalmers.se>
+ * Copyright (C) 2001-2004 Billy Biggs <vektor@dumbterm.net>,
+ *                         Håkan Hjort <d95hjort@dtek.chalmers.se>,
+ *                         Björn Englund <d4bjorn@dtek.chalmers.se>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 #ifdef WIN32
 /* replacement gettimeofday implementation */
 #include <sys/timeb.h>
-static inline int gettimeofday( struct timeval *tv, void *tz )
+static inline int _private_gettimeofday( struct timeval *tv, void *tz )
 {
   struct timeb t;
   ftime( &t );
@@ -44,6 +44,7 @@ static inline int gettimeofday( struct timeval *tv, void *tz )
   tv->tv_usec = t.millitm * 1000;
   return 0;
 }
+#define gettimeofday(TV, TZ) _private_gettimeofday((TV), (TZ))
 #include <io.h> /* read() */
 #define lseek64 _lseeki64
 #endif
