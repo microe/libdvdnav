@@ -1,3 +1,12 @@
+libdvdnav (0.1.8)
+  * more timing info in cell change event struct
+  * documentation review
+
+libdvdnav (0.1.7)
+  * fixed a bug in title jumping, where the title number would not be
+    converted from TTN to VTS_TTN properly
+  * some minor sanity checks added to prevent segfaults
+
 libdvdnav (0.1.6) unstable; urgency=low
   * new event DVDNAV_WAIT to fix consistency problems in applications with fifos
     where libdvdnav is always a bit ahead in the stream, the event forces
