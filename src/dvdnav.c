@@ -671,9 +671,11 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   }
   /* FIXME: Don't really need "cell", we only need vobu_start */
   if( (this->position_current.cell != this->position_next.cell) ||
+      (this->position_current.cell_restart != this->position_next.cell_restart) ||
       (this->position_current.vobu_start != this->position_next.vobu_start) ||
       (this->position_current.vobu_next != this->position_next.vobu_next) ) {
     this->position_current.cell = this->position_next.cell;
+    this->position_current.cell_restart = this->position_next.cell_restart;
     /* vobu_start changes when PGC or PG changes. */
     this->position_current.vobu_start = this->position_next.vobu_start;
     this->position_current.vobu_next = this->position_next.vobu_next;
@@ -940,6 +942,11 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.23  2002/07/02 22:57:09  jcdutton
+ * Rename some of the functions in vm.c to help readability.
+ * Hopefully fix __FUNCTION__ problem. Use __func_ as recommended in C99.
+ * Fix bug where libdvdnav would not immeadiately replay the same cell due to menu buttons.
+ *
  * Revision 1.22  2002/06/25 13:37:11  jcdutton
  * Revert back to old read_cache method.
  * Some new optimizations added to the old read_cache method, thus reducing the amount of calls to read blocks from the DVD device.

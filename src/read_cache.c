@@ -83,7 +83,7 @@ struct read_cache_s {
 #define _MT_TRACE 1
 
 #if _MT_TRACE
-#define dprintf(fmt, args...) fprintf(stderr, "%s: "fmt,  ##__FUNCTION__##, ##args);
+#define dprintf(fmt, args...) fprintf(stderr, "%s: "fmt,  __func__, ##args);
 #else
 #define dprintf(fmt, args...) /* Nowt */
 #endif

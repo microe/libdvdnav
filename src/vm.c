@@ -45,7 +45,6 @@
 /* Local prototypes */
 
 static void saveRSMinfo(vm_t *vm,int cellN, int blockN);
-static int set_PGN(vm_t *vm);
 static link_t play_PGC(vm_t *vm);
 static link_t play_PGC_PG(vm_t *vm, int pgN);
 static link_t play_PGC_post(vm_t *vm);
@@ -57,19 +56,25 @@ static link_t process_command(vm_t *vm,link_t link_values);
 static void ifoOpenNewVTSI(vm_t *vm,dvd_reader_t *dvd, int vtsN);
 static pgcit_t* get_PGCIT(vm_t *vm);
 
-/* Can only be called when in VTS_DOMAIN */
-static int get_TT(vm_t *vm,int tt);
-static int get_VTS_TT(vm_t *vm,int vtsN, int vts_ttn);
-static int get_VTS_PTT(vm_t *vm,int vtsN, int vts_ttn, int part);
-static int find_TT(vm_t *vm, int vtsN, int vts_ttn);
+/* get_XYZ returns a value.
+ * ser_XYZ sets state using passed parameters.
+ *         returns success/failure.
+ */
 
-static int get_MENU(vm_t *vm,int menu); /*  VTSM & VMGM */
-static int get_FP_PGC(vm_t *vm); /*  FP */
+/* Can only be called when in VTS_DOMAIN */
+static int set_FP_PGC(vm_t *vm); /*  FP */
+static int set_TT(vm_t *vm,int tt);
+static int set_VTS_TT(vm_t *vm,int vtsN, int vts_ttn);
+static int set_VTS_PTT(vm_t *vm,int vtsN, int vts_ttn, int part);
+
+static int set_MENU(vm_t *vm,int menu); /*  VTSM & VMGM */
 
 /* Called in any domain */
+static int get_TT(vm_t *vm, int vtsN, int vts_ttn);
 static int get_ID(vm_t *vm,int id);
-static int get_PGC(vm_t *vm,int pgcN);
 static int get_PGCN(vm_t *vm);
+static int set_PGN(vm_t *vm); /* Set PGN based on (vm->state).CellN */
+static int set_PGC(vm_t *vm,int pgcN);
 
 /* Initialisation */
 
@@ -193,6 +198,7 @@ int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ {
    
   (vm->state).pgN = 0;
   (vm->state).cellN = 0;
+  (vm->state).cell_restart = 0;
 
   (vm->state).domain = FP_DOMAIN;
   (vm->state).rsm_vtsN = 0;
@@ -258,7 +264,7 @@ int vm_start(vm_t *vm)
   link_t link_values;
 
   /*  Set pgc to FP(First Play) pgc */
-  get_FP_PGC(vm);
+  set_FP_PGC(vm);
   link_values = play_PGC(vm); 
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
@@ -281,6 +287,7 @@ int vm_position_get(vm_t *vm, vm_position_t *position) {
   position->vts = (vm->state).vtsN; 
   position->domain = (vm->state).domain; 
   position->cell = (vm->state).cellN;
+  position->cell_restart = (vm->state).cell_restart;
   position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
   position->vobu_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
   position->vobu_next = (vm->state).blockN;
@@ -289,7 +296,7 @@ int vm_position_get(vm_t *vm, vm_position_t *position) {
 }
 
 int vm_position_print(vm_t *vm, vm_position_t *position) {
-  fprintf(stderr, "But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x still=%x start=%x next=%x\n",
+  fprintf(stderr, "But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x cell_restart=%x still=%x start=%x next=%x\n",
   position->button,
   position->spu_channel,
   position->audio_channel,
@@ -298,6 +305,7 @@ int vm_position_print(vm_t *vm, vm_position_t *position) {
   position->vts,
   position->domain,
   position->cell,
+  position->cell_restart,
   position->still,
   position->vobu_start,
   position->vobu_next);
@@ -308,7 +316,7 @@ int vm_position_print(vm_t *vm, vm_position_t *position) {
 int vm_start_title(vm_t *vm, int tt) {
   link_t link_values;
 
-  get_TT(vm, tt);
+  set_TT(vm, tt);
   link_values = play_PGC(vm); 
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
@@ -326,7 +334,7 @@ int vm_jump_prog(vm_t *vm, int pr) {
 
   (vm->state).pgN = pr; /*  ?? */
 
-  get_PGC(vm, get_PGCN(vm));
+  set_PGC(vm, get_PGCN(vm));
   link_values = play_PG(vm); 
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
@@ -391,7 +399,7 @@ int vm_go_up(vm_t *vm)
 {
   link_t link_values;
  
-  if(get_PGC(vm, (vm->state).pgc->goup_pgc_nr))
+  if(set_PGC(vm, (vm->state).pgc->goup_pgc_nr))
    assert(0);
 
   link_values = play_PGC(vm);
@@ -466,7 +474,7 @@ int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block)
   case VTSM_DOMAIN:
   case VMGM_DOMAIN:
     (vm->state).domain = menuid2domain(menuid);
-    if(get_PGCIT(vm) != NULL && get_MENU(vm, menuid) != -1) {
+    if(get_PGCIT(vm) != NULL && set_MENU(vm, menuid) != -1) {
       link_values = play_PGC(vm);
       link_values = process_command(vm, link_values);
       assert(link_values.command == PlayThis);
@@ -500,7 +508,7 @@ int vm_resume(vm_t *vm)
   
   (vm->state).domain = VTS_DOMAIN;
   ifoOpenNewVTSI(vm, vm->dvd, (vm->state).rsm_vtsN);
-  get_PGC(vm, (vm->state).rsm_pgcN);
+  set_PGC(vm, (vm->state).rsm_pgcN);
   
   /* These should never be set in SystemSpace and/or MenuSpace */ 
   /*  (vm->state).TTN_REG = (vm->state).rsm_tt; */
@@ -993,7 +1001,8 @@ static link_t play_Cell(vm_t *vm)
     assert(0);
     return tmp;
   }
-  
+  (vm->state).cell_restart++; 
+  fprintf(stderr, "libdvdnav: Cell should restart here\n");
   {
     link_t tmp = {PlayThis, /* Block in Cell */ 0, 0, 0};
     return tmp;
@@ -1163,7 +1172,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
     case LinkTopPG:
       /* Link to Top Program */
       /* BUTTON number:data1 */
-      fprintf(stderr, "libdvdnav: FIXME: LinkTopPG. What is LinkTopPG?\n");
+      fprintf(stderr, "libdvdnav: FIXME: LinkTopPG. This should start the current PG again.\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       /*  Does pgN always contain the current value? */
@@ -1203,7 +1212,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       assert((vm->state).pgc->next_pgc_nr != 0);
-      if(get_PGC(vm, (vm->state).pgc->next_pgc_nr))
+      if(set_PGC(vm, (vm->state).pgc->next_pgc_nr))
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1213,7 +1222,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       assert((vm->state).pgc->prev_pgc_nr != 0);
-      if(get_PGC(vm, (vm->state).pgc->prev_pgc_nr))
+      if(set_PGC(vm, (vm->state).pgc->prev_pgc_nr))
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1223,7 +1232,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       assert((vm->state).pgc->goup_pgc_nr != 0);
-      if(get_PGC(vm, (vm->state).pgc->goup_pgc_nr))
+      if(set_PGC(vm, (vm->state).pgc->goup_pgc_nr))
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1243,7 +1252,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
 	/*  Check and see if there is any rsm info!! */
 	(vm->state).domain = VTS_DOMAIN;
 	ifoOpenNewVTSI(vm, vm->dvd, (vm->state).rsm_vtsN);
-	get_PGC(vm, (vm->state).rsm_pgcN);
+	set_PGC(vm, (vm->state).rsm_pgcN);
 	
 	/* These should never be set in SystemSpace and/or MenuSpace */ 
 	/* (vm->state).TTN_REG = rsm_tt; ?? */
@@ -1278,7 +1287,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkPGCN:
       /* Link to Program Chain Number:data1 */
-      if(get_PGC(vm, link_values.data1))
+      if(set_PGC(vm, link_values.data1))
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1288,7 +1297,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert((vm->state).domain == VTS_DOMAIN);
       if(link_values.data2 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
-      if(get_VTS_PTT(vm, (vm->state).vtsN, (vm->state).VTS_TTN_REG, link_values.data1) == -1)
+      if(set_VTS_PTT(vm, (vm->state).vtsN, (vm->state).VTS_TTN_REG, link_values.data1) == -1)
 	assert(0);
       link_values = play_PG(vm);
       break;
@@ -1320,7 +1329,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* Only allowed from the First Play domain(PGC) */
       /* or the Video Manager domain (VMG) */
       assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
-      if(get_TT(vm,link_values.data1) == -1)
+      if(set_TT(vm,link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1330,7 +1339,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* or the Video Title Set Domain(VTS) */
       assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
       fprintf(stderr, "libdvdnav: FIXME: Should be able to use get_VTS_PTT here.\n"); 
-      if(get_VTS_TT(vm,(vm->state).vtsN, link_values.data1) == -1)
+      if(set_VTS_TT(vm,(vm->state).vtsN, link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1339,7 +1348,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* Only allowed from the VTS Menu Domain(VTSM) */
       /* or the Video Title Set Domain(VTS) */
       assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
-      if(get_VTS_PTT(vm,(vm->state).vtsN, link_values.data1, link_values.data2) == -1)
+      if(set_VTS_PTT(vm,(vm->state).vtsN, link_values.data1, link_values.data2) == -1)
 	assert(0);
       link_values = play_PGC_PG(vm, link_values.data2);
       break;
@@ -1349,7 +1358,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* Only allowed from the VTS Menu Domain(VTSM) */
       /* or the Video Manager domain (VMG) */
       assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == VTSM_DOMAIN); /* ?? */
-      get_FP_PGC(vm);
+      set_FP_PGC(vm);
       link_values = play_PGC(vm);
       break;
     case JumpSS_VMGM_MENU:
@@ -1359,7 +1368,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
 	     (vm->state).domain == VTSM_DOMAIN || 
 	     (vm->state).domain == FP_DOMAIN); /* ?? */
       (vm->state).domain = VMGM_DOMAIN;
-      if(get_MENU(vm,link_values.data1) == -1)
+      if(set_MENU(vm,link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1392,7 +1401,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /*  Alien or Aliens has this != 1, I think. */
       /* assert(link_values.data2 == 1); */
       (vm->state).VTS_TTN_REG = link_values.data2;
-      if(get_MENU(vm, link_values.data3) == -1)
+      if(set_MENU(vm, link_values.data3) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1402,7 +1411,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
 	     (vm->state).domain == VTSM_DOMAIN ||
 	     (vm->state).domain == FP_DOMAIN); /* ?? */
       (vm->state).domain = VMGM_DOMAIN;
-      if(get_PGC(vm,link_values.data1) == -1)
+      if(set_PGC(vm,link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1412,7 +1421,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert((vm->state).domain == VTS_DOMAIN); /* ??    */
       /*  Must be called before domain is changed */
       saveRSMinfo(vm, link_values.data1, /* We dont have block info */ 0);
-      get_FP_PGC(vm);
+      set_FP_PGC(vm);
       link_values = play_PGC(vm);
       break;
     case CallSS_VMGM_MENU:
@@ -1422,7 +1431,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /*  Must be called before domain is changed */
       saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);      
       (vm->state).domain = VMGM_DOMAIN;
-      if(get_MENU(vm,link_values.data1) == -1)
+      if(set_MENU(vm,link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1433,7 +1442,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /*  Must be called before domain is changed */
       saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);
       (vm->state).domain = VTSM_DOMAIN;
-      if(get_MENU(vm,link_values.data1) == -1)
+      if(set_MENU(vm,link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1444,7 +1453,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /*  Must be called before domain is changed */
       saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);
       (vm->state).domain = VMGM_DOMAIN;
-      if(get_PGC(vm,link_values.data1) == -1)
+      if(set_PGC(vm,link_values.data1) == -1)
 	assert(0);
       link_values = play_PGC(vm);
       break;
@@ -1468,7 +1477,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
  * returns the current TT.
  * returns 0 if not found.
  */
-static int find_TT(vm_t *vm, int vtsN, int vts_ttn) {
+static int get_TT(vm_t *vm, int vtsN, int vts_ttn) {
   int i;
   int tt=0;
   for(i = 1; i <= vm->vmgi->tt_srpt->nr_of_srpts; i++) {
@@ -1481,36 +1490,36 @@ static int find_TT(vm_t *vm, int vtsN, int vts_ttn) {
   return tt; 
 }
 
-static int get_TT(vm_t *vm, int tt)
+static int set_TT(vm_t *vm, int tt)
 {  
   assert(tt <= vm->vmgi->tt_srpt->nr_of_srpts);
   
   (vm->state).TTN_REG = tt;
    
-  return get_VTS_TT(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
+  return set_VTS_TT(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
 		    vm->vmgi->tt_srpt->title[tt - 1].vts_ttn);
 }
 
 
-static int get_VTS_TT(vm_t *vm, int vtsN, int vts_ttn)
+static int set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn)
 {
   fprintf(stderr, "get_VTS_TT called, testing!!! vtsN=%d, vts_ttn=%d\n", vtsN, vts_ttn);
-  return get_VTS_PTT(vm, vtsN, vts_ttn, 1);
+  return set_VTS_PTT(vm, vtsN, vts_ttn, 1);
   /* pgcN = get_ID(vm, vts_ttn);  This might return -1 */
   /*
   assert(pgcN != -1);
 
-  (vm->state).TTN_REG = find_TT(*vm, vtsN, vts_ttn);
+  (vm->state).TTN_REG = get_TT(*vm, vtsN, vts_ttn);
   (vm->state).VTS_TTN_REG = vts_ttn;
   (vm->state).vtsN = 
   */
   /* Any other registers? */
   
-  /* return get_PGC(vm, pgcN); */
+  /* return set_PGC(vm, pgcN); */
 }
 
 
-static int get_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int part)
+static int set_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int part)
 {
   int pgcN, pgN;
   
@@ -1527,7 +1536,7 @@ static int get_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int
   (vm->state).TT_PGCN_REG = pgcN;
   (vm->state).PTTN_REG = pgN;
 
-  (vm->state).TTN_REG = find_TT(vm, vtsN, vts_ttn);
+  (vm->state).TTN_REG = get_TT(vm, vtsN, vts_ttn);
   assert( (vm->state.TTN_REG) != 0 );
   (vm->state).VTS_TTN_REG = vts_ttn;
   (vm->state).vtsN = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
@@ -1535,12 +1544,12 @@ static int get_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int
   
   (vm->state).pgN = pgN; /*  ?? */
   
-  return get_PGC(vm, pgcN);
+  return set_PGC(vm, pgcN);
 }
 
 
 
-static int get_FP_PGC(vm_t *vm)
+static int set_FP_PGC(vm_t *vm)
 {  
   (vm->state).domain = FP_DOMAIN;
 
@@ -1550,10 +1559,10 @@ static int get_FP_PGC(vm_t *vm)
 }
 
 
-static int get_MENU(vm_t *vm, int menu)
+static int set_MENU(vm_t *vm, int menu)
 {
   assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == VTSM_DOMAIN);
-  return get_PGC(vm, get_ID(vm, menu));
+  return set_PGC(vm, get_ID(vm, menu));
 }
 
 static int get_ID(vm_t *vm, int id)
@@ -1577,7 +1586,10 @@ static int get_ID(vm_t *vm, int id)
   return -1; /*  error */
 }
 
-static int get_PGC(vm_t *vm, int pgcN)
+/* Set the vm->state to pgcN.
+ * Returns success/failure.
+ */
+static int set_PGC(vm_t *vm, int pgcN)
 {
   /* FIXME: Keep this up to date with the ogle people */
   pgcit_t *pgcit;
@@ -1614,7 +1626,9 @@ static int get_PGCN(vm_t *vm)
       return pgcN;
     pgcN++;
   }
-  
+  fprintf(stderr, "libdvdnav: get_PGCN failed. Trying to find pgcN in domain %d \n", 
+         (vm->state).domain);
+  assert(0); 
   return -1; /*  error */
 }
 
@@ -1622,12 +1636,21 @@ int vm_get_video_aspect(vm_t *vm)
 {
   int aspect = 0;
   
-  if((vm->state).domain == VTS_DOMAIN) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
     aspect = vm->vtsi->vtsi_mat->vts_video_attr.display_aspect_ratio;  
-  } else if((vm->state).domain == VTSM_DOMAIN) {
+    break;
+  case VTSM_DOMAIN:
     aspect = vm->vtsi->vtsi_mat->vtsm_video_attr.display_aspect_ratio;
-  } else if((vm->state).domain == VMGM_DOMAIN) {
+    break;
+  case VMGM_DOMAIN:
     aspect = vm->vmgi->vmgi_mat->vmgm_video_attr.display_aspect_ratio;
+    break;
+  default:
+    fprintf(stderr, "libdvdnav: vm_get_video_aspect failed. Unknown domain %d\n",
+             (vm->state).domain);
+    assert(0);
+    break;
   }
 #ifdef TRACE
   fprintf(stderr, "dvdnav:get_video_aspect:aspect=%d\n",aspect);
@@ -1704,14 +1727,22 @@ static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang)
 static pgcit_t* get_PGCIT(vm_t *vm) {
   pgcit_t *pgcit;
   
-  if((vm->state).domain == VTS_DOMAIN) {
+  switch ((vm->state).domain) {
+  case VTS_DOMAIN:
     pgcit = vm->vtsi->vts_pgcit;
-  } else if((vm->state).domain == VTSM_DOMAIN) {
+    break;
+  case VTSM_DOMAIN:
     pgcit = get_MENU_PGCIT(vm, vm->vtsi, (vm->state).registers.SPRM[0]);
-  } else if((vm->state).domain == VMGM_DOMAIN) {
+    break;
+  case VMGM_DOMAIN:
     pgcit = get_MENU_PGCIT(vm, vm->vmgi, (vm->state).registers.SPRM[0]);
-  } else {
+    break;
+  default:
     pgcit = NULL;    /* Should never hapen */
+    fprintf(stderr, "libdvdnav: get_PGCIT: Unknown domain:%d\n",
+             (vm->state).domain);
+    assert(0);
+    break;
   }
   
   return pgcit;
@@ -1719,6 +1750,11 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.20  2002/07/02 22:57:10  jcdutton
+ * Rename some of the functions in vm.c to help readability.
+ * Hopefully fix __FUNCTION__ problem. Use __func_ as recommended in C99.
+ * Fix bug where libdvdnav would not immeadiately replay the same cell due to menu buttons.
+ *
  * Revision 1.19  2002/06/04 13:35:16  richwareham
  * Removed more C++ style comments
  *

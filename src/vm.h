@@ -51,6 +51,7 @@ typedef struct {
   /*   int pgcN; // either this or *pgc is enough. Which to use? */
   int pgN;  /*  is this needed? can allways fid pgN from cellN? */
   int cellN;
+  int32_t cell_restart; /* get cell to restart */
   int blockN;
   
   /* Resume info */
@@ -73,6 +74,7 @@ typedef struct vm_position_s {
   int32_t title; /* title number */
   int32_t chapter; /* chapter number */
   int32_t cell; /* cell number */
+  int32_t cell_restart; /* get cell to restart */
   int32_t still; /* is cell still */
   int32_t vobu_start; /* block number of start of current VOBU in use */
   int32_t vobu_next; /* block number within VOBU in use */
