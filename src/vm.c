@@ -429,14 +429,12 @@ void vm_position_get(vm_t *vm, vm_position_t *position) {
   position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
   position->block = (vm->state).blockN;
 
-  /* still already detrmined or not at PGC end */
-  if (position->still || (vm->state).cellN < (vm->state).pgc->nr_of_cells)
+  /* handle PGC stills at PGC end */
+  if ((vm->state).cellN == (vm->state).pgc->nr_of_cells && (vm->state).pgc->still_time)
+    position->still += (vm->state).pgc->still_time;
+  /* still already determined */
+  if (position->still)
     return;
-  /* handle PGC stills */
-  if ((vm->state).pgc->still_time) {
-    position->still = (vm->state).pgc->still_time;
-    return;
-  }
   /* This is a rough fix for some strange still situations on some strange DVDs.
    * There are discs (like the German "Back to the Future" RC2) where the only
    * indication of a still is a cell playback time higher than the time the frames
