@@ -21,6 +21,29 @@ AC_SUBST(SPEC_VERSION)
 AC_SUBST(PACKAGE)
 AC_SUBST(RELEASE)
 
+dnl this is only for pre-1.0 releases (ie with unstable interface)
+LT_RELEASE=$DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB
+LT_CURRENT=0
+LT_REVISION=0
+LT_AGE=0
+
+dnl non-devel releases should not use LT_RELEASE but something like this:
+dnl
+dnl LT_REVISION=$XINE_SUB
+dnl LT_CURRENT=`expr $XINE_MAJOR + $XINE_MINOR`
+dnl LT_AGE=$XINE_MINOR
+dnl
+dnl !! This only works if subminor releases don't have any interface changes,
+dnl !! minor releases _only add_ interfaces and major releases remove at least
+dnl !! one interface
+dnl otherwise, the LT_* variables must be set according to
+dnl <info:(libtool)Updating version info>
+
+AC_SUBST(LT_RELEASE)
+AC_SUBST(LT_CURRENT)
+AC_SUBST(LT_REVISION)
+AC_SUBST(LT_AGE)
+
 dnl Every other copy of the package version number gets its value from here
 AM_INIT_AUTOMAKE("libdvdnav", $DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE)
 

@@ -5,7 +5,8 @@ lib_LTLIBRARIES = libdvdnav.la
 libdvdnav_la_SOURCES = decoder.c dvdnav.c vm.c vmcmd.c \
 		       read_cache.c navigation.c highlight.c \
 		       searching.c settings.c
-libdvdnav_la_LDFLAGS = $(DVDREAD_LIBS)		       
+libdvdnav_la_LDFLAGS = $(DVDREAD_LIBS) -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
+	-release $(LT_RELEASE) 
 
 include_HEADERS = decoder.h dvdnav.h dvdnav_events.h \
 	dvdnav_internal.h vm.h vmcmd.h read_cache.h dvd_types.h
