@@ -27,7 +27,6 @@ EXTRA_DIST = autogen.sh \
 	     ltmain.sh \
 	     missing \
 	     mkinstalldirs \
-	     NEWS \
 	     README \
 	     TODO \
 	     depcomp \
