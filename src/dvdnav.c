@@ -567,7 +567,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE\n");
 #endif
-    (*len) = sizeof(dvdnav_still_event_t);
+    (*len) = 16 * sizeof(uint32_t);
     memcpy(*buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
     this->spu_clut_changed = 0;
 #ifdef LOG_DEBUG
@@ -754,6 +754,10 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
         this->vobu.vobu_length = 0; 
         this->vobu.blockN = this->vobu.vobu_length + 1; 
         /* Make blockN > vobu_next to do expected_nav */
+        /* update the spu palette on PGC changes */
+        this->spu_clut_changed = 1;
+        this->position_current.spu_channel = -1; /* Force an update */
+        this->position_current.audio_channel = -1; /* Force an update */;
         (*event) = DVDNAV_CELL_CHANGE;
         (*len) = 0;
         pthread_mutex_unlock(&this->vm_lock); 
@@ -995,6 +999,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.30  2002/08/09 21:34:27  mroi
+ * update spu clut, spu channel and audio channel more often
+ *
  * Revision 1.29  2002/07/25 14:51:40  richwareham
  * Moved get_current_nav_pci into dvdnac.c, changed example to use it instead of 'home-rolled'
  * check_packet.
