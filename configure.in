@@ -1,4 +1,4 @@
-dnl
+sdnl
 dnl Require autoconf version 2.13
 dnl
 AC_PREREQ(2.13)
@@ -104,6 +104,16 @@ AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AM_TYPE_PTRDIFF_T
 AC_C_BIGENDIAN
+
+dnl
+dnl define or no in dvdnav_internal.h WORDS_BIGENDIAN
+dnl
+if test x$ac_cv_c_bigendian = "xyes"; then
+  BIGENDIAN="#define WORDS_BIGENDIAN 1"
+else
+  BIGENDIAN="#undef WORDS_BIGENDIAN"
+fi
+AC_SUBST(BIGENDIAN)
 
 AC_SUBST(DEBUG_CFLAGS)
 AC_SUBST(GLOBAL_CFLAGS)
@@ -215,9 +225,10 @@ dnl
 AC_OUTPUT([
 Makefile 
 src/Makefile
+src/dvdnav_internal.h
 examples/Makefile
 misc/Makefile
 misc/dvdnav-config
 m4/Makefile
 libdvdnav.spec
-])
+], [echo '/* !! DO NO EDIT THIS FILE, it is automatically generated */' > src/dvdnav_internal.h.tmp && cat src/dvdnav_internal.h >> src/dvdnav_internal.h.tmp && mv -f src/dvdnav_internal.h.tmp src/dvdnav_internal.h])
