@@ -263,6 +263,7 @@ int vm_start(vm_t *vm)
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
   fprintf(stderr, "vm_start: blockN set to 0x%x\n", (vm->state).blockN);
+  assert( (vm->state).blockN == 0 );
 
 
   return 0; /* ?? */
@@ -310,6 +311,7 @@ int vm_start_title(vm_t *vm, int tt) {
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
   fprintf(stderr, "vm_start_title: blockN set to 0x%x\n", (vm->state).blockN);
+  assert( (vm->state).blockN == 0 );
 
   return 0; /* ?? */
 }
@@ -325,6 +327,7 @@ int vm_jump_prog(vm_t *vm, int pr) {
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
   fprintf(stderr, "vm_jump_prog: blockN set to 0x%x\n", (vm->state).blockN);
+  assert( (vm->state).blockN == 0 );
   
   return 0; /* ?? */
 }
@@ -338,6 +341,7 @@ int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd)
     assert(link_values.command == PlayThis);
     (vm->state).blockN = link_values.data1;
     fprintf(stderr, "vm_eval_cmd: blockN set to 0x%x\n", (vm->state).blockN);
+    assert( (vm->state).blockN == 0 );
     return 1; /*  Something changed, Jump */
   } else {
     return 0; /*  It updated some state thats all... */
@@ -352,6 +356,7 @@ int vm_get_next_cell(vm_t *vm)
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
   fprintf(stderr, "vm_get_next_cell: blockN set to 0x%x\n", (vm->state).blockN);
+  assert( (vm->state).blockN == 0 );
   
   return 0; /*  ?? */
 }
@@ -364,6 +369,7 @@ int vm_top_pg(vm_t *vm)
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
   fprintf(stderr, "vm_top_pg: blockN set to 0x%x\n", (vm->state).blockN);
+  assert( (vm->state).blockN == 0 );
   
   return 1; /*  Jump */
 }
@@ -380,6 +386,7 @@ int vm_go_up(vm_t *vm)
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
   fprintf(stderr, "vm_go_up: blockN set to 0x%x\n", (vm->state).blockN);
+  assert( (vm->state).blockN == 0 );
   
   return 1; /*  Jump */
 }
@@ -450,6 +457,7 @@ int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block)
       assert(link_values.command == PlayThis);
       (vm->state).blockN = link_values.data1;
       fprintf(stderr, "vm_menu_call: blockN set to 0x%x\n", (vm->state).blockN);
+      assert( (vm->state).blockN == 0 );
       return 1; /*  Jump */
     } else {
       (vm->state).domain = old_domain;
@@ -493,6 +501,7 @@ int vm_resume(vm_t *vm)
     assert(link_values.command == PlayThis);
     (vm->state).blockN = link_values.data1;
     fprintf(stderr, "vm_resume1: blockN set to 0x%x\n", (vm->state).blockN);
+    assert( (vm->state).blockN == 0 );
   } else { 
     (vm->state).cellN = (vm->state).rsm_cellN;
     (vm->state).blockN = (vm->state).rsm_blockN;
@@ -1618,6 +1627,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.15  2002/04/23 13:18:31  jcdutton
+ * Insert some assert commands to hopefully catch a DVD which will give us information on what to do if these values are != 0.
+ *
  * Revision 1.14  2002/04/23 12:34:39  f1rmb
  * Why rewrite vm function, use it instead (this remark is for me, of course ;-) ).
  * Comment unused var, shut compiler warnings.
