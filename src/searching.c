@@ -269,7 +269,8 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
 
   pthread_mutex_lock(&this->vm_lock); 
   state = &(this->vm->state);
-  vm_menu_call(this->vm, menu, 0); 
+  if (vm_menu_call(this->vm, menu, 0))
+    this->vm->hop_channel++;
   pthread_mutex_unlock(&this->vm_lock); 
   return S_OK;
 }
