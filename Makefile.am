@@ -5,7 +5,6 @@
 AUTOMAKE_OPTIONS = 1.3
 
 SUBDIRS = src examples doc misc m4
-## SUBDIRS = src doc misc m4
 
 DEBFILES = debian/README.Debian debian/bug-presubj debian/changelog \
 	debian/control debian/copyright debian/dvdnav-config.1 \
