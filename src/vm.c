@@ -47,6 +47,11 @@
 #define lseek64 lseek
 #endif /* _MSC_VER */
 
+#ifdef __CYGWIN__
+# define off64_t off_t
+# define lseek64 lseek
+#endif
+
 /*
 #define STRICT
 */
