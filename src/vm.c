@@ -248,7 +248,7 @@ int vm_start(vm_t *vm)
 {
   link_t link_values;
 
-  /*  Set pgc to FP pgc */
+  /*  Set pgc to FP(First Play) pgc */
   get_FP_PGC(vm);
   link_values = play_PGC(vm); 
   link_values = process_command(vm,link_values);
@@ -752,10 +752,6 @@ static int set_PGN(vm_t *vm) {
   return 0;
 }
 
-
-
-
-
 static link_t play_PGC(vm_t *vm) 
 {    
   link_t link_values;
@@ -984,6 +980,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
     switch(link_values.command) {
     case LinkNoLink:
       /* No Link */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       fprintf(stderr, "libdvdnav in trouble...LinkNoLink - CRASHING!!!\n");
@@ -991,12 +988,14 @@ static link_t process_command(vm_t *vm, link_t link_values)
       
     case LinkTopC:
       /* Link to Top?? Cell */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_Cell(vm);
       break;
     case LinkNextC:
       /* Link to Next Cell */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       (vm->state).cellN += 1; /* FIXME: What if cellN becomes > nr_of_cells? */
@@ -1004,6 +1003,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkPrevC:
       /* Link to Previous Cell */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       (vm->state).cellN -= 1; /*  FIXME: What if cellN becomes < 1? */
@@ -1012,6 +1012,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       
     case LinkTopPG:
       /* Link to Top Program */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       /*  Does pgN always contain the current value? */
@@ -1019,6 +1020,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkNextPG:
       /* Link to Next Program */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       /*  Does pgN always contain the current value? */
@@ -1027,21 +1029,25 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkPrevPG:
       /* Link to Previous Program */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       /*  Does pgN always contain the current value? */
+      assert((vm->state).pgN > 1);
       (vm->state).pgN -= 1; /*  FIXME: What if pgN becomes < 1? */
       link_values = play_PG(vm);
       break;
       
     case LinkTopPGC:
       /* Link to Top Program Chain */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PGC(vm);
       break;
     case LinkNextPGC:
       /* Link to Next Program Chain */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       assert((vm->state).pgc->next_pgc_nr != 0);
@@ -1051,6 +1057,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkPrevPGC:
       /* Link to Previous Program Chain */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       assert((vm->state).pgc->prev_pgc_nr != 0);
@@ -1060,6 +1067,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkGoUpPGC:
       /* Link to GoUp??? Program Chain */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       assert((vm->state).pgc->goup_pgc_nr != 0);
@@ -1069,6 +1077,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkTailPGC:
       /* Link to Tail??? Program Chain */
+      /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PGC_post(vm);
@@ -1122,6 +1131,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkPTTN:
       /* Link to Part of this Title Number:data1 */
+      /* BUTTON number:data2 */
       assert((vm->state).domain == VTS_DOMAIN);
       if(link_values.data2 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
@@ -1131,6 +1141,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkPGN:
       /* Link to Program Number:data1 */
+      /* BUTTON number:data2 */
       if(link_values.data2 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
       /* Update any other state, PTTN perhaps? */
@@ -1139,6 +1150,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case LinkCN:
       /* Link to Cell Number:data1 */
+      /* BUTTON number:data2 */
       if(link_values.data2 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data2 << 10;
       /* Update any other state, pgN, PTTN perhaps? */
@@ -1204,6 +1216,9 @@ static link_t process_command(vm_t *vm, link_t link_values)
       /* or to a Menu is the current VTS */
       /* FIXME: This goes badly wrong for some DVDs. */
       /* FIXME: Keep in touch with ogle people regarding what to do here */
+      /* ifoOpenNewVTSI:data1 */
+      /* VTS_TTN_REG:data2 */
+      /* get_MENU:data3 */ 
       fprintf(stderr, "dvdnav: BUG TRACKING *******************************************************************\n");
       fprintf(stderr, "dvdnav:              If you see this message, please report these values to the dvd-devel mailing list.\n");
       fprintf(stderr, "    data1=%u data2=%u data3=%u\n", 
@@ -1229,6 +1244,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       link_values = play_PGC(vm);
       break;
     case JumpSS_VMGM_PGC:
+      /* get_PGC:data1 */
       assert((vm->state).domain == VMGM_DOMAIN ||
 	     (vm->state).domain == VTSM_DOMAIN ||
 	     (vm->state).domain == FP_DOMAIN); /* ?? */
@@ -1239,6 +1255,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
       
     case CallSS_FP:
+      /* saveRSMinfo:data1 */
       assert((vm->state).domain == VTS_DOMAIN); /* ??    */
       /*  Must be called before domain is changed */
       saveRSMinfo(vm, link_values.data1, /* We dont have block info */ 0);
@@ -1246,6 +1263,8 @@ static link_t process_command(vm_t *vm, link_t link_values)
       link_values = play_PGC(vm);
       break;
     case CallSS_VMGM_MENU:
+      /* get_MENU:data1 */ 
+      /* saveRSMinfo:data2 */
       assert((vm->state).domain == VTS_DOMAIN); /* ??    */
       /*  Must be called before domain is changed */
       saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);      
@@ -1255,6 +1274,8 @@ static link_t process_command(vm_t *vm, link_t link_values)
       link_values = play_PGC(vm);
       break;
     case CallSS_VTSM:
+      /* get_MENU:data1 */ 
+      /* saveRSMinfo:data2 */
       assert((vm->state).domain == VTS_DOMAIN); /* ??    */
       /*  Must be called before domain is changed */
       saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);
@@ -1264,6 +1285,8 @@ static link_t process_command(vm_t *vm, link_t link_values)
       link_values = play_PGC(vm);
       break;
     case CallSS_VMGM_PGC:
+      /* get_PGC:data1 */
+      /* saveRSMinfo:data2 */
       assert((vm->state).domain == VTS_DOMAIN); /* ??    */
       /*  Must be called before domain is changed */
       saveRSMinfo(vm,link_values.data2, /* We dont have block info */ 0);
@@ -1274,6 +1297,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
     case PlayThis:
       /* Should never happen. */
+      assert(0);
       break;
     }
   fprintf(stderr, "After:");
@@ -1426,7 +1450,6 @@ static int get_PGCN(vm_t *vm)
   return -1; /*  error */
 }
 
-
 static int get_video_aspect(vm_t *vm)
 {
   int aspect = 0;
@@ -1445,11 +1468,6 @@ static int get_video_aspect(vm_t *vm)
   
   return aspect;
 }
-
-
-
-
-
 
 static void ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN) 
 {
@@ -1487,9 +1505,6 @@ static void ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN)
   }
   (vm->state).vtsN = vtsN;
 }
-
-
-
 
 static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang)
 {
@@ -1534,6 +1549,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.5  2002/04/07 19:35:54  jcdutton
+ * Added some comments into the code.
+ *
  * Revision 1.4  2002/04/06 18:31:50  jcdutton
  * Some cleaning up.
  * changed exit(1) to assert(0) so they actually get seen by the user so that it helps developers more.
