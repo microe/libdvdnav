@@ -364,6 +364,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
     /* merge changes on success */
     vm_merge(this->vm, try_vm);
     vm_free_copy(try_vm);
+    this->position_current.still = 0;
     this->vm->hop_channel++;
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
