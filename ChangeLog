@@ -1,0 +1,55 @@
+libdvdnav (0.1.3-1) unstable; urgency=low
+  * Zero-copy read cache.
+  * More support for alternative Menu languages.
+
+ -- Rich Wareham <richwareham@users.sourceforge.net> Fri,  2 Aug 2002 08:52:24 +0100
+
+libdvdnav (0.1.2-1) unstable; urgency=low
+  * Read Cache changes. Recommended setting for read_cache is OFF.
+    Unless one's DVD drive has too small a buffer.
+  * Should work with xine 0.9.10 or above.
+
+ -- James Courtier-Dutton <jcdutton@users.sourceforge.net> Sun, 3 Jul 2002 15:30:00 +0000
+
+libdvdnav (0.1.1-1) unstable; urgency=low
+
+  * New upstream version. (closes: #148495)
+  * Include TODO
+
+ -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Sat,  1 Jun 2002 17:47:59 +0200
+
+libdvdnav (0.1.0-2) unstable; urgency=low
+
+  * Add manual page dvdnav-config.1
+  * Add bug-presubj on Daniel's request
+  * Get dvdnav.c:1.17 from CVS to fix angle support
+  * Merge patch from Jamie Wilkinson (#146699)
+  * Rerun automake to fix dependencies
+  * Ack NMU from siggi
+  * Fix include in examples/menus.c
+
+ -- Philipp Hahn <pmhahn@titan.lahn.de>  Thu, 23 May 2002 09:41:15 +0200
+
+libdvdnav (0.1.0-1.1) unstable; urgency=low
+
+  * Prepared for first 'real' release.
+  * Bug fixes
+  * Changes to allow apps to 'roll-their-own' dvdnav_get_next_block functions.
+  * NMU in order to get xine-dvdnav running again
+    - changed package name to libdvdnav0
+      (see patch from Jamie Wilkinson for a better solution)
+
+ -- Siggi Langauf <siggi@debian.org>  Mon, 20 May 2002 15:57:40 +0200
+ 
+libdvdnav (0.0.1-1) unstable; urgency=low
+
+  * Repackaged using dh-make.
+
+ -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Sun,  7 Apr 2002 16:29:35 +0200
+
+libdvdnav (0.0.1) unstable; urgency=low
+
+  * Initial release.
+
+ -- rjw57 <rjw57@hermes.cam.ac.uk>  Tue, 12 Mar 2002 19:41:13 +0000
+
