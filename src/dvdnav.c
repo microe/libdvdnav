@@ -605,6 +605,11 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
       cell_event->pg_length +=
         dvdnav_convert_time(&state->pgc->cell_playback[i - 1].playback_time);
     cell_event->pgc_length = dvdnav_convert_time(&state->pgc->playback_time);
+
+    cell_event->cell_start = 0;
+    for (i = 1; i < state->cellN; i++)
+      cell_event->cell_start +=
+        dvdnav_convert_time(&state->pgc->cell_playback[i - 1].playback_time);
     
     this->position_current.cell         = this->position_next.cell;
     this->position_current.cell_restart = this->position_next.cell_restart;
@@ -1079,6 +1084,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.51  2003/04/04 14:21:32  mroi
+ * fill in new timing member in cell_change event
+ *
  * Revision 1.50  2003/04/01 11:30:56  mroi
  * merge James fixes from xine-lib cvs back into libdvdnav cvs so they will not be lost
  * on syncing
