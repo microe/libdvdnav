@@ -58,6 +58,42 @@ uint32_t vm_getbits(command_t *command, int start, int count) {
   return (uint32_t) result;
 }
 
+static uint16_t get_GPRM(registers_t* registers, uint8_t reg) {
+  if (registers->GPRM_mode[reg] & 0x01) {
+    struct timeval current_time, time_offset;
+    uint16_t result;
+    /* Counter mode */
+    /* fprintf(stderr, "Getting counter %d\n",reg);*/
+    gettimeofday(&current_time, NULL);
+    time_offset.tv_sec = current_time.tv_sec - registers->GPRM_time[reg].tv_sec;
+    time_offset.tv_usec = current_time.tv_usec - registers->GPRM_time[reg].tv_usec;
+    if (time_offset.tv_usec < 0) { 
+      time_offset.tv_sec--; 
+      time_offset.tv_usec += 1000000;
+    }
+    result = (uint16_t) (time_offset.tv_sec & 0xffff);
+    registers->GPRM[reg]=result;
+    return result; 
+
+  } else {
+    /* Register mode */
+    return registers->GPRM[reg];
+  }
+  
+}
+
+static void set_GPRM(registers_t* registers, uint8_t reg, uint16_t value) {
+  if (registers->GPRM_mode[reg] & 0x01) {
+    struct timeval current_time;
+    /* Counter mode */
+    /* fprintf(stderr, "Setting counter %d\n",reg); */
+    gettimeofday(&current_time, NULL);
+    registers->GPRM_time[reg] = current_time;
+    registers->GPRM_time[reg].tv_sec -= value;
+  }
+  registers->GPRM[reg] = value;
+}
+
 /* Eval register code, can either be system or general register.
    SXXX_XXXX, where S is 1 if it is system register. */
 static uint16_t eval_reg(command_t* command, uint8_t reg) {
@@ -67,7 +103,7 @@ static uint16_t eval_reg(command_t* command, uint8_t reg) {
       }
     return command->registers->SPRM[reg & 0x1f]; /*  FIXME max 24 not 32 */
   } else {
-    return command->registers->GPRM[reg & 0x0f];
+    return get_GPRM(command->registers, reg & 0x0f) ;
   }
 }
 
@@ -90,7 +126,7 @@ uint16_t eval_reg_or_data_2(command_t* command, int32_t imm, int32_t byte) {
   if(imm) /* immediate */
     return vm_getbits(command, ((byte*8)+1), 7);
   else
-    return command->registers->GPRM[vm_getbits(command, ((byte*8)+4), 4)];
+    return get_GPRM(command->registers, (vm_getbits(command, ((byte*8)+4), 4)) );
 }
 
 
@@ -341,14 +377,12 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       data = eval_reg_or_data(command, vm_getbits(command, 3, 1), 2);
       data2 = vm_getbits(command, 44, 4);
       if(vm_getbits(command, 40, 1)) {
-	fprintf(stderr, "Detected SetGPRMMD Counter!! This is unsupported.\n");
 	command->registers->GPRM_mode[data2] |= 1; /* Set bit 0 */
       } else {
-	fprintf(stderr, "Detected ResetGPRMMD Counter!! This is unsupported.\n");
 	command->registers->GPRM_mode[data2] &= ~ 0x01; /* Reset bit 0 */
       }
       if(cond) {
-	command->registers->GPRM[data2] = data;
+        set_GPRM(command->registers, data2, data);
       }
       break;
     case 6: /*  Set system reg 8 (Highlighted button) */
@@ -374,48 +408,48 @@ static void eval_set_op(command_t* command, int32_t op, int32_t reg, int32_t reg
   int32_t     tmp; 
   switch(op) {
     case 1:
-      command->registers->GPRM[reg] = data;
+      set_GPRM(command->registers, reg, data);
       break;
     case 2: /* SPECIAL CASE - SWAP! */
-      command->registers->GPRM[reg2] = command->registers->GPRM[reg];
-      command->registers->GPRM[reg] = data;
+      set_GPRM(command->registers, reg2, get_GPRM(command->registers, reg));
+      set_GPRM(command->registers, reg, data);
       break;
     case 3:
-      tmp = command->registers->GPRM[reg] + data;
+      tmp = get_GPRM(command->registers, reg) + data;
       if(tmp > shortmax) tmp = shortmax;
-      command->registers->GPRM[reg] = (uint16_t)tmp;
+      set_GPRM(command->registers, reg, (uint16_t)tmp);
       break;
     case 4:
-      tmp = command->registers->GPRM[reg] - data;
+      tmp = get_GPRM(command->registers, reg) - data;
       if(tmp < 0) tmp = 0;
-      command->registers->GPRM[reg] = (uint16_t)tmp;
+      set_GPRM(command->registers, reg, (uint16_t)tmp);
       break;
     case 5:
-      tmp = command->registers->GPRM[reg] * data;
+      tmp = get_GPRM(command->registers, reg) * data;
       if(tmp >= shortmax) tmp = shortmax;
-      command->registers->GPRM[reg] = (uint16_t)tmp;
+      set_GPRM(command->registers, reg, (uint16_t)tmp);
       break;
     case 6:
       if (data != 0) {
-       command->registers->GPRM[reg] /= data;
+        set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) / data) );
       } else {
-       command->registers->GPRM[reg] =  0; /* Avoid that divide by zero! */
+        set_GPRM(command->registers, reg, 0); /* Avoid that divide by zero! */
       }
       break;
     case 7:
-      command->registers->GPRM[reg] %= data;
+      set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) % data) );
       break;
     case 8: /* SPECIAL CASE - RND! */
-      command->registers->GPRM[reg] = (uint16_t) ((float) data * rand()/(RAND_MAX+1.0));
+      set_GPRM(command->registers, reg, ((uint16_t) ((float) data * rand()/(RAND_MAX+1.0))) );
       break;
     case 9:
-      command->registers->GPRM[reg] &= data;
+      set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) & data) );
       break;
     case 10:
-      command->registers->GPRM[reg] |= data;
+      set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) | data) );
       break;
     case 11:
-      command->registers->GPRM[reg] ^= data;
+      set_GPRM(command->registers, reg, (get_GPRM(command->registers, reg) ^ data) );
       break;
   }
 }
@@ -722,9 +756,12 @@ void vmPrint_registers( registers_t *registers ) {
     fprintf(stderr, "%04x|", registers->SPRM[i]);
   fprintf(stderr, "\nGRPMS: ");
   for(i = 0; i < 16; i++)
-    fprintf(stderr, "%04x|", registers->GPRM[i]);
+    fprintf(stderr, "%04x|", get_GPRM(registers, i) );
   fprintf(stderr, "\nGmode: ");
   for(i = 0; i < 16; i++)
     fprintf(stderr, "%04x|", registers->GPRM_mode[i]);
+  fprintf(stderr, "\nGtime: ");
+  for(i = 0; i < 16; i++)
+    fprintf(stderr, "%04lx|", registers->GPRM_time[i].tv_sec & 0xffff);
   fprintf(stderr, "\n");
 }

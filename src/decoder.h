@@ -27,6 +27,8 @@
 
 #include "config.h"
 #include <inttypes.h>
+#include <sys/time.h>
+
 #include <dvdread/ifo_types.h> /*  vm_cmd_t */
 
 /* Uncomment for tracing */
@@ -86,6 +88,7 @@ typedef struct {
   uint16_t SPRM[24];
   uint16_t GPRM[16];
   uint8_t  GPRM_mode[16];  /* Need to have some thing to indicate normal/counter mode for every GPRM */
+  struct timeval GPRM_time[16]; /* For counter mode */
 } registers_t;
 
 typedef struct

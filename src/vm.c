@@ -167,6 +167,8 @@ int vm_reset(vm_t *vm, char *dvdroot) /*  , register_t regs) */ {
   memset((vm->state).registers.SPRM, 0, sizeof(uint16_t)*24);
   memset((vm->state).registers.GPRM, 0, sizeof((vm->state).registers.GPRM));
   memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
+  memset((vm->state).registers.GPRM_mode, 0, sizeof((vm->state).registers.GPRM_mode));
+  memset((vm->state).registers.GPRM_time, 0, sizeof((vm->state).registers.GPRM_time));
   (vm->state).registers.SPRM[0] = ('e'<<8)|'n'; /*  Player Menu Languange code */
   (vm->state).AST_REG = 15; /*  15 why? */
   (vm->state).SPST_REG = 62; /*  62 why? */
@@ -1572,6 +1574,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.11  2002/04/12 20:06:41  jcdutton
+ * Implement General Register Counters or GPRM counters.
+ * Navigation timers are not supported yet. SPRM[9] and SPRM[10].
+ *
  * Revision 1.10  2002/04/12 12:43:36  jcdutton
  * Display DVD disk region setting.
  * Display possible RCE region protection message.
