@@ -115,14 +115,17 @@ void vm_stop(vm_t *self) {
 
   if(self->vmgi) {
     ifoClose(self->vmgi);
+    self->vmgi=NULL;
   }
 
   if(self->vtsi) {
     ifoClose(self->vtsi);
+    self->vmgi=NULL;
   }
   
   if(self->dvd) {
     DVDClose(self->dvd);
+    self->dvd=NULL;
   }
 }
 
@@ -193,42 +196,49 @@ int vm_reset(vm_t *self, char *dvdroot) /*  , register_t regs) */ {
   
   (self->state).vtsN = -1;
   
-  self->dvd = DVDOpen(dvdroot);
-  if(!self->dvd) {
-    fprintf(stderr, "vm: faild to open/read the DVD\n");
-    return -1;
+  if (self->dvd && dvdroot) {
+    // a new dvd device has been requested
+    vm_stop(self);
   }
+  if (!self->dvd) {
+    self->dvd = DVDOpen(dvdroot);
+    if(!self->dvd) {
+      fprintf(stderr, "vm: faild to open/read the DVD\n");
+      return -1;
+    }
 
-  self->vmgi = ifoOpenVMGI(self->dvd);
-  if(!self->vmgi) {
-    fprintf(stderr, "vm: faild to read VIDEO_TS.IFO\n");
-    return -1;
+    self->vmgi = ifoOpenVMGI(self->dvd);
+    if(!self->vmgi) {
+      fprintf(stderr, "vm: faild to read VIDEO_TS.IFO\n");
+      return -1;
+    }
+    if(!ifoRead_FP_PGC(self->vmgi)) {
+      fprintf(stderr, "vm: ifoRead_FP_PGC failed\n");
+      return -1;
+    }
+    if(!ifoRead_TT_SRPT(self->vmgi)) {
+      fprintf(stderr, "vm: ifoRead_TT_SRPT failed\n");
+      return -1;
+    }
+    if(!ifoRead_PGCI_UT(self->vmgi)) {
+      fprintf(stderr, "vm: ifoRead_PGCI_UT failed\n");
+      return -1;
+    }
+    if(!ifoRead_PTL_MAIT(self->vmgi)) {
+      fprintf(stderr, "vm: ifoRead_PTL_MAIT failed\n");
+      ; /*  return -1; Not really used for now.. */
+    }
+    if(!ifoRead_VTS_ATRT(self->vmgi)) {
+      fprintf(stderr, "vm: ifoRead_VTS_ATRT failed\n");
+      ; /*  return -1; Not really used for now.. */
+    }
+    if(!ifoRead_VOBU_ADMAP(self->vmgi)) {
+      fprintf(stderr, "vm: ifoRead_VOBU_ADMAP vgmi failed\n");
+      ; /*  return -1; Not really used for now.. */
+    }
+    /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
   }
-  if(!ifoRead_FP_PGC(self->vmgi)) {
-    fprintf(stderr, "vm: ifoRead_FP_PGC failed\n");
-    return -1;
-  }
-  if(!ifoRead_TT_SRPT(self->vmgi)) {
-    fprintf(stderr, "vm: ifoRead_TT_SRPT failed\n");
-    return -1;
-  }
-  if(!ifoRead_PGCI_UT(self->vmgi)) {
-    fprintf(stderr, "vm: ifoRead_PGCI_UT failed\n");
-    return -1;
-  }
-  if(!ifoRead_PTL_MAIT(self->vmgi)) {
-    fprintf(stderr, "vm: ifoRead_PTL_MAIT failed\n");
-    ; /*  return -1; Not really used for now.. */
-  }
-  if(!ifoRead_VTS_ATRT(self->vmgi)) {
-    fprintf(stderr, "vm: ifoRead_VTS_ATRT failed\n");
-    ; /*  return -1; Not really used for now.. */
-  }
-  if(!ifoRead_VOBU_ADMAP(self->vmgi)) {
-    fprintf(stderr, "vm: ifoRead_VOBU_ADMAP vgmi failed\n");
-    ; /*  return -1; Not really used for now.. */
-  }
-  /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
+  else fprintf(stderr, "vm: reset\n");
 
   return 0;
 }
@@ -1522,6 +1532,9 @@ static pgcit_t* get_PGCIT(vm_t *self) {
 
 /*
  * $Log$
+ * Revision 1.3  2002/04/02 18:22:27  richwareham
+ * Added reset patch from Kees Cook <kees@outflux.net>
+ *
  * Revision 1.2  2002/04/01 18:56:28  richwareham
  * Added initial example programs directory and make sure all debug/error output goes to stderr.
  *

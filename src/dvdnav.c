@@ -35,6 +35,53 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+dvdnav_status_t dvdnav_clear(dvdnav_t * self) {
+  if (!self) {
+    printerr("Passed a NULL pointer");
+    return S_ERR;
+  }
+  /* clear everything except path, file, vm, mutex, readahead */
+
+  // path
+  if (self->file) DVDCloseFile(self->file);
+  self->file = NULL;
+  self->open_vtsN = -1;
+  self->open_domain = -1;
+  self->vobu_start=0;
+  self->vobu_length=0;
+  self->blockN=0;
+  self->next_vobu=0;
+  self->cell = NULL;
+  self->jmp_blockN=0;
+  self->jmp_vobu_start=0;
+  self->seekto_block=0;
+
+  memset(&self->pci,0,sizeof(self->pci));
+  memset(&self->dsi,0,sizeof(self->dsi));
+
+  /* Set initial values of flags */
+  self->expecting_nav_packet = 1;
+  self->at_soc = 1;
+  self->still_frame = -1;
+  self->jumping = 0;
+  self->seeking = 0;
+  self->stop = 0;
+  self->highlight_changed = 0;
+  self->spu_clut_changed = 0;
+  self->spu_stream_changed = 0;
+  self->audio_stream_changed = 0;
+  self->started=0;
+  // self->use_read_ahead
+
+  self->hli_state=0;
+
+  self->cache_start_sector = -1;
+  self->cache_block_count = 0;
+  self->cache_valid = 0;
+
+  return S_OK;
+}
+
 dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   dvdnav_t *self;
   
@@ -63,28 +110,7 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   /* Set the path. FIXME: Is a deep copy 'right' */
   strncpy(self->path, path, MAX_PATH_LEN);
 
-  /* Set initial values of flags */
-  self->expecting_nav_packet = 1;
-  self->started = 0;
-  
-  self->open_vtsN = -1;
-  self->open_domain = -1;
-  self->file = NULL;
-  self->cell = NULL;
-  self->at_soc = 1;
-  self->jumping = 0;
-  self->seeking = 0;
-  self->still_frame = -1;
-  self->cache_buffer = NULL;
-  self->cache_start_sector = -1;
-  self->cache_block_count = 0;
-  self->cache_valid = 0;
-  self->use_read_ahead = 1;
-  self->stop = 0;
-  self->highlight_changed = 0;
-  self->spu_clut_changed = 0;
-
-  self->vobu_start = self->vobu_length = 0;
+  dvdnav_clear(self);
  
   /* Pre-open and close a file so that the CSS-keys are cached. */
   self->file = DVDOpenFile(vm_get_dvd_reader(self->vm), 0, DVD_READ_MENU_VOBS);
@@ -127,6 +153,35 @@ dvdnav_status_t dvdnav_close(dvdnav_t *self) {
   free(self);
   
   return S_OK;
+}
+
+dvdnav_status_t dvdnav_reset(dvdnav_t *self) {
+  dvdnav_status_t result;
+
+  printf("dvdnav:reset:called\n");
+  if(!self) {
+    printerr("Passed a NULL pointer");
+    return S_ERR;
+  }
+  printf("getting lock\n");
+  pthread_mutex_lock(&self->vm_lock); 
+  printf("reseting vm\n");
+  if(vm_reset(self->vm, NULL) == -1) {
+    printerr("Error restarting the VM");
+    pthread_mutex_unlock(&self->vm_lock); 
+    return S_ERR;
+  }
+  printf("clearing dvdnav\n");
+  result=dvdnav_clear(self);
+  printf("starting vm\n");
+  if(!self->started) {
+    /* Start the VM */
+    vm_start(self->vm);
+    self->started = 1;
+  }
+  printf("unlocking\n");
+  pthread_mutex_unlock(&self->vm_lock); 
+  return result;
 }
 
 dvdnav_status_t dvdnav_path(dvdnav_t *self, char** path) {
@@ -931,6 +986,9 @@ dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.3  2002/04/02 18:22:27  richwareham
+ * Added reset patch from Kees Cook <kees@outflux.net>
+ *
  * Revision 1.2  2002/04/01 18:56:28  richwareham
  * Added initial example programs directory and make sure all debug/error output goes to stderr.
  *

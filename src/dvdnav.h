@@ -69,6 +69,14 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path);
 dvdnav_status_t dvdnav_close(dvdnav_t *self);
 
 /**
+ * Resets the VM and buffers in a previously opened dvdnav
+ *
+ * Arguments:
+ *   self     -- dvdnav_t to reset.
+ */
+dvdnav_status_t dvdnav_reset(dvdnav_t *self);
+
+/**
  * Fills a pointer wiht a value pointing to a string describing
  * the path associated with an open dvdnav_t. It assigns it NULL
  * on error.
