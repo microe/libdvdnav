@@ -537,7 +537,7 @@ int vm_prev_pg(vm_t *vm)
 int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result)
 {
   vts_ptt_srpt_t *vts_ptt_srpt;
-  int title=0, part=0;
+  int title=0, part=0, ttn=0;
   int found = 0;
   int16_t pgcN, pgN;
 
@@ -558,24 +558,34 @@ int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result)
   pgN = vm->state.pgN;
   printf("VTS_PTT_SRPT - PGC: %3i PG: %3i\n",
     pgcN, pgN);
-  for(title=0;( (title < vts_ptt_srpt->nr_of_srpts) && (found == 0) );title++) {
-    for(part=0;((part < vts_ptt_srpt->title[title].nr_of_ptts) && (found == 0));part++) {
-      if ( (vts_ptt_srpt->title[title].ptt[part].pgcn == pgcN) &&
-           (vts_ptt_srpt->title[title].ptt[part].pgn == pgN ) ) {
+
+  for(ttn=0;( (ttn < vts_ptt_srpt->nr_of_srpts) && (found == 0) );ttn++) {
+    for(part=0;((part < vts_ptt_srpt->title[ttn].nr_of_ptts) && (found == 0));part++) {
+      if ( (vts_ptt_srpt->title[ttn].ptt[part].pgcn == pgcN) &&
+           (vts_ptt_srpt->title[ttn].ptt[part].pgn == pgN ) ) {
         found = 1;
         break;
       }
     }
     if (found != 0) break;
   }
-  title++;
+  ttn++;
   part++;
+  for(title=0; title < vm->vmgi->tt_srpt->nr_of_srpts; title++){
+    if( (vm->vmgi->tt_srpt->title[title].vts_ttn == ttn) &&
+        (vm->vmgi->tt_srpt->title[title].title_set_nr == vm->state.vtsN)){
+      found = 1;
+      break;
+    }
+  }
+  title++;
+
   if (found == 1) {
     fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
     fprintf(MSG_OUT, "libdvdnav: VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
              title, part,
-             vts_ptt_srpt->title[title-1].ptt[part-1].pgcn ,
-             vts_ptt_srpt->title[title-1].ptt[part-1].pgn );
+             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgcn ,
+             vts_ptt_srpt->title[ttn-1].ptt[part-1].pgn );
   } else {
     fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
     return S_ERR;
@@ -2019,6 +2029,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.39  2002/11/23 11:05:45  mroi
+ * patch from Marco Zühlke for reporting correct title number
+ *
  * Revision 1.38  2002/11/22 17:14:26  mroi
  * warning: ugly fix ahead! (see comment in the code for details)
  * But I hate it when DVDs do not work with libdvdnav and after checking a bunch of
