@@ -2,3 +2,4 @@ Makefile
 Makefile.in
 dvdnav-config
 libdvdnav.spec
+relchk.sh

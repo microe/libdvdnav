@@ -26,8 +26,8 @@
 #include <assert.h>
 
 #include "config.h" // Needed for WORDS_BIGENDIAN
-#include <dvdnav/ifo_types.h>
-#include <dvdnav/ifo_read.h>
+#include "ifo_types.h"
+#include "ifo_read.h"
 #include "ifo_print.h"
 #include "vmcmd.h"
 
@@ -1164,6 +1164,14 @@ void ifo_print(dvd_reader_t *dvd, int title) {
 
 /*
  * $Log$
+ * Revision 1.1  2004/01/11 21:43:13  mroi
+ * big build system changes
+ *  * cleaned up all Makefiles and added a Makefile.common
+ *  * added relchk script
+ *  * moved libdvdread files to a dvdread subdir
+ *  * moved DVD VM to a vm subdir
+ *  * removed unused code in read_cache.c
+ *
  * Revision 1.4  2004/01/01 15:13:13  jcdutton
  * Put ifo_print.c and .h back in.
  *

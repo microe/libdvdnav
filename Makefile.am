@@ -1,6 +1,4 @@
-##
-## Process this file with automake to produce Makefile.in
-##
+include $(top_srcdir)/misc/Makefile.common
 
 AUTOMAKE_OPTIONS = 1.3
 
@@ -28,35 +26,26 @@ EXTRA_DIST = autogen.sh \
 	     mkinstalldirs \
 	     README \
 	     TODO \
-	     depcomp \
-	     @DEPCOMP@
+	     $(DEPCOMP)
 
-debug:
-	@list='$(SUBDIRS)'; for subdir in $$list; do \
-	  (cd $$subdir && $(MAKE) $@) || exit;\
-	done;
+MOSTLYCLEANFILES += $(PACKAGE)_$(VERSION).tar.gz \
+	$(distdir).tar.gz $(PACKAGE).tgz package_descriptions
 
-install-debug: debug
-	@list='$(SUBDIRS)'; for subdir in $$list; do \
-	  (cd $$subdir && $(MAKE) $@) || exit; \
-	done;
+MAINTAINERCLEANFILES += configure $(ACLOCAL_M4) config.h.in \
+	ltmain.sh config.guess config.sub install-sh missing \
+	mkinstalldirs $(DEPCOMP)
+
+world:
+	@$(MAKE) clean all install 2> warnings.log
+	test -s warnings.log || rm warnings.log
 
 prune-cache:
 	-rm -f config.cache
 
-mostlyclean-generic:
-	-rm -f *~ \#* .*~ .\#* 
-	-rm -f $(PACKAGE)_$(VERSION).tar.gz
-	-rm -f $(distdir).tar.gz $(PACKAGE).tgz package_descriptions
-	-rm -rf $(distdir)
+release-check:
+	@./config.status misc/relchk.sh
+	@./autogen.sh noconfig && $(SHELL) misc/relchk.sh
 
-maintainer-clean-generic:
-	-@echo "This command is intended for maintainers to use;"
-	-@echo "it deletes files that may require special tools to rebuild."
-	-rm -f Makefile.in configure acinclude.m4 aclocal.m4
-	-rm -f config.h.in stamp-h.in ltconfig ltmain.sh
-	-rm -f config.guess config.sub install-sh missing mkinstalldirs
-	-rm -f depcomp config.log
-
-maintainer-clean-generic-hook: 
-	rm -f config.status
+dist-hook:
+	cp -r $(srcdir)/msvc $(distdir)/msvc
+	rm -rf `find $(distdir)/msvc -name CVS`

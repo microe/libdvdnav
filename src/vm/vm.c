@@ -487,13 +487,20 @@ int vm_jump_cell_block(vm_t *vm, int cell, int block) {
 }
 
 int vm_jump_title_part(vm_t *vm, int title, int part) {
+  link_t link;
+  
   if(!set_PTT(vm, title, part))
     return 0;
   /* Some DVDs do not want us to jump directly into a title and have
    * PGC pre commands taking us back to some menu. Since we do not like that,
-   * we do not execute PGC pre commands but directly play the PG. */
+   * we do not execute PGC pre commands that would do a jump. */
   /* process_command(vm, play_PGC_PG(vm, (vm->state).pgN)); */
-  process_command(vm, play_PG(vm));
+  link = play_PGC_PG(vm, (vm->state).pgN);
+  if (link.command != PlayThis)
+    /* jump occured -> ignore it and play the PG anyway */
+    process_command(vm, play_PG(vm));
+  else
+    process_command(vm, link);
   return 1;
 }
 
@@ -1448,24 +1455,22 @@ static int process_command(vm_t *vm, link_t link_values) {
       /* Jump to a menu in Video Title domain, */
       /* or to a Menu is the current VTS */
       /* Stop SPRM9 Timer and any GPRM counters */
-      /* FIXME: This goes badly wrong for some DVDs. */
-      /* FIXME: Keep in touch with ogle people regarding what to do here */
       /* ifoOpenNewVTSI:data1 */
       /* VTS_TTN_REG:data2 */
       /* get_MENU:data3 */ 
-#ifdef TRACE
-      fprintf(MSG_OUT, "libdvdnav: BUG TRACKING *******************************************************************\n");
-      fprintf(MSG_OUT, "libdvdnav:     data1=%u data2=%u data3=%u\n", 
-                link_values.data1,
-                link_values.data2,
-                link_values.data3);
-      fprintf(MSG_OUT, "libdvdnav: *******************************************************************\n");
-#endif
-
       if(link_values.data1 != 0) {
-	assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
-	(vm->state).domain = VTSM_DOMAIN;
-	ifoOpenNewVTSI(vm, vm->dvd, link_values.data1);  /*  Also sets (vm->state).vtsN */
+	if (link_values.data1 != (vm->state).vtsN) {
+	  /* the normal case */
+	  assert((vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
+	  (vm->state).domain = VTSM_DOMAIN;
+	  ifoOpenNewVTSI(vm, vm->dvd, link_values.data1);  /* Also sets (vm->state).vtsN */
+	} else {
+	  /* This happens on some discs like "Captain Scarlet & the Mysterons" or
+	   * the German RC2 of "Anatomie" in VTSM. */
+	  assert((vm->state).domain == VTSM_DOMAIN ||
+	    (vm->state).domain == VMGM_DOMAIN || (vm->state).domain == FP_DOMAIN); /* ?? */
+	  (vm->state).domain = VTSM_DOMAIN;
+	}
       } else {
 	/*  This happens on 'The Fifth Element' region 2. */
 	assert((vm->state).domain == VTSM_DOMAIN);
@@ -1477,7 +1482,6 @@ static int process_command(vm_t *vm, link_t link_values) {
       /* TTN_REG (SPRM4), VTS_TTN_REG (SPRM5), TT_PGCN_REG (SPRM6) are linked, */
       /* so if one changes, the others must change to match it. */
       (vm->state).TTN_REG     = get_TT(vm, (vm->state).vtsN, (vm->state).VTS_TTN_REG);
-
       if(!set_MENU(vm, link_values.data3))
 	assert(0);
       link_values = play_PGC(vm);

@@ -21,7 +21,11 @@
 #define IFO_PRINT_H_INCLUDED
 
 #include <inttypes.h>
-#include <dvdnav/ifo_types.h> /*  Only for vm_cmd_t  */
+#ifdef DVDNAV_COMPILE
+#  include "ifo_types.h"
+#else
+#  include <dvdnav/ifo_types.h> /*  Only for vm_cmd_t  */
+#endif
 
 void ifo_print(dvd_reader_t *dvd, int title);
 
@@ -29,6 +33,14 @@ void ifo_print(dvd_reader_t *dvd, int title);
 
 /*
  * $Log$
+ * Revision 1.1  2004/01/11 21:43:13  mroi
+ * big build system changes
+ *  * cleaned up all Makefiles and added a Makefile.common
+ *  * added relchk script
+ *  * moved libdvdread files to a dvdread subdir
+ *  * moved DVD VM to a vm subdir
+ *  * removed unused code in read_cache.c
+ *
  * Revision 1.4  2004/01/01 15:13:13  jcdutton
  * Put ifo_print.c and .h back in.
  *

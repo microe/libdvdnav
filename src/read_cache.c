@@ -20,6 +20,11 @@
  * $Id$
  *
  */
+/*
+ * There was a multithreaded read ahead cache in here for some time, but
+ * it had only been used for a short time. If you want to have a look at it,
+ * search the CVS attic.
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -30,42 +35,6 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <time.h>
-
-
-#define DVDNAV_PROFILE
-
-
-/* Read-ahead cache structure. */
-#if _MULTITHREAD_
-
-/* For the multithreaded cache, the cache is a ring buffer + writing
- * thread that continuously reads data into the buffer until it is
- * full or the 'upper-bound' has been reached.
- */
-
-#define CACHE_BUFFER_SIZE 2048 /* Cache this number of blocks at a time */
-
-struct read_cache_s {
-  pthread_mutex_t cache_lock;
-  pthread_t read_thread;
-
-  /* Buffer */
-  uint8_t   *buffer;
-
-  /* Size of buffer */
-  int32_t    size;
-  /* block offset from sector start of buffer 'head' */
-  uint32_t   pos;
-  /* block offset from sector start of read point */
-  uint32_t   read_point;
-  /* block offset from buffer start to ring-boundary */
-  uint32_t   start;
-
-  /* Bit of strange cross-linking going on here :) -- Gotta love C :) */
-  dvdnav_t    *dvd_self;
-};
-
-#else
 
 #define READ_CACHE_CHUNKS 10
 
@@ -98,7 +67,6 @@ struct read_cache_s {
   /* Bit of strange cross-linking going on here :) -- Gotta love C :) */
   dvdnav_t           *dvd_self;
 };
-#endif
 
 /*
 #define READ_CACHE_TRACE 0
@@ -122,241 +90,6 @@ struct read_cache_s {
 # endif
 #endif
 
-#if _MULTITHREAD_
-
-void * read_cache_read_thread (void * this_gen) {
-  int cont = 1;
-  int32_t diff, start;
-  uint32_t pos, size, startp, endp;
-  uint32_t s,c;
-  uint8_t *at;
-  read_cache_t *self = (read_cache_t*)this_gen;
-
-  while(cont) {
-
-    pthread_mutex_lock(&self->cache_lock);
-
-    if(self->size >= 0) {
-      diff = self->read_point - self->pos;
-      if(diff >= self->size/2) {
-	dprintf("(II) Read thread -- ");
-
-	startp = (self->start) % CACHE_BUFFER_SIZE;
-	endp = abs((self->start + diff - 1) % CACHE_BUFFER_SIZE);
-	dprintf("startp = %i, endp = %i -- ",startp, endp);
-
-	pos = self->pos + diff;
-	size = self->size - diff;
-	start = (self->start + diff) % CACHE_BUFFER_SIZE;
-
-	/* Fill remainder of buffer */
-
-	if(startp > endp) {
-	  s = pos + size; c = CACHE_BUFFER_SIZE - startp;
-	  at = self->buffer + (startp * DVD_VIDEO_LB_LEN);
-	  if(c > 0) {
-	    dprintf("(1) Reading from %i to %i to %i ", s, s+c-1, startp);
-	    pthread_mutex_unlock(&self->cache_lock);
-	    DVDReadBlocks(self->dvd_self->file, s,c, at);
-	    pthread_mutex_lock(&self->cache_lock);
-	  }
-
-	  s = pos + size + c; c = CACHE_BUFFER_SIZE - size - c;
-	  at = self->buffer;
-	  if(c > 0) {
-	    dprintf("(2) Reading from %i to %i to %i ", s, s+c-1, 0);
-	    pthread_mutex_unlock(&self->cache_lock);
-	    DVDReadBlocks(self->dvd_self->file, s,c, at);
-	    pthread_mutex_lock(&self->cache_lock);
-	  }
-	} else {
-	  s = pos + size; c = CACHE_BUFFER_SIZE - size;
-	  at = self->buffer + (startp * DVD_VIDEO_LB_LEN);
-	  if(c > 0) {
-	    dprintf("(3) Reading from %i to %i to %i ", s, s+c-1, startp);
-	    pthread_mutex_unlock(&self->cache_lock);
-	    DVDReadBlocks(self->dvd_self->file, s,c, at);
-	    pthread_mutex_lock(&self->cache_lock);
-	  }
-	}
-
-	dprintf("\n");
-
-	self->pos = pos;
-	self->start = start; self->size = CACHE_BUFFER_SIZE;
-      }
-    }
-
-    pthread_mutex_unlock(&self->cache_lock);
-    cont = (self->buffer != NULL);
-    usleep(100);
-  }
-
-  return NULL;
-}
-
-read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self) {
-  read_cache_t *me;
-
-  me = (read_cache_t*)malloc(sizeof(struct read_cache_s));
-
-  if(me) {
-    int err;
-
-    me->dvd_self = dvd_self;
-    me->buffer = (uint8_t*)malloc(CACHE_BUFFER_SIZE * DVD_VIDEO_LB_LEN);
-    me->start = 0;
-    me->pos = 0;
-    me->read_point = 0;
-    me->size = -1;
-
-    /* Initialise the mutex */
-    pthread_mutex_init(&me->cache_lock, NULL);
-
-    if ((err = pthread_create (&me->read_thread,
-			       NULL, read_cache_read_thread, me)) != 0) {
-      dprintf("read_cache: can't create new thread (%s)\n",strerror(err));
-    }
-  }
-
-  return me;
-}
-
-void dvdnav_read_cache_free(read_cache_t* self) {
-  dvdnav_t *tmp;
-
-  pthread_mutex_lock(&self->cache_lock);
-
-  if(self->buffer) {
-    free(self->buffer);
-    self->buffer = NULL;
-    self->size = -2;
-  }
-
-  pthread_mutex_unlock(&self->cache_lock);
-
-  pthread_join(self->read_thread, NULL);
-
-  pthread_mutex_destroy(&self->cache_lock);
-
-  tmp = self->dvd_self;
-  free(self);
-
-  /* We free the main structure, too, because we have no buffers out there. */
-  free(tmp);
-}
-
-/* This function MUST be called whenever self->file changes. */
-void dvdnav_read_cache_clear(read_cache_t *self) {
-  if(!self)
-   return;
-
-  pthread_mutex_lock(&self->cache_lock);
-  self->size = -1;
-  self->start = 0;
-  self->pos = 0;
-  self->read_point = 0;
-  pthread_mutex_unlock(&self->cache_lock);
-}
-
-/* This function is called just after reading the NAV packet. */
-void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count) {
-  if(!self)
-   return;
-
-  if(!self->dvd_self->use_read_ahead) {
-    return;
-  }
-
-  pthread_mutex_lock(&self->cache_lock);
-  dprintf("Requested pre-cache (%i -> +%i) : current state pos=%i, size=%i.\n",
-	 sector, block_count, self->pos, self->size);
-
-  /* Are the contents of the buffer in any way relevant? */
-  if((self->size > 0) && (sector >= self->pos) && (sector <= self->pos+self->size)) {
-    dprintf("Contents relevant ... adjusting\n");
-    self->read_point = sector;
-  } else {
-    /* Flush the cache as its not much use */
-    dprintf("Contents irrelevent... flushing\n");
-    self->size = 0;
-    self->start = 0;
-    self->pos = sector;
-    self->read_point = sector;
-  }
-
-  pthread_mutex_unlock(&self->cache_lock);
-}
-
-/* This function will do the cache read */
-int dvdnav_read_cache_block( read_cache_t *self, int sector, size_t block_count, uint8_t **buf) {
-  int result, diff;
-
-  if(!self)
-   return 0;
-
-  pthread_mutex_lock(&self->cache_lock);
-  dprintf("Read from %i -> +%i (buffer pos=%i, read_point=%i, size=%i)... ", sector, block_count,
-	 self->pos, self->read_point, self->size);
-  if((self->size > 0) && (sector >= self->read_point) &&
-     (sector + block_count <= self->pos + self->size)) {
-    /* Hit */
-
-    /* Drop any skipped blocks */
-    diff = sector - self->read_point;
-    if(diff > 0)
-     self->read_point += diff;
-
-    diff = self->read_point - self->pos;
-
-    if(((self->start + diff) % CACHE_BUFFER_SIZE) + block_count <= CACHE_BUFFER_SIZE) {
-      dprintf("************** Single read\n");
-      memcpy(*buf, self->buffer + (((self->start + diff) % CACHE_BUFFER_SIZE) * DVD_VIDEO_LB_LEN),
-	     block_count * DVD_VIDEO_LB_LEN);
-      self->read_point += block_count;
-      pthread_mutex_unlock(&self->cache_lock);
-
-      return (int)block_count;
-    } else {
-      int32_t boundary = CACHE_BUFFER_SIZE - self->start;
-
-      dprintf("************** Multiple read\n");
-      memcpy(*buf, self->buffer + (((self->start + diff) % CACHE_BUFFER_SIZE) * DVD_VIDEO_LB_LEN),
-	     boundary * DVD_VIDEO_LB_LEN);
-      memcpy(*buf + (boundary  * DVD_VIDEO_LB_LEN), self->buffer,
-	     (block_count-boundary) * DVD_VIDEO_LB_LEN);
-      self->read_point += block_count;
-      pthread_mutex_unlock(&self->cache_lock);
-
-      return (int)block_count;
-    }
-  } else {
-    /* Miss */
-
-    fprintf(MSG_OUT, "libdvdnav: DVD read cache miss! (not bad but a performance hit) sector=%d\n", sector);
-    result = DVDReadBlocks( self->dvd_self->file, sector, block_count, *buf);
-    self->read_point = sector+block_count;
-    if(self->read_point > self->pos + self->size) {
-      /* Flush the cache as its not much use */
-      dprintf("Contents irrelevent... flushing\n");
-      self->size = 0;
-      self->start = 0;
-      self->pos = sector+block_count;
-    }
-    pthread_mutex_unlock(&self->cache_lock);
-    usleep(300);
-    return result;
-  }
-
-  /* Should never get here */
-  return 0;
-}
-
-dvdnav_status_t dvdnav_free_cache_block(dvdnav_t *self, unsigned char *buf) {
-  return DVDNAV_STATUS_OK;
-}
-
-#else
 
 read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self) {
   read_cache_t *self;
@@ -520,7 +253,8 @@ int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, 
     
     /* Increment read-ahead size if sector follows the last sector */
     if (sector == (self->last_sector + 1)) {
-      self->read_ahead_incr++;
+      if (self->read_ahead_incr < READ_AHEAD_SIZE_MAX)
+        self->read_ahead_incr++;
     } else {
       self->read_ahead_size = READ_AHEAD_SIZE_MIN;
       self->read_ahead_incr = 0;
@@ -539,34 +273,33 @@ int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, 
     chunk->usage_count++;
     pthread_mutex_unlock(&self->lock);
 
-    /* Read blocks if needed */
-    if (sector >= (chunk->cache_start_sector + chunk->cache_read_count)) {
+    dprintf("libdvdnav: sector=%d, start_sector=%d, last_sector=%d\n", sector, chunk->cache_start_sector, chunk->cache_start_sector + chunk->cache_block_count);
 
-      dprintf("libdvdnav: sector=%d, start_sector=%d, last_sector=%d\n", sector, chunk->cache_start_sector, chunk->cache_start_sector + chunk->cache_block_count);
+    /* read_ahead_size */
+    incr = self->read_ahead_incr >> 1;
+    if ((self->read_ahead_size + incr) > READ_AHEAD_SIZE_MAX) {
+      self->read_ahead_size = READ_AHEAD_SIZE_MAX;
+    } else {
+      self->read_ahead_size += incr;
+    }
 
-      /* read_ahead_size */
-      incr = self->read_ahead_incr >> 1;
-      if ((self->read_ahead_size + incr) > READ_AHEAD_SIZE_MAX) {
-        self->read_ahead_size = READ_AHEAD_SIZE_MAX;
-      } else {
-        self->read_ahead_size = self->read_ahead_size + incr;
-      }
-      self->read_ahead_incr = 0;
+    /* real read size */
+    start = chunk->cache_start_sector + chunk->cache_read_count;
+    if (chunk->cache_read_count + self->read_ahead_size > chunk->cache_block_count) {
+      size = chunk->cache_block_count - chunk->cache_read_count;
+    } else {
+      size = self->read_ahead_size;
+      /* ensure that the sector we want will be read */
+      if (sector >= chunk->cache_start_sector + chunk->cache_read_count + size)
+        size = sector - chunk->cache_start_sector - chunk->cache_read_count;
+    }
+    dprintf("libdvdnav: read_ahead_size=%d, size=%d\n", self->read_ahead_size, size);
 
-      /* real read size */
-      start = chunk->cache_start_sector + chunk->cache_read_count;
-      if (chunk->cache_read_count + self->read_ahead_size > chunk->cache_block_count) {
-        size = chunk->cache_block_count - chunk->cache_read_count;
-      } else {
-        size = self->read_ahead_size;
-      }
-      dprintf("libdvdnav: read_ahead_size=%d, size=%d\n", self->read_ahead_size, size);
-
+    if (size)
       chunk->cache_read_count += DVDReadBlocks(self->dvd_self->file,
                                                start,
                                                size,
                                                read_ahead_buf);
-    }
 
     res = DVD_VIDEO_LB_LEN * block_count;
 
@@ -611,5 +344,3 @@ dvdnav_status_t dvdnav_free_cache_block(dvdnav_t *self, unsigned char *buf) {
 
   return DVDNAV_STATUS_OK;
 }
-
-#endif

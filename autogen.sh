@@ -95,7 +95,7 @@ detect_libtool() {
   NUM_RESULT=$#
   RESULT_FILE=$3
   if [ $RETVAL -eq 0 -a $NUM_RESULT -eq 3 -a -f "$RESULT_FILE" ]; then
-    LT="`libtool --version | awk '{ print $4 }' | sed -e 's/[a-zA-Z\ \.\(\)\-]//g'`"
+    LT="`libtool --version | awk '{ print $4 }' | sed -e 's/[a-zA-Z\ \.\(\)\-\;]//g'`"
     LIBTOOL_MIN="`echo $LIBTOOL_MIN | sed -e 's/[a-zA-Z\ \.\(\)\-]//g'`"
     if test $LT -lt 100 ; then
       LT=`expr $LT \* 10`

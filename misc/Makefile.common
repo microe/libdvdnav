@@ -1,0 +1,8 @@
+MOSTLYCLEANFILES     = *~ \\\#* .*~ .\\\#*
+MAINTAINERCLEANFILES = Makefile.in
+
+debug:
+	@$(MAKE) CFLAGS="$(DEBUG_CFLAGS)"
+
+install-debug:
+	@$(MAKE) CFLAGS="$(DEBUG_CFLAGS)" install

@@ -212,12 +212,13 @@ dnl ---------------------------------------------
 AC_OUTPUT([
 Makefile 
 src/Makefile
+src/dvdread/Makefile
+src/vm/Makefile
 misc/Makefile
 misc/dvdnav-config
 misc/libdvdnav.spec
+misc/relchk.sh
 m4/Makefile
 doc/Makefile
 examples/Makefile
 ])
-
-
