@@ -170,7 +170,7 @@ static dvd_input_t file_open(const char *target)
   
   /* Open the device */
 #ifndef WIN32
-  dev->fd = open(target, O_RDONLY | O_EXCL);
+  dev->fd = open(target, O_RDONLY);
 #else
   dev->fd = open(target, O_RDONLY | O_BINARY);
 #endif
