@@ -1,4 +1,7 @@
-SUBDIRS = src misc
+SUBDIRS = src misc m4
+
+EXTRA_DIST = debian/README.debian debian/changelog debian/control debian/copyright debian/dirs \
+	debian/libdvdnav1.files debian/rules libdvdnav.spec
 
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#* 

@@ -1,5 +1,7 @@
 EXTRA_DIST = autogen.sh  dvdnav-config.in
 
+bin_SCRIPTS = dvdnav-config
+
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#*
 
