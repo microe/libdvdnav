@@ -213,7 +213,8 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int32_t *button) {
   }
 
   /* Simply return the appropriate value based on the SPRM */
-  (*button) = this->position_current.button;
+  if(((*button) = this->position_current.button) == -1)
+    (*button) = this->vm->state.HL_BTNN_REG >> 10;
   
   return DVDNAV_STATUS_OK;
 }
