@@ -83,7 +83,7 @@ struct read_cache_s {
 #define _MT_TRACE 1
 
 #if _MT_TRACE
-#define dprintf(fmt, args...) fprintf(stderr, "%s: " fmt,  __FUNCTION__, ##args);
+#define dprintf(fmt, args...) fprintf(stderr, "%s: "fmt,  ##__FUNCTION__##, ##args);
 #else
 #define dprintf(fmt, args...) /* Nowt */
 #endif
@@ -384,9 +384,9 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
    * This is so that fewer realloc's happen if at all.
    */ 
   if (self->cache_buffer) {
-    if( block_count > self->cache_malloc_size) {
+    if(block_count > self->cache_malloc_size) {
       self->cache_buffer = realloc(self->cache_buffer, block_count * DVD_VIDEO_LB_LEN);
-      dprintf("libdvdnav:read_cache:pre_cache DVD read realloc happened\n"); 
+      dprintf("libdvdnav:read_cache:pre_cache DVD read realloc happened\n");
       self->cache_malloc_size = block_count;
     } 
   } else {
