@@ -274,7 +274,7 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
 
   this->hli_state = 1; /* Selected */
 
-  /* this->position_current.button = -1; */ /* Force Highligh change */ 
+  this->position_current.button = -1; /* Force Highligh change */
 
   return S_OK;
 }
