@@ -3,5 +3,3 @@
 * Support Still PGCs. Only Still Cells are currently supported.
 * Fix the Next_PGC = 0 problem with some DVDs. Not enought details on this yet.
 * Properly implement seeking and position reporting (do not rely on sequential physical layout)
-* DVDNAV_WAIT event that indicates to the application to wait for its fifos to run dry
-  (prevents discrepancies between what the users sees on screen and what state libdvdnav is in)

@@ -1,3 +1,8 @@
+libdvdnav (0.1.6) unstable; urgency=low
+  * new event DVDNAV_WAIT to fix consistency problems in applications with fifos
+    where libdvdnav is always a bit ahead in the stream, the event forces
+    the application to wait for its fifos to get empty
+
 libdvdnav (0.1.5) unstable; urgency=low
   * some bugfixes
   * code cleanup
