@@ -21,8 +21,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifndef _MSC_VER 
 #include <sys/param.h>
 #include <sys/fcntl.h>
+#else
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 255
+#endif
+#endif /* _MSC_VER */
+
 #include <assert.h>
 #include "remap.h"
 #include "dvdnav_internal.h"

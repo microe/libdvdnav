@@ -1,6 +1,9 @@
 #ifndef DVDREAD_INTERNAL_H
 #define DVDREAD_INTERNAL_H
 
+#ifdef _MSC_VER
+#include <unistd.h>
+#endif /* _MSC_VER */
 
 #define CHECK_VALUE(arg) \
  if(!(arg)) { \

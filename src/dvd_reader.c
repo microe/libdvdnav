@@ -51,6 +51,10 @@
 
 #define DEFAULT_UDF_CACHE_LEVEL 1
 
+/**/
+#define WIN32_CSS 0
+/**/
+
 struct dvd_reader_s {
     /* Basic information. */
     int isImageFile;
@@ -296,12 +300,31 @@ static char *bsd_block2char( const char *path )
 
 dvd_reader_t *DVDOpen( const char *path )
 {
+#ifndef _MSC_VER
     struct stat fileinfo;
-    int ret, have_css;
+    int ret;
+#endif /* _MSC_VER */
+
+    int have_css;
+
     char *dev_name = 0;
 
     if( path == NULL )
       return 0;
+
+#ifdef _MSC_VER
+
+#ifdef WIN32_CSS
+    /* Try to open libdvdcss or fall back to standard functions */
+    have_css = dvdinput_setup();
+
+    return DVDOpenImageFile( path, have_css );
+#else
+    /* Under Win32, we only try to open image files */
+    return DVDOpenImageFile( path, DVDInputSetup() );
+#endif
+
+#else
 
     ret = stat( path, &fileinfo );
     if( ret < 0 ) {
@@ -446,6 +469,7 @@ dvd_reader_t *DVDOpen( const char *path )
          */
         return DVDOpenPath( path );
     }
+#endif /* _MSC_VER */
 
     /* If it's none of the above, screw it. */
     fprintf( stderr, "libdvdread: Could not open %s\n", path );

@@ -42,6 +42,11 @@
 
 #include "dvdnav_internal.h"
 
+#ifdef _MSC_VER
+#include <io.h>   /* read() */
+#define lseek64 lseek
+#endif /* _MSC_VER */
+
 /*
 #define STRICT
 */
@@ -123,7 +128,7 @@ static void vm_print_current_domain_state(vm_t *vm) {
 
 static void dvd_read_name(char *name, const char *device) {
     int fd, i;
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(WIN32)
     off64_t off;
 #else
     off_t off;
@@ -1841,6 +1846,9 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.59  2003/04/28 16:29:22  jcdutton
+ * Helping with the WIN32 port.
+ *
  * Revision 1.58  2003/04/27 01:26:18  jcdutton
  * Modified libdvdnav to do without libdvdread.
  * Use internal ifo tools.

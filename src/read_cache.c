@@ -114,7 +114,11 @@ struct read_cache_s {
 # if READ_CACHE_TRACE
 #  define dprintf(fmt, ...) fprintf(MSG_OUT, "libdvdnav: %s: "fmt,  __func__ , __VA_ARGS__)
 # else
+#ifdef _MSC_VER
+#  define dprintf(fmt, str) /* Nowt */
+#else
 #  define dprintf(fmt, ...) /* Nowt */
+#endif /* _MSC_VER */
 # endif
 #endif
 

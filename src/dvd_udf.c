@@ -33,7 +33,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef _MSC_VER
 #include <sys/ioctl.h>
+#endif /* _MSC_VER */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
