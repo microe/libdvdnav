@@ -209,7 +209,7 @@ const char* dvdnav_err_to_string(dvdnav_t *this) {
 /* converts a dvd_time_t to PTS ticks */
 static int64_t dvdnav_convert_time(dvd_time_t *time) {
   int64_t result;
-  int frames;
+  int64_t frames;
   
   result  = (time->hour    >> 4  ) * 10 * 60 * 60 * 90000;
   result += (time->hour    & 0x0f)      * 60 * 60 * 90000;
@@ -236,14 +236,14 @@ static int64_t dvdnav_convert_time(dvd_time_t *time) {
  * Most of the code in here is copied from xine's MPEG demuxer
  * so any bugs which are found in that should be corrected here also.
  */
-static int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, pci_t *nav_pci) {
-  int            bMpeg1 = 0;
+static int32_t dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, pci_t *nav_pci) {
+  int32_t        bMpeg1 = 0;
   uint32_t       nHeaderLen;
   uint32_t       nPacketLen;
   uint32_t       nStreamID;
 
   if (p[3] == 0xBA) { /* program stream pack header */
-    int nStuffingBytes;
+    int32_t nStuffingBytes;
 
     bMpeg1 = (p[4] & 0x40) == 0;
 
@@ -274,7 +274,7 @@ static int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, pci_
 
   if (nStreamID == 0xbf) { /* Private stream 2 */
 #if 0
-    int i;
+    int32_t i;
     fprintf(MSG_OUT, "libdvdnav: nav packet=%u\n",p-p_start-6);
     for(i=0;i<80;i++)
       fprintf(MSG_OUT, "%02x ",p[i-6]);
@@ -301,9 +301,9 @@ static int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, pci_
 /* DSI is used for most angle stuff. 
  * PCI is used for only non-seemless angle stuff
  */ 
-static int dvdnav_get_vobu(dvdnav_t *this, dsi_t *nav_dsi, pci_t *nav_pci, dvdnav_vobu_t *vobu) {
+static int32_t dvdnav_get_vobu(dvdnav_t *this, dsi_t *nav_dsi, pci_t *nav_pci, dvdnav_vobu_t *vobu) {
   uint32_t next;
-  int angle, num_angle;
+  int32_t angle, num_angle;
 
   vobu->vobu_start = nav_dsi->dsi_gi.nv_pck_lbn; /* Absolute offset from start of disk */
   vobu->vobu_length = nav_dsi->dsi_gi.vobu_ea; /* Relative offset from vobu_start */
@@ -378,8 +378,8 @@ static int dvdnav_get_vobu(dvdnav_t *this, dsi_t *nav_dsi, pci_t *nav_pci, dvdna
  * The drawback is the additional memcopy.
  */
 
-dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
-				      int *event, int *len) {
+dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, uint8_t *buf,
+				      int32_t *event, int32_t *len) {
   unsigned char *block;
   dvdnav_status_t status;
   
@@ -393,10 +393,10 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   return status;
 }
  
-dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
-					    int *event, int *len) {
+dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
+					    int32_t *event, int32_t *len) {
   dvd_state_t *state;
-  int result;
+  int32_t result;
 
   if(!this || !event || !len || !buf || !*buf) {
     printerr("Passed a NULL pointer.");
@@ -440,12 +440,12 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     fprintf(MSG_OUT, "libdvdnav: HOP_CHANNEL\n");
 #endif
     if (this->position_next.hop_channel - this->position_current.hop_channel >= HOP_SEEK) {
-      int num_angles = 0, current;
+      int32_t num_angles = 0, current;
       
       /* we seeked -> check for multiple angles */
       vm_get_angle_info(this->vm, &current, &num_angles);
       if (num_angles > 1) {
-        int result, block;
+        int32_t result, block;
 	/* we have to skip the first VOBU when seeking in a multiangle feature,
 	 * because it might belong to the wrong angle */
 	block = this->position_next.cell_start + this->position_next.block;
@@ -514,7 +514,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
   if((this->position_current.vts != this->position_next.vts) || 
      (this->position_current.domain != this->position_next.domain)) {
     dvd_read_domain_t domain;
-    int vtsN;
+    int32_t vtsN;
     dvdnav_vts_change_event_t *vts_event = (dvdnav_vts_change_event_t *)*buf;
     
     if(this->file) {
@@ -581,7 +581,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
       (this->position_current.cell_restart != this->position_next.cell_restart) ||
       (this->position_current.cell_start != this->position_next.cell_start) ) {
     dvdnav_cell_change_event_t *cell_event = (dvdnav_cell_change_event_t *)*buf;
-    int first_cell_nr, last_cell_nr, i;
+    int32_t first_cell_nr, last_cell_nr, i;
     dvd_state_t *state = &this->vm->state;
     
     (*event) = DVDNAV_CELL_CHANGE;
@@ -1041,8 +1041,8 @@ int8_t dvdnav_is_domain_vts(dvdnav_t *this) {
 }
 
 /* Generally delegate angle information handling to VM */
-dvdnav_status_t dvdnav_angle_change(dvdnav_t *this, int angle) {
-  int num, current;
+dvdnav_status_t dvdnav_angle_change(dvdnav_t *this, int32_t angle) {
+  int32_t num, current;
   
   if(!this) {
     printerr("Passed a NULL pointer.");
@@ -1064,8 +1064,8 @@ dvdnav_status_t dvdnav_angle_change(dvdnav_t *this, int angle) {
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *this, int *current_angle,
-				      int *number_of_angles) {
+dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *this, int32_t *current_angle,
+				      int32_t *number_of_angles) {
   if(!this || !current_angle || !number_of_angles) {
     printerr("Passed a NULL pointer.");
     return DVDNAV_STATUS_ERR;

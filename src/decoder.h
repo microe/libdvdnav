@@ -101,11 +101,11 @@ typedef struct {
 /* the big VM function, executing the given commands and writing
  * the link where to continue, the return value indicates if a jump
  * has been performed */
-int vmEval_CMD(vm_cmd_t commands[], int num_commands, 
+int vmEval_CMD(vm_cmd_t commands[], int32_t num_commands, 
 	       registers_t *registers, link_t *return_values);
 
 /* extracts some bits from the command */
-uint32_t vm_getbits(command_t* command, int start, int count);
+uint32_t vm_getbits(command_t* command, int32_t start, int32_t count);
 
 #ifdef TRACE
 /* for debugging: prints a link in readable form */

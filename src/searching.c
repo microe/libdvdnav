@@ -35,7 +35,7 @@
 /* Searching API calls */
 
 dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
-				   unsigned long int time) {
+				   uint64_t time) {
   /* FIXME: Time search the current PGC based on the xxx table */
   return DVDNAV_STATUS_OK;
 }
@@ -44,7 +44,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 /* Return placed in vobu. */
 /* Returns error status */
 /* FIXME: Maybe need to handle seeking outside current cell. */
-static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int domain, uint32_t seekto_block, uint32_t *vobu) {
+static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, uint32_t seekto_block, uint32_t *vobu) {
   vobu_admap_t *admap = NULL;
 
 #ifdef LOG_DEBUG
@@ -71,7 +71,7 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int domain, uint32_t se
   if(admap) {
     uint32_t address = 0;
     uint32_t vobu_start, next_vobu;
-    int found = 0;
+    int32_t found = 0;
 
     /* Search through ADMAP for best sector */
     vobu_start = SRI_END_OF_CELL;
@@ -102,11 +102,11 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int domain, uint32_t se
 }
 
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
-				     unsigned long int offset, int origin) {
+				     uint64_t offset, int32_t origin) {
   uint32_t target = 0;
   uint32_t length = 0;
   uint32_t first_cell_nr, last_cell_nr, cell_nr;
-  int found;
+  int32_t found;
   cell_playback_t *cell;
   dvd_state_t *state;
   dvdnav_status_t result;
@@ -220,8 +220,8 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   return DVDNAV_STATUS_ERR;
 }
 
-dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int part) {
-  int title, old_part;
+dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int32_t part) {
+  int32_t title, old_part;
   
   if (dvdnav_current_title_info(this, &title, &old_part) == DVDNAV_STATUS_OK)
     return dvdnav_part_play(this, title, part);
@@ -387,10 +387,10 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   }
 }
 
-dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
-				    unsigned int *len) {
+dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
+				    uint32_t *len) {
   uint32_t cur_sector;
-  int cell_nr, first_cell_nr, last_cell_nr;
+  int32_t cell_nr, first_cell_nr, last_cell_nr;
   cell_playback_t *cell;
   dvd_state_t *state;
 
@@ -455,8 +455,8 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
 }
 
 dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
-					     unsigned int *pos,
-					     unsigned int *len) {
+					     uint32_t *pos,
+					     uint32_t *len) {
   uint32_t cur_sector;
   uint32_t first_cell_nr;
   uint32_t last_cell_nr;

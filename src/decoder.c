@@ -35,7 +35,7 @@
 
 #include "dvdnav_internal.h"
 
-uint32_t vm_getbits(command_t *command, int start, int count) {
+uint32_t vm_getbits(command_t *command, int32_t start, int32_t count) {
   uint64_t result = 0;
   uint64_t bit_mask = 0;
   uint64_t examining = 0;

@@ -60,7 +60,7 @@ extern "C" {
 typedef struct dvdnav_s dvdnav_t;
 
 /* Status as reported by most of libdvdnav's functions */
-typedef int dvdnav_status_t;
+typedef int32_t dvdnav_status_t;
 
 /*
  * Unless otherwise stated, all functions return DVDNAV_STATUS_OK if
@@ -132,7 +132,7 @@ const char* dvdnav_err_to_string(dvdnav_t *self);
  *
  * This has _nothing_ to do with the region setting of the DVD drive.
  */
-dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *self, int region_mask);
+dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *self, int32_t region_mask);
 
 /*
  * Returns the region mask (bit 0 set implies region 1, bit 1 set implies
@@ -140,7 +140,7 @@ dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *self, int region_mask);
  *
  * This has _nothing_ to do with the region setting of the DVD drive.
  */
-dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *self, int *region_mask);
+dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *self, int32_t *region_mask);
 
 /*
  * Specify whether read-ahead caching should be used. You may not want this if your
@@ -155,12 +155,12 @@ dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *self, int *region_mask);
  * If in addition you want to prevent memcpy's to improve performance, have a look
  * at dvdnav_get_next_cache_block().
  */
-dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *self, int read_ahead_flag);
+dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *self, int32_t read_ahead_flag);
 
 /*
  * Query whether read-ahead caching/buffering will be used.
  */
-dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *self, int *read_ahead_flag);
+dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *self, int32_t *read_ahead_flag);
 
 /*
  * Specify whether the positioning works PGC or PG based.
@@ -169,12 +169,12 @@ dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *self, int *read_ahead_flag);
  * functions dvdnav_get_position() and dvdnav_sector_search(). See there.
  * Default is PG based positioning.
  */
-dvdnav_status_t dvdnav_set_PGC_positioning_flag(dvdnav_t *self, int pgc_based_flag);
+dvdnav_status_t dvdnav_set_PGC_positioning_flag(dvdnav_t *self, int32_t pgc_based_flag);
 
 /*
  * Query whether positioning is PG or PGC based.
  */
-dvdnav_status_t dvdnav_get_PGC_positioning_flag(dvdnav_t *self, int *pgc_based_flag);
+dvdnav_status_t dvdnav_get_PGC_positioning_flag(dvdnav_t *self, int32_t *pgc_based_flag);
 
 
 /*********************************************************************
@@ -200,8 +200,8 @@ dvdnav_status_t dvdnav_get_PGC_positioning_flag(dvdnav_t *self, int *pgc_based_f
  *
  * See the dvdnav_events.h header for information on the various events.
  */
-dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
-				      int *event, int *len);
+dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, uint8_t *buf,
+				      int32_t *event, int32_t *len);
 
 /*
  * This basically does the same as dvdnav_get_next_block. The only difference is
@@ -211,8 +211,8 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
  * Those pointers must _never_ be freed but instead returned to the library via
  * dvdnav_free_cache_block().
  */
-dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *self, unsigned char **buf,
-					    int *event, int *len);
+dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *self, uint8_t **buf,
+					    int32_t *event, int32_t *len);
 
 /*
  * All buffers which came from the internal cache (when dvdnav_get_next_cache_block()
@@ -263,22 +263,22 @@ dvdnav_status_t dvdnav_stop(dvdnav_t *self);
 /*
  * Returns the number of titles on the disk.
  */
-dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *self, int *titles);
+dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *self, int32_t *titles);
 
 /*
  * Returns the number of parts within the given title.
  */
-dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *self, int title, int *parts);
+dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *self, int32_t title, int32_t *parts);
 
 /*
  * Plays the specified title of the DVD from its beginning (that is: part 1).
  */
-dvdnav_status_t dvdnav_title_play(dvdnav_t *self, int title);
+dvdnav_status_t dvdnav_title_play(dvdnav_t *self, int32_t title);
 
 /*
  * Plays the specified title, starting from the specified part.
  */
-dvdnav_status_t dvdnav_part_play(dvdnav_t *self, int title, int part);
+dvdnav_status_t dvdnav_part_play(dvdnav_t *self, int32_t title, int32_t part);
 
 /*
  * Play the specified amount of parts of the specified title of
@@ -286,16 +286,16 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *self, int title, int part);
  *
  * Currently unimplemented!
  */
-dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *self, int title,
-					   int part, int parts_to_play);
+dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *self, int32_t title,
+					   int32_t part, int32_t parts_to_play);
 
 /*
  * Play the specified title starting from the specified time.
  *
  * Currently unimplemented!
  */
-dvdnav_status_t dvdnav_time_play(dvdnav_t *self, int title,
-				 unsigned long int time);
+dvdnav_status_t dvdnav_time_play(dvdnav_t *self, int32_t title,
+				 uint64_t time);
 
 /*
  * Stop playing the current position and jump to the specified menu.
@@ -309,8 +309,8 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *self, DVDMenuID_t menu);
  * A title of 0 indicates, we are in a menu. In this case, part
  * is set to the current menu's ID.
  */
-dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int *title,
-					  int *part);
+dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int32_t *title,
+					  int32_t *part);
 
 /*
  * Return the current position (in blocks) within the current
@@ -320,8 +320,8 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *self, int *title,
  * Use is discouraged!
  */
 dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
-					     unsigned int *pos,
-					     unsigned int *len);
+					     uint32_t *pos,
+					     uint32_t *len);
 
 /*
  * This function is only available for compatibility reasons.
@@ -329,7 +329,7 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *self,
  * Stop playing the current position and start playback of the current title
  * from the specified part.
  */
-dvdnav_status_t dvdnav_part_search(dvdnav_t *self, int part);
+dvdnav_status_t dvdnav_part_search(dvdnav_t *self, int32_t part);
 
 
 /*********************************************************************
@@ -351,7 +351,7 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *self, int part);
  * fcntl.h.
  */
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *self, 
-				     unsigned long int offset, int origin);
+				     uint64_t offset, int32_t origin);
 
 /*
  * Stop playing the current position and start playback of the title
@@ -360,7 +360,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
  * Currently unimplemented!
  */
 dvdnav_status_t dvdnav_time_search(dvdnav_t *self, 
-				   unsigned long int time);
+				   uint64_t time);
 
 /*
  * Stop playing current position and play the "GoUp"-program chain.
@@ -394,8 +394,8 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *self);
  * (see dvdnav_set_PGC_positioning_flag()), this will return the
  * relative position in and the length of the current program chain.
  */
-dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int *pos,
-				    unsigned int *len);
+dvdnav_status_t dvdnav_get_position(dvdnav_t *self, uint32_t *pos,
+				    uint32_t *len);
 
 
 /*********************************************************************
@@ -416,7 +416,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *self, unsigned int *pos,
  * Get the currently highlighted button 
  * number (1..36) or 0 if no button is highlighted.
  */
-dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *self, int *button);
+dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *self, int32_t *button);
 
 /*
  * Returns the Presentation Control Information (PCI) structure associated
@@ -458,12 +458,12 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *self, pci_t *pci);
 /*
  * Highlight a specific button.
  */
-dvdnav_status_t dvdnav_button_select(dvdnav_t *self, pci_t *pci, int button);
+dvdnav_status_t dvdnav_button_select(dvdnav_t *self, pci_t *pci, int32_t button);
 
 /*
  * Activate ("press") specified button.
  */
-dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *self, pci_t *pci, int button);
+dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *self, pci_t *pci, int32_t button);
 
 /*
  * Activate (press) a button and execute specified command.
@@ -473,12 +473,12 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *self, int32_t button, vm_cm
 /*
  * Select button at specified video frame coordinates.
  */
-dvdnav_status_t dvdnav_mouse_select(dvdnav_t *self, pci_t *pci, int x, int y);
+dvdnav_status_t dvdnav_mouse_select(dvdnav_t *self, pci_t *pci, int32_t x, int32_t y);
 
 /*
  * Activate ("press") button at specified video frame coordinates.
  */
-dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *self, pci_t *pci, int x, int y);
+dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *self, pci_t *pci, int32_t x, int32_t y);
 
 
 /*********************************************************************
@@ -595,13 +595,13 @@ int8_t dvdnav_get_active_spu_stream(dvdnav_t *self);
  * Sets the current angle. If you try to follow a non existant angle
  * the call fails.
  */
-dvdnav_status_t dvdnav_angle_change(dvdnav_t *self, int angle);
+dvdnav_status_t dvdnav_angle_change(dvdnav_t *self, int32_t angle);
 
 /*
  * Returns the current angle and number of angles present.
  */
-dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int *current_angle,
-				      int *number_of_angles);
+dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int32_t *current_angle,
+				      int32_t *number_of_angles);
 
 /*********************************************************************
  * domain queries                                                    *
