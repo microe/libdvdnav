@@ -1,0 +1,158 @@
+dnl
+dnl Require autoconf version 2.13
+dnl
+AC_PREREQ(2.13)
+
+AC_INIT(src/dvdnav.h)
+
+DVDNAV_MAJOR=0
+DVDNAV_MINOR=0
+DVDNAV_SUB=1
+DVDNAV_PRE=".beta2"
+PACKAGE="libdvdnav"
+RELEASE="1"
+TAR_NAME=$PACKAGE-$DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE
+SPEC_VERSION=$DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE
+AC_SUBST(DVDNAV_MAJOR)
+AC_SUBST(DVDNAV_MINOR)
+AC_SUBST(DVDNAV_SUB)
+AC_SUBST(TAR_NAME)
+AC_SUBST(SPEC_VERSION)
+AC_SUBST(PACKAGE)
+AC_SUBST(RELEASE)
+
+dnl Every other copy of the package version number gets its value from here
+AM_INIT_AUTOMAKE("libdvdnav", $DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE)
+
+dnl
+dnl Made possible to build for another arch.
+dnl
+if test x$DVDNAV_BUILD != "x"; then
+  AC_MSG_RESULT(*** build forced to $DVDNAV_BUILD ***)
+  build=$DVDNAV_BUILD
+  host=$DVDNAV_BUILD
+else
+  check_athlon=yes
+fi
+
+dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
+AM_CONFIG_HEADER(config.h)
+
+AC_SUBST(VERSION)
+
+ISODATE=`date +%Y-%m-%d`
+AC_SUBST(ISODATE)
+
+AC_CANONICAL_HOST
+
+dnl Checks for programs.
+AC_ISC_POSIX
+AC_PROG_CC
+AC_STDC_HEADERS
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+
+dnl
+dnl Libtool
+dnl
+AC_LIBTOOL_DLOPEN
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+if ${CONFIG_SHELL} ./libtool --features | grep "enable static" >/dev/null; then
+  STATIC="-static"
+else
+  STATIC=
+fi
+AC_SUBST(STATIC)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(unistd.h)
+
+dnl
+dnl Checks for typedefs, structures, and compiler characteristics.
+dnl
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AM_TYPE_PTRDIFF_T
+AC_C_BIGENDIAN
+
+AC_SUBST(DEBUG_CFLAGS)
+AC_SUBST(GLOBAL_CFLAGS)
+dnl AC_SUBST(ROOT_CFLAGS)
+dnl AC_SUBST(TOOLS_CFLAGS)
+
+dnl
+dnl threads
+dnl
+
+case $host in
+  *-*-freebsd*)
+    THREAD_LIBS="-pthread"
+    CFLAGS="$CFLAGS -I/usr/local/include -L/usr/local/lib -D_THREAD_SAFE"
+    CPPFLAGS="$CPPFLAGS -I/usr/local/include -L/usr/local/lib"
+    ;;
+  *)
+    AC_CHECK_LIB(pthread, pthread_create,
+  	     THREAD_LIBS="-lpthread",
+ 	     AC_MSG_ERROR(pthread needed))
+    ;;
+esac
+AC_SUBST(THREAD_LIBS)
+
+dnl
+dnl dynamic linker
+dnl
+AC_CHECK_LIB(c, dlopen,
+	     DYNAMIC_LD_LIBS="",
+	     AC_CHECK_LIB(dl, dlopen,
+             	          DYNAMIC_LD_LIBS="-ldl",
+	                  AC_MSG_ERROR(dynamic linker needed)))
+AC_SUBST(DYNAMIC_LD_LIBS)
+
+dnl
+dnl Check some header files
+dnl
+AC_CHECK_HEADER(string.h)
+
+dnl 
+dnl Check for DVDReader
+dnl
+AC_CHECK_LIB(dvdread,
+             DVDOpen,
+ 	     [DVDREAD_LIBS="-ldvdread"
+	     AC_DEFINE(HAVE_LIBDVDREAD)
+ 	     AC_CHECK_LIB(dvdread,
+                          UDFReadLB,
+                          [ :
+                          ],
+                          [ AC_DEFINE(HAVE_LIBDVDREAD)
+                            AC_DEFINE(HAVE_DVDREAD9)
+                          ])
+	     ],
+ 	     AC_MSG_ERROR(Could not find libdvdread. It is needed))
+AC_SUBST(DVDREAD_LIBS)
+
+dnl Common cflags for all platforms
+COMMON_CFLAGS="-Wall -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE"
+
+dnl
+dnl Some include paths ( !!! DO NOT REMOVE !!! )
+dnl
+INCLUDES='-I$(top_srcdir) $(DVDNAV_CFLAGS)'
+AC_SUBST(INCLUDES)
+
+dnl
+dnl Output configuration files
+dnl
+
+AC_OUTPUT([
+Makefile 
+src/Makefile
+libdvdnav.spec
+])

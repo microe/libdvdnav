@@ -1,0 +1,42 @@
+%define	prefix @prefix@
+Summary: DVD Navigation library
+Name: @PACKAGE@
+Version: @SPEC_VERSION@
+Release: @RELEASE@
+Group: Development/Libraries
+Copyright: GPL
+Url: http://dvd.sourceforge.net/
+Source: %{name}-%{version}.tar.gz
+Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
+Requires: 
+
+%description
+libdvdnav provides support to applications wishing to make use of advanced
+DVD features.
+%prep
+%setup
+
+%build
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=$RPM_BUILD_ROOT%{prefix} 
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+#ROOT=$RPM_BUILD_ROOT 
+make install-strip 
+
+%clean
+rm -r $RPM_BUILD_ROOT
+
+%post
+
+%files
+%defattr(-,root,root)
+%doc AUTHORS ChangeLog COPYING INSTALL README
+%{_libdir}/xine/*
+%changelog
+* Tue Mar 12 2002 Rich Wareham <richwareham@users.sourceforge.net>
+- Canabalisation to form libdvdnav spec file.
+* Sun Sep 09 2001 Thomas Vander Stichele <thomas@apestaart.org>
+- first spec file
+

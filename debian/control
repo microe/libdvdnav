@@ -1,0 +1,20 @@
+Source: libdvdnav
+Section: devel
+Priority: optional
+Maintainer: root <root@hermes.cam.ac.uk>
+Standards-Version: 3.2.1
+
+Package: libdvdnav1-dev
+Architecture: any
+Depends: libdvdnav1, libc6-dev
+Provides: libdvdnav-dev
+Conflicts: libdvdnav-dev
+Description: Missing
+ Missing
+
+Package: libdvdnav1
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Missing
+ Missing
+
