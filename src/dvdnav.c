@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 /*
  * NOTE:
@@ -175,6 +176,7 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
 
 dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   dvdnav_t *this;
+  struct timeval time;
   
   /* Create a new structure */
   fprintf(MSG_OUT, "libdvdnav: Using dvdnav version from http://dvd.sf.net\n");
@@ -216,7 +218,13 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
     
   /* Start the read-ahead cache. */
   this->cache = dvdnav_read_cache_new(this);
-  
+
+  /* Seed the random numbers. So that the DVD VM Command rand()i
+   * gives a different start value each time a DVD is played.
+   */
+  gettimeofday(&time,NULL);
+  srand(time.tv_usec);
+ 
   return S_OK;
 }
 
@@ -990,6 +998,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.33  2002/08/31 11:05:27  jcdutton
+ * Properly seed the DVD VM Instruction rand().
+ *
  * Revision 1.32  2002/08/31 02:50:27  jcdutton
  * Improve some debug messages.
  * Add some comments about dvdnav_open memory leaks.
