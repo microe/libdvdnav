@@ -228,6 +228,25 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int part) {
   return S_OK;
 }
 
+dvdnav_status_t dvdnav_prev_part_search(dvdnav_t *this) {
+
+  if((!this) || (!this->vm)  )
+    return S_ERR;
+  
+  vm_prev_part(this->vm);
+  /* FIXME: handle errors */
+  return S_OK;
+}
+
+dvdnav_status_t dvdnav_next_part_search(dvdnav_t *this) {
+  if((!this) || (!this->vm)  )
+    return S_ERR;
+
+  vm_next_part(this->vm);
+  /* FIXME: handle errors */
+  return S_OK;
+}
+
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
   dvd_state_t *state;
 

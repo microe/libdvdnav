@@ -137,6 +137,8 @@ int vm_go_up(vm_t *vm);
 int vm_top_pg(vm_t *vm);
 int vm_next_pg(vm_t *vm);
 int vm_prev_pg(vm_t *vm);
+int vm_next_part(vm_t *vm);
+int vm_prev_part(vm_t *vm);
 int vm_get_audio_stream(vm_t *vm, int audioN);
 int vm_get_audio_active_stream(vm_t *vm);
 int vm_get_subp_stream(vm_t *vm, int subpN, int mode);
@@ -144,6 +146,7 @@ int vm_get_subp_active_stream(vm_t *vm, int mode);
 void vm_get_angle_info(vm_t *vm, int *num_avail, int *current);
 void vm_get_audio_info(vm_t *vm, int *num_avail, int *current);
 void vm_get_subp_info(vm_t *vm, int *num_avail, int *current);
+
 subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN);
 audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN);
 void vm_get_video_res(vm_t *vm, int *width, int *height);

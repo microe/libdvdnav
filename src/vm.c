@@ -438,6 +438,129 @@ int vm_prev_pg(vm_t *vm)
   return vm_top_pg(vm);
 }
 
+int vm_prev_part(vm_t *vm)
+{
+  link_t link_values;
+  vts_ptt_srpt_t *vts_ptt_srpt;
+  int title, part=0;
+  int found = 0;
+  int16_t pgcN, pgN;
+
+  if((!vm) || (!vm->vtsi) )
+    return S_ERR;
+
+  if(!(vm->state.pgc) )
+    return S_ERR;
+  if (vm->state.domain != VTS_DOMAIN)
+    return S_ERR;
+  vts_ptt_srpt = vm->vtsi->vts_ptt_srpt;
+  pgcN = get_PGCN(vm);
+  pgN = vm->state.pgN;
+  printf("VTS_PTT_SRPT - PGC: %3i PG: %3i\n",
+    pgcN, pgN);
+  for(title=0;( (title<vts_ptt_srpt->nr_of_srpts) && (found == 0) );title++) {
+    for(part=0;((part < vts_ptt_srpt->title[title].nr_of_ptts) && (found == 0));part++) {
+      if ( (vts_ptt_srpt->title[title].ptt[part].pgcn == pgcN) &&
+           (vts_ptt_srpt->title[title].ptt[part].pgn == pgN ) ) {
+        found = 1;
+        break;
+      }
+    }
+    if (found != 0) break;
+  }
+  title++;
+  part++;
+  if (found == 1) {
+    fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
+    printf("VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
+             title, part,
+             vts_ptt_srpt->title[title-1].ptt[part-1].pgcn ,
+             vts_ptt_srpt->title[title-1].ptt[part-1].pgn );
+  } else {
+    fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
+    return S_ERR;
+  }
+  /* Make sure this is not the first chapter */
+  if(part <= 1 ) {
+    fprintf(MSG_OUT, "libdvdnav: at first chapter. prev chapter failed.\n");
+    return S_ERR;
+  }
+  part--;  /* Previous chapter */
+  if(set_VTS_PTT(vm,(vm->state).vtsN, title, part) == -1)
+    assert(0);
+  link_values = play_PGC_PG( vm, (vm->state).pgN ); 
+  link_values = process_command(vm,link_values);
+  assert(link_values.command == PlayThis);
+  (vm->state).blockN = link_values.data1;
+  assert( (vm->state).blockN == 0 );
+  vm->hop_channel++;
+  
+  fprintf(MSG_OUT, "libdvdnav: previous chapter done\n");
+
+  return 1;
+}
+
+
+int vm_next_part(vm_t *vm)
+{
+  link_t link_values;
+  vts_ptt_srpt_t *vts_ptt_srpt;
+  int title, part=0;
+  int found = 0;
+  int16_t pgcN, pgN;
+
+  if((!vm) || (!vm->vtsi) )
+    return S_ERR;
+
+  if(!(vm->state.pgc) )
+    return S_ERR;
+  if (vm->state.domain != VTS_DOMAIN)
+    return S_ERR;
+  vts_ptt_srpt = vm->vtsi->vts_ptt_srpt;
+  pgcN = get_PGCN(vm);
+  pgN = vm->state.pgN;
+  printf("VTS_PTT_SRPT - PGC: %3i PG: %3i\n",
+    pgcN, pgN);
+  for(title=0;( (title<vts_ptt_srpt->nr_of_srpts) && (found == 0) );title++) {
+    for(part=0;((part < vts_ptt_srpt->title[title].nr_of_ptts) && (found == 0));part++) {
+      if ( (vts_ptt_srpt->title[title].ptt[part].pgcn == pgcN) &&
+           (vts_ptt_srpt->title[title].ptt[part].pgn == pgN ) ) {
+        found = 1;
+        break;
+      }
+    }
+    if (found != 0) break;
+  }
+  title++;
+  part++;
+  if (found == 1) {
+    fprintf(MSG_OUT, "libdvdnav: ************ this chapter FOUND!\n");
+    printf("VTS_PTT_SRPT - Title %3i part %3i: PGC: %3i PG: %3i\n",
+             title, part,
+             vts_ptt_srpt->title[title-1].ptt[part-1].pgcn ,
+             vts_ptt_srpt->title[title-1].ptt[part-1].pgn );
+  } else {
+    fprintf(MSG_OUT, "libdvdnav: ************ this chapter NOT FOUND!\n");
+  }
+  /* Make sure this is not the last chapter */
+  if(part >= vts_ptt_srpt->title[title-1].nr_of_ptts) {
+    fprintf(MSG_OUT, "libdvdnav: at last chapter. next chapter failed.\n");
+    return S_ERR;
+  }
+  part++;  /* Next chapter */
+  if(set_VTS_PTT(vm,(vm->state).vtsN, title, part) == -1)
+    assert(0);
+  link_values = play_PGC_PG( vm, (vm->state).pgN );
+  link_values = process_command(vm,link_values);
+  assert(link_values.command == PlayThis);
+  (vm->state).blockN = link_values.data1;
+  assert( (vm->state).blockN == 0 );
+  vm->hop_channel++;
+
+  fprintf(MSG_OUT, "libdvdnav: next chapter done\n");
+
+  return 1;
+}
 
 static domain_t menuid2domain(DVDMenuID_t menuid)
 {
@@ -1834,6 +1957,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.33  2002/09/02 03:20:01  jcdutton
+ * Implement proper prev/next chapter/part.
+ * I don't know why someone has not noticed the problem until now.
+ *
  * Revision 1.32  2002/09/02 00:27:14  jcdutton
  * Fix bug in JumpVTS_PTT command.
  *

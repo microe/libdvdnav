@@ -396,6 +396,22 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *self, int part);
 
 /**
  * Stop playing the current title and start playback of the title
+ * from the previous part (chapter).
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ */
+dvdnav_status_t dvdnav_prev_part_search(dvdnav_t *self);
+
+/**
+ * Stop playing the current title and start playback of the title
+ * from the next part (chapter).
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ */
+dvdnav_status_t dvdnav_next_part_search(dvdnav_t *self);
+
+/**
+ * Stop playing the current title and start playback of the title
  * from the previous program (if it exists).
  *
  * \param self Pointer to dvdnav_t associated with this operation.
