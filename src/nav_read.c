@@ -96,6 +96,8 @@ static uint32_t getbits(getbits_state_t *state, uint32_t number_of_bits) {
   return result;
 }
 
+#if 0  /* TODO: optimized versions not yet used */
+
 /* WARNING: This function can only be used on a byte boundary.
             No checks are made that we are in fact on a byte boundary.
  */
@@ -119,6 +121,8 @@ static uint32_t get32bits(getbits_state_t *state) {
   state->byte = state->start[state->byte_position];
   return result;
 }
+
+#endif
 
 void navRead_PCI(pci_t *pci, unsigned char *buffer) {
   int32_t i, j;
