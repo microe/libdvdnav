@@ -34,13 +34,17 @@ not know), but they are practically proven in libdvdnav.
    - PG (program)
        * points to a Cell
        * usually the mapping between PG and Cells is 1:1, but not always
-       * units for user skip operations
-       * currently unit for seeking too
+	 (multiple Cells inside one PG can occur when special VM commands
+	 have to be executed in the middle of a PG, for example to switch
+	 SPU channels or to provide a branching target for special
+	 features that need access to parts of the movie)
+       * unit for user skip operations
+       * default unit for seeking
    - PGC (program chain)
        * contains multiple programs and cells
        * logical playback chain
        * VM commands at start and stop (PGC_pre and PGC_post commands)
-       * might be used for seeking
+       * might be used for seeking (see dvdnav_set_PGC_positioning())
 3. title structure - high level navigation
    - PTT (part of title track)
        * points to a PG in a PGC
@@ -53,15 +57,16 @@ not know), but they are practically proven in libdvdnav.
    - VTS (video title set)
        * contains multiple TTs
        * high level partitioning of the content (movie / bonus material)
+       * video, audio and spu attributes are common inside a whole VTS
 4. domain structure - bringing it all together
    - FP (first play)
        * one special PGC in the VMGM domain run on start of the disc
-   - VMGM (video manager menu) - file video_ts.{vob,ifo,bup}
+   - VMGM (video manager menu) - files video_ts.{vob,ifo,bup}
        * the menu which allows you to select between title sets
        * contains a set of PGCs
-   - VTSM (video title set menu) - file vts_<vtsN>_0.{vob,ifo,bup}
+   - VTSM (video title set menu) - files vts_<vtsN>_0.{vob,ifo,bup}
        * the menu which allows you to select between the TTs of a VTS
        * contains a set of PGCs
-   - VTS (video title set) - files vts_<vtsN>_[1-9].vob
+   - VTS (video title set) - files vts_<vtsN>_[1-9].vob, vts_<vtsN>_0.{ifo,bup}
        * regular playback
        * contains one VTS and a set of PGCs
