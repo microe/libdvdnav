@@ -14,4 +14,4 @@ libdvdread_la_LIBADD = $(DYNAMIC_LD_LIBS)
 include_HEADERS = dvd_reader.h nav_read.h ifo_read.h \
 	nav_print.h ifo_print.h ifo_types.h nav_types.h
 
-noinst_HEADERS = bswap.h dvd_input.h dvdread_internal.h dvd_udf.h md5.h dlfcn.c dlfcn.h
+noinst_HEADERS = bswap.h dvd_input.h dvdread_internal.h dvd_udf.h md5.h

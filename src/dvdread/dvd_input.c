@@ -24,13 +24,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-#else
-/* Only needed on MINGW at the moment */
-#include "dlfcn.c"
-#endif
-
 #include "dvd_reader.h"
 #include "dvd_input.h"
 
@@ -55,7 +48,12 @@ char *      (*dvdinput_error) (dvd_input_t);
 #else
 
 /* dlopening libdvdcss */
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#else
+/* Only needed on MINGW at the moment */
+#include "../../msvc/contrib/dlfcn.c"
+#endif
 
 typedef struct dvdcss_s *dvdcss_handle;
 static dvdcss_handle (*DVDcss_open)  (const char *);

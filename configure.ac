@@ -154,7 +154,12 @@ dnl ---------------------------------------------
 dnl dynamic linker
 dnl ---------------------------------------------
 case $host in
-  *mingw32* | *cygwin*)
+  *mingw32*)
+    CFLAGS="-idirafter \$(top_srcdir)/msvc/include $CFLAGS"
+    LDFLAGS="-no-undefined $LDFLAGS"
+    ;;
+  *cygwin*)
+    LDFLAGS="-no-undefined $LDFLAGS"
     ;;
   *)
     AC_CHECK_LIB(c, dlopen,
