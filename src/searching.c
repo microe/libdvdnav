@@ -298,6 +298,7 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
+  vm_t *try_vm;
 
   if(!this) {
     printerr("Passed a NULL pointer.");
@@ -314,12 +315,24 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: next chapter\n");
 #endif
-  if (!vm_jump_next_pg(this->vm)) {
-    fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
-    printerr("Skip to next chapter failed.");
-    pthread_mutex_unlock(&this->vm_lock);
-    return S_ERR;
+  /* make a copy of current VM and try to navigate the copy to the next PG */
+  try_vm = vm_new_copy(this->vm);
+  if (!vm_jump_next_pg(try_vm) || try_vm->stopped) {
+    vm_free_copy(try_vm);
+    /* next_pg failed, try to jump at least to the next cell */
+    try_vm = vm_new_copy(this->vm);
+    vm_get_next_cell(try_vm);
+    if (try_vm->stopped) {
+      vm_free_copy(try_vm);
+      fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
+      printerr("Skip to next chapter failed.");
+      pthread_mutex_unlock(&this->vm_lock);
+      return S_ERR;
+    }
   }
+  /* merge changes on success */
+  vm_merge(this->vm, try_vm);
+  vm_free_copy(try_vm);
   this->position_current.still = 0;
   this->vm->hop_channel++;
 #ifdef LOG_DEBUG
