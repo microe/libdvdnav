@@ -53,11 +53,6 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int* button) {
   return S_OK;
 }
 
-pci_t* dvdnav_get_current_nav_pci(dvdnav_t *this) {
-  if (!this ) assert(0);
-  return &this->pci;
-}
-
 btni_t *__get_current_button(dvdnav_t *this) {
   int button = 0;
 

@@ -503,12 +503,12 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *self, int* button);
 pci_t* dvdnav_get_current_nav_pci(dvdnav_t *self);
 
 /**
- * Returns the DSI structure associated
+ * Returns the DSI (data seach information) structure associated
  * with the current position.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
  *
- * \sa dsi_t (in <tt>libdvdread</tt>)
+ * \sa pci_t (in <tt>libdvdread</tt>)
  */
 dsi_t* dvdnav_get_current_nav_dsi(dvdnav_t *self);
 

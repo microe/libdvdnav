@@ -16,93 +16,6 @@
 dvdnav_t *dvdnav;
 char buf[2050];
 
-/**
- * Returns 1 if block contains NAV packet, 0 otherwise.
- * Puts pci and dsi packets into appropriate parameters if present
- * 
- * Most of the code in here is copied from xine's MPEG demuxer
- * so any bugs which are found in that should be corrected here also.
- */
-int check_packet(uint8_t *p, pci_t* pci, dsi_t* dsi) {
-  int            bMpeg1=0;
-  uint32_t       nHeaderLen;
-  uint32_t       nPacketLen;
-  uint32_t       nStreamID;
-/* uint8_t       *p_start=p; */
-
-
-  if (p==NULL) {
-    fprintf(stderr,"Passed a NULL pointer.\n");
-    return 0;
-  }
-
-  /* dprint("Checking packet...\n"); */
-
-  if (p[3] == 0xBA) { /* program stream pack header */
-
-    int nStuffingBytes;
-
-    /* xprintf (VERBOSE|DEMUX, "program stream pack header\n"); */
-
-    bMpeg1 = (p[4] & 0x40) == 0;
-
-    if (bMpeg1) {
-      p   += 12;
-    } else { /* mpeg2 */
-      nStuffingBytes = p[0xD] & 0x07;
-      p += 14 + nStuffingBytes;
-    }
-  }
-
-
-  if (p[3] == 0xbb) { /* program stream system header */
-    int nHeaderLen;
-
-    nHeaderLen = (p[4] << 8) | p[5];
-    p += 6 + nHeaderLen;
-  }
-
-  /* we should now have a PES packet here */
-
-  if (p[0] || p[1] || (p[2] != 1)) {
-    fprintf(stderr,"demux error! %02x %02x %02x (should be 0x000001) \n",p[0],p[1],p[2]);
-    return 0;
-  }
-
-  nPacketLen = p[4] << 8 | p[5];
-  nStreamID  = p[3];
-
-  nHeaderLen = 6;
-  p += nHeaderLen;
-
-  if (nStreamID == 0xbf) { /* Private stream 2 */
-/*
- *   int i;
- *    printf("dvdnav:nav packet=%u\n",p-p_start-6);
- *   for(i=0;i<80;i++) {
- *     printf("%02x ",p[i-6]);
- *   }
- *   printf("\n");
- */
-    if(p[0] == 0x00) {
-      navRead_PCI(pci, p+1);
-    }
-
-    p += nPacketLen;
-
-    /* We should now have a DSI packet. */
-    if(p[6] == 0x01) {
-      nPacketLen = p[4] << 8 | p[5];
-      p += 6;
-      /* dprint("NAV DSI packet\n");  */
-      navRead_DSI(dsi, p+1);
-    }
-    return 1;
-  }
-
-  return 0;
-}
-
 int main(int argc, char **argv) {
   int region, i, finished;
   int event, len, dump, tt_dump;
@@ -239,38 +152,36 @@ int main(int argc, char **argv) {
       break;
      case DVDNAV_NAV_PACKET:
        {
-	pci_t pci;
-	dsi_t dsi;
+	pci_t *pci;
+	dsi_t *dsi;
 	
-	/* Take a look at the NAV packet to see if there
-	 * is a menu */
-	if(check_packet(buf, &pci, &dsi)) {
-	  if(pci.hli.hl_gi.btn_ns > 0) {
-	    int button;
+	/* Take a look at PCI/DSI to see if there is a menu */
+	pci = dvdnav_get_current_nav_pci(dvdnav);
+	dsi = dvdnav_get_current_nav_dsi(dvdnav);
+	
+	if(pci->hli.hl_gi.btn_ns > 0) {
+	  int button;
 	    
-	    printf("Found %i buttons...\n", pci.hli.hl_gi.btn_ns);
+	  printf("Found %i buttons...\n", pci->hli.hl_gi.btn_ns);
 
-	    for(button = 0; button<pci.hli.hl_gi.btn_ns; button++) {
-	      btni_t *btni;
-
-	      btni = &(pci.hli.btnit[button]);
-	      printf("Button %i top-left @ (%i,%i), bottom-right @ (%i,%i)\n", 
-		     button+1, btni->x_start, btni->y_start,
-		     btni->x_end, btni->y_end);
-	      
-	    }
-
-	    button = 0;
-	    while((button <= 0) || (button > pci.hli.hl_gi.btn_ns)) {
-	      printf("Which button (1 to %i): ", pci.hli.hl_gi.btn_ns);
-	      scanf("%i", &button);
-	    }
-
-	    printf("Selecting button %i\n", button);
-	    dvdnav_button_select_and_activate(dvdnav, button);
+	  for(button = 0; button<pci->hli.hl_gi.btn_ns; button++) {
+	    btni_t *btni;
+            btni = &(pci->hli.btnit[button]);
+	    printf("Button %i top-left @ (%i,%i), bottom-right @ (%i,%i)\n", 
+	            button+1, btni->x_start, btni->y_start,
+		    btni->x_end, btni->y_end);
 	  }
+
+	  button = 0;
+	  while((button <= 0) || (button > pci->hli.hl_gi.btn_ns)) {
+	    printf("Which button (1 to %i): ", pci->hli.hl_gi.btn_ns);
+	    scanf("%i", &button);
+	  }
+
+	  printf("Selecting button %i\n", button);
+	  dvdnav_button_select_and_activate(dvdnav, button);
 	}
-       }
+      }
       break;
      case DVDNAV_STOP:
        {

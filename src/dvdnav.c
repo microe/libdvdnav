@@ -976,6 +976,11 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
   return S_OK;
 } 
 
+pci_t* dvdnav_get_current_nav_pci(dvdnav_t *this) {
+  if(!this || !this->vm) return 0;
+  return &this->pci;
+}
+
 dsi_t* dvdnav_get_current_nav_dsi(dvdnav_t *this) {
   if(!this || !this->vm) return 0;
   return &this->dsi;
@@ -990,6 +995,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.29  2002/07/25 14:51:40  richwareham
+ * Moved get_current_nav_pci into dvdnac.c, changed example to use it instead of 'home-rolled'
+ * check_packet.
+ *
  * Revision 1.28  2002/07/25 14:42:33  richwareham
  * Patch from aschultz@cs.uni-magdeburg.de to allow for still-frame 'peek-ahead'
  *
