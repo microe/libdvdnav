@@ -574,6 +574,18 @@ int vm_exec_cmd(vm_t *vm, vm_cmd_t *cmd) {
 
 
 /* getting information */
+int vm_get_current_menu(vm_t *vm, int *menuid)
+{
+  pgcit_t* pgcit;
+  int pgcn;
+  pgcn = (vm->state).pgcN;
+  pgcit = get_PGCIT(vm);
+  *menuid = pgcit->pgci_srp[pgcn - 1].entry_id & 0xf ;
+  printf("PGCN = %d, MENU_ID = %d\n", pgcn, *menuid);
+  return S_OK;
+
+}
+
 
 int vm_get_current_title_part(vm_t *vm, int *title_result, int *part_result) {
   vts_ptt_srpt_t *vts_ptt_srpt;
@@ -1593,6 +1605,8 @@ static int set_PGCN(vm_t *vm, int pgcN) {
   }
   
   (vm->state).pgc = pgcit->pgci_srp[pgcN - 1].pgc;
+  printf("Setting PGCN = %d\n",pgcN);
+  (vm->state).pgcN = pgcN;
   (vm->state).pgN = 1;
  
   if((vm->state).domain == VTS_DOMAIN)
@@ -1818,6 +1832,11 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.54  2003/04/06 10:59:28  jcdutton
+ * Return details about menu number in dvdnav_current_title_info()
+ * If title = 0, we are in menu, and part gives us what menu number.
+ * If title > 0, we are in a title.
+ *
  * Revision 1.53  2003/04/05 13:11:13  jcdutton
  * Minor changes.
  *

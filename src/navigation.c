@@ -111,6 +111,13 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int *title, int *part)
     return S_ERR;
   }
   if (this->vm->state.domain != VTS_DOMAIN) {
+    if ( (this->vm->state.domain == VTSM_DOMAIN)
+        || (this->vm->state.domain == VMGM_DOMAIN) ) {
+      /* Get current Menu ID: into *part. */
+      vm_get_current_menu(this->vm, part);
+      pthread_mutex_unlock(&this->vm_lock);
+      return S_OK;
+    }
     printerr("Not in VTS domain.");
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
