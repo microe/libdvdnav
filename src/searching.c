@@ -344,6 +344,7 @@ int vts_ttn = 0;
   vts_ttn = this->vm->state.VTS_TTN_REG;
   vts = this->vm->state.vtsN;
 
+  /* FIXME: pr should be found by searching the VTS_SRPT table. Not just the pgN */
   if(pr) {
     *pr = this->vm->state.pgN;
   }

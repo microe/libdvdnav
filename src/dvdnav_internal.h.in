@@ -60,7 +60,7 @@
 #endif
 
 /* where should libdvdnav write its messages (stdout/stderr) */
-#define MSG_OUT stderr
+#define MSG_OUT stdout
 
 typedef struct read_cache_s read_cache_t;
 
