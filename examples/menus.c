@@ -1,4 +1,4 @@
-#include <dvdnav.h>
+#include "../src/dvdnav.h"
 #include <stdio.h>
 #include <dvdread/nav_read.h>
 #include <unistd.h>
