@@ -683,7 +683,7 @@ static int ifoRead_PGC(ifo_handle_t *ifofile, pgc_t *pgc, unsigned int offset) {
     pgc->command_tbl = NULL;
   }
   
-  if(pgc->program_map_offset != 0) {
+  if(pgc->program_map_offset != 0 && pgc->nr_of_programs>0) {
     pgc->program_map = malloc(pgc->nr_of_programs * sizeof(pgc_program_map_t));
     if(!pgc->program_map) {
       ifoFree_PGC_COMMAND_TBL(pgc->command_tbl);
@@ -699,7 +699,7 @@ static int ifoRead_PGC(ifo_handle_t *ifofile, pgc_t *pgc, unsigned int offset) {
     pgc->program_map = NULL;
   }
   
-  if(pgc->cell_playback_offset != 0) {
+  if(pgc->cell_playback_offset != 0 && pgc->nr_of_cells>0) {
     pgc->cell_playback = malloc(pgc->nr_of_cells * sizeof(cell_playback_t));
     if(!pgc->cell_playback) {
       ifoFree_PGC_COMMAND_TBL(pgc->command_tbl);
@@ -720,7 +720,7 @@ static int ifoRead_PGC(ifo_handle_t *ifofile, pgc_t *pgc, unsigned int offset) {
     pgc->cell_playback = NULL;
   }
   
-  if(pgc->cell_position_offset != 0) {
+  if(pgc->cell_position_offset != 0 && pgc->nr_of_cells>0) {
     pgc->cell_position = malloc(pgc->nr_of_cells * sizeof(cell_position_t));
     if(!pgc->cell_position) {
       ifoFree_PGC(pgc);
