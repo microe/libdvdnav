@@ -39,6 +39,67 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
   return S_OK;
 }
 
+/* Scan the ADMAP for a particular block number. */
+/* Return placed in vobu. */
+/* Returns error status */
+
+dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, int32_t seekto_block, int32_t *vobu) {
+  /* FIXME:Need to handle seeking outside current cell. */
+  vobu_admap_t *admap = NULL;
+  *vobu = -1;
+  fprintf(stderr,"Seeking to target %u ...\n",
+              seekto_block);
+
+  /* Search through the VOBU_ADMAP for the nearest VOBU
+   * to the target block */
+  switch(domain) {
+    case FP_DOMAIN:
+    case VMGM_DOMAIN:
+      admap = this->vm->vmgi->menu_vobu_admap;
+      break;
+    case VTSM_DOMAIN:
+      admap = this->vm->vtsi->menu_vobu_admap;
+      break;
+    case VTS_DOMAIN:
+      admap = this->vm->vtsi->vts_vobu_admap;
+      break;
+    default:
+      fprintf(stderr,"Error: Unknown domain for seeking seek.\n");
+  }
+  if(admap) {
+    int32_t address = 0;
+    int32_t vobu_start, next_vobu;
+    int found = 0;
+
+    /* Search through ADMAP for best sector */
+    vobu_start = 0x3fffffff;
+    /* FIXME: Implement a faster search algorithm */
+    while((!found) && ((address<<2) < admap->last_byte)) {
+      next_vobu = admap->vobu_start_sectors[address];
+
+      /* printf("Found block %u\n", next_vobu); */
+
+      if(vobu_start <= seekto_block &&
+          next_vobu > seekto_block) {
+        found = 1;
+      } else {
+        vobu_start = next_vobu;
+      }
+
+      address ++;
+    }
+    if(found) {
+      *vobu = vobu_start;
+      return S_OK;
+    } else {
+      fprintf(stderr,"Could not locate block\n");
+      return S_ERR;
+    }
+  }
+  fprintf(stderr,"admap not located\n");
+  return S_ERR;
+}
+
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
 				   unsigned long int offset, int origin) {
 /* FIXME: Implement */
@@ -125,33 +186,35 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
   }
 
   if(fnd_cell_nr <= last_cell_nr) {
+    int32_t vobu, start, blockN;
+    dvdnav_status_t status;
     fprintf(stderr,"Seeking to cell %i from choice of %i to %i\n",
 	   fnd_cell_nr, first_cell_nr, last_cell_nr);
-    this->seekto_block = target;
-    this->seeking = 1;
+    status = dvdnav_scan_admap(this, state->domain, target, &vobu);
     /* 
      * Clut does not actually change,
      * but as the decoders have been closed then opened,
      * A new clut has to be sent.
      */
-    this->spu_clut_changed = 1;
-    //ogle_do_post_jump(ogle);
-    fprintf(stderr,"FIXME: After cellN=%u blockN=%u\n" ,
+    start =(state->pgc->cell_playback[state->cellN - 1].first_sector); 
+    fprintf(stderr,"FIXME: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
       state->cellN,
+      state->blockN,
+      target,
+      vobu,
+      start);
+    state->blockN = vobu - start; 
+    fprintf(stderr,"FIXME: After vobu=%x start=%x blockN=%x\n" ,
+      vobu,
+      start,
       state->blockN);
-    
     pthread_mutex_unlock(&this->vm_lock);
     return target;
   } else {
     fprintf(stderr, "Error when seeking, asked to seek outside program\n");
   }
 
-
-
   fprintf(stderr,"FIXME: Implement seeking to location %u\n", target); 
-
-//  this->seekto_block=target;
-//  this->seeking = 1;
 
   pthread_mutex_unlock(&this->vm_lock);
   return -1;

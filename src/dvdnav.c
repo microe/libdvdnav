@@ -752,10 +752,12 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   }
   /* FIXME: Don't really need "cell", we only need vobu_start */
   if( (this->position_current.cell != this->position_next.cell) ||
-      (this->position_current.vobu_start != this->position_next.vobu_start) ) {
+      (this->position_current.vobu_start != this->position_next.vobu_start) ||
+      (this->position_current.vobu_next != this->position_next.vobu_next) ) {
     this->position_current.cell = this->position_next.cell;
     /* vobu_start changes when PGC or PG changes. */
     this->position_current.vobu_start = this->position_next.vobu_start;
+    this->position_current.vobu_next = this->position_next.vobu_next;
     /* FIXME: Need to set vobu_start, vobu_next */
     this->vobu.vobu_start = this->position_next.vobu_start; 
     /* vobu_next is use for mid cell resumes */
@@ -790,6 +792,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
         this->skip_still = 0;
         this->position_current.cell = this->position_next.cell;
         this->position_current.vobu_start = this->position_next.vobu_start;
+        this->position_current.vobu_next = this->position_next.vobu_next;
         this->vobu.vobu_start = this->position_next.vobu_start; 
         /* vobu_next is use for mid cell resumes */
         this->vobu.vobu_next = this->position_next.vobu_next; 
@@ -1009,6 +1012,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.11  2002/04/23 02:12:27  jcdutton
+ * Re-implemented seeking.
+ *
  * Revision 1.10  2002/04/23 00:07:16  jcdutton
  * Name stills work better.
  *

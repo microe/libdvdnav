@@ -263,6 +263,8 @@ int vm_start(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+  fprintf(stderr, "vm_start: blockN set to 0x%x\n", (vm->state).blockN);
+
 
   return 0; /* ?? */
 }
@@ -279,12 +281,12 @@ int vm_position_get(vm_t *vm, vm_position_t *position) {
   position->still = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].still_time;
   position->vobu_start = (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector;
   position->vobu_next = (vm->state).blockN;
-  position->vobu_next = 0; /* Just for now */
+//  position->vobu_next = 0; /* Just for now */
   return 1;
 }
 
 int vm_position_print(vm_t *vm, vm_position_t *position) {
-  fprintf(stderr, "But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x still=%x start=%x next=%d\n",
+  fprintf(stderr, "But=%x Spu=%x Aud=%x Ang=%x Hop=%x vts=%x dom=%x cell=%x still=%x start=%x next=%x\n",
   position->button,
   position->spu_channel,
   position->audio_channel,
@@ -308,6 +310,7 @@ int vm_start_title(vm_t *vm, int tt) {
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+  fprintf(stderr, "vm_start_title: blockN set to 0x%x\n", (vm->state).blockN);
 
   return 0; /* ?? */
 }
@@ -322,6 +325,7 @@ int vm_jump_prog(vm_t *vm, int pr) {
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+  fprintf(stderr, "vm_jump_prog: blockN set to 0x%x\n", (vm->state).blockN);
   
   return 0; /* ?? */
 }
@@ -334,6 +338,7 @@ int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd)
     link_values = process_command(vm, link_values);
     assert(link_values.command == PlayThis);
     (vm->state).blockN = link_values.data1;
+    fprintf(stderr, "vm_eval_cmd: blockN set to 0x%x\n", (vm->state).blockN);
     return 1; /*  Something changed, Jump */
   } else {
     return 0; /*  It updated some state thats all... */
@@ -347,6 +352,7 @@ int vm_get_next_cell(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+  fprintf(stderr, "vm_get_next_cell: blockN set to 0x%x\n", (vm->state).blockN);
   
   return 0; /*  ?? */
 }
@@ -358,6 +364,7 @@ int vm_top_pg(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+  fprintf(stderr, "vm_top_pg: blockN set to 0x%x\n", (vm->state).blockN);
   
   return 1; /*  Jump */
 }
@@ -373,6 +380,7 @@ int vm_go_up(vm_t *vm)
   link_values = process_command(vm,link_values);
   assert(link_values.command == PlayThis);
   (vm->state).blockN = link_values.data1;
+  fprintf(stderr, "vm_go_up: blockN set to 0x%x\n", (vm->state).blockN);
   
   return 1; /*  Jump */
 }
@@ -442,6 +450,7 @@ int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block)
       link_values = process_command(vm, link_values);
       assert(link_values.command == PlayThis);
       (vm->state).blockN = link_values.data1;
+      fprintf(stderr, "vm_menu_call: blockN set to 0x%x\n", (vm->state).blockN);
       return 1; /*  Jump */
     } else {
       (vm->state).domain = old_domain;
@@ -484,9 +493,11 @@ int vm_resume(vm_t *vm)
     link_values = process_command(vm, link_values);
     assert(link_values.command == PlayThis);
     (vm->state).blockN = link_values.data1;
+    fprintf(stderr, "vm_resume1: blockN set to 0x%x\n", (vm->state).blockN);
   } else { 
     (vm->state).cellN = (vm->state).rsm_cellN;
     (vm->state).blockN = (vm->state).rsm_blockN;
+    fprintf(stderr, "vm_resume2: blockN set to 0x%x\n", (vm->state).blockN);
     /* (vm->state).pgN = ?? does this gets the righ value in play_Cell, no! */
     if(set_PGN(vm)) {
       /* Were at or past the end of the PGC, should not happen for a RSM */
@@ -1608,6 +1619,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.13  2002/04/23 02:12:27  jcdutton
+ * Re-implemented seeking.
+ *
  * Revision 1.12  2002/04/22 22:00:48  jcdutton
  * Start of rewrite of libdvdnav. Still need to re-implement seeking.
  *
