@@ -31,6 +31,7 @@
 
 #include "dvdnav_internal.h"
 #include "read_cache.h"
+#include "nav_read.h"
 
 #include <stdlib.h>
 #include <stdio.h>
