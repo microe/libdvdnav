@@ -794,7 +794,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
      }
 
 
-    //result = DVDReadBlocks(this->file, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
+    /* result = DVDReadBlocks(this->file, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf); */
     result = dvdnav_read_cache_block(this->cache, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
 
     if(result <= 0) {
@@ -1010,6 +1010,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.39  2002/10/23 11:38:09  mroi
+ * port Stephen's comment fixing to avoid problems when syncing xine-lib's copy of
+ * libdvdnav
+ *
  * Revision 1.38  2002/09/19 04:48:28  jcdutton
  * Update version info.
  * The "note2" bit if to help developers know which version of libdvdnav the user is using.

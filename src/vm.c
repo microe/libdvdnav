@@ -1741,7 +1741,7 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int
   (vm->state).vtsN = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
   /* Any other registers? */
   
-  res = set_PGC(vm, pgcN);   // This clobber's state.pgN (sets it to 1), but we don't want clobbering here.
+  res = set_PGC(vm, pgcN);   /* This clobber's state.pgN (sets it to 1), but we don't want clobbering here. */
   (vm->state).pgN = pgN; /*  Part?? */
   return res;
 }
@@ -1988,6 +1988,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.37  2002/10/23 11:38:09  mroi
+ * port Stephen's comment fixing to avoid problems when syncing xine-lib's copy of
+ * libdvdnav
+ *
  * Revision 1.36  2002/09/22 11:53:32  mroi
  * small output beautification
  *
