@@ -31,25 +31,24 @@ dnl    LT_REVISION ++;
 dnl else { /* interfaces have been added, removed or changed */
 dnl    LT_REVISION = 0;
 dnl    LT_CURRENT ++;
-dnl /*
-dnl The LT_AGE number is how many consecutive versions of the API the
-dnl current implementation supports. Thus, if the CURRENT library API is
-dnl the sixth published version of the interface and it is also binary
-dnl compatible with the fourth and fifth versions (i.e., the last two),
-dnl the CURRENT:REVISION:AGE might be 6:0:2. When you break binary
-dnl compatibility, for example by removing a public function call, you
-dnl need to set AGE to 0 and, of course, increment CURRENT.
-dnl In linux, the final .so number is CURRENT-AGE.AGE.REVISION
-dnl As libdvdnav is changing so much, the advice will be to keep LT_AGE
-dnl always = 0
-dnl */
 dnl    if (any interfaces have been _added_ since last release)
 dnl       AGE ++;
-dnl    if (any interfaces have been _removed_ or incompatibly changed)
+dnl    if (any interfaces have been _removed_ or _incompatibly changed_)
 dnl       AGE = 0;
 dnl }
+dnl 
+dnl If you want to know more about what you are doing, here are some details:
+dnl  * LT_CURRENT is the current API version
+dnl  * LT_REVISION is an internal revision number which is increased when the API
+dnl    itself did not change
+dnl  * LT_AGE is the number of previous API versions still supported by this library
+dnl  * libtool has its own numbering scheme, because local library numbering schemes
+dnl    are platform dependent
+dnl  * in Linux, the library will be named
+dnl    libname.so.(LT_CURRENT - LT_AGE).LT_AGE.LT_REVISION
+
 LT_CURRENT=5
-LT_AGE=0
+LT_AGE=1
 LT_REVISION=0
 
 AC_SUBST(LT_CURRENT)
