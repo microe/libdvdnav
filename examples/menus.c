@@ -35,6 +35,10 @@
 /* which is the default language for menus/audio/subpictures? */
 #define DVD_LANGUAGE "en"
 
+#ifdef WIN32
+#define S_IRWXG 0
+#endif
+
 int main(int argc, char **argv) {
   dvdnav_t *dvdnav;
   uint8_t mem[DVD_VIDEO_LB_LEN];

@@ -33,11 +33,35 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
-#include <pthread.h>
 
-#include "dvd_reader.h"
-#include "ifo_read.h"
-#include "ifo_types.h"
+#ifdef WIN32
+/* pthread_mutex_* wrapper for win32 */
+#include <windows.h>
+#include <process.h>
+typedef CRITICAL_SECTION pthread_mutex_t;
+#define pthread_mutex_init(a, b) InitializeCriticalSection(a)
+#define pthread_mutex_lock(a)    EnterCriticalSection(a)
+#define pthread_mutex_unlock(a)  LeaveCriticalSection(a)
+#define pthread_mutex_destroy(a)
+#else
+#include <pthread.h>
+#endif
+
+/* misc win32 helpers */
+#ifdef WIN32
+/* replacement gettimeofday implementation */
+#include <sys/timeb.h>
+static inline int gettimeofday( struct timeval *tv, void *tz )
+{
+  struct timeb t;
+  ftime( &t );
+  tv->tv_sec = t.time;
+  tv->tv_usec = t.millitm * 1000;
+  return 0;
+}
+#include <io.h> /* read() */
+#define lseek64 _lseeki64
+#endif
 
 /* Uncomment for VM command tracing */
 /* #define TRACE */

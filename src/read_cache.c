@@ -31,8 +31,8 @@
 #endif
 
 #include "dvdnav.h"
+#include "dvdnav_internal.h"
 #include "read_cache.h"
-#include <pthread.h>
 #include <sys/time.h>
 #include <time.h>
 

@@ -139,6 +139,8 @@ case $host in
     THREAD_CFLAGS="-I/usr/local/include -D_THREAD_SAFE"
     CFLAGS="$THREAD_CFLAGS $CFLAGS"
     ;;
+  *mingw32* | *cygwin*)
+    ;;
   *)
     AC_CHECK_LIB(pthread, pthread_create,
 	[THREAD_LIBS="-lpthread"],
@@ -151,12 +153,18 @@ AC_SUBST(THREAD_CFLAGS)
 dnl ---------------------------------------------
 dnl dynamic linker
 dnl ---------------------------------------------
-AC_CHECK_LIB(c, dlopen,
-	     DYNAMIC_LD_LIBS="",
-	     AC_CHECK_LIB(dl, dlopen,
-             	          DYNAMIC_LD_LIBS="-ldl",
-	                  AC_MSG_ERROR(dynamic linker needed)))
-AC_SUBST(DYNAMIC_LD_LIBS)
+case $host in
+  *mingw32* | *cygwin*)
+    ;;
+  *)
+    AC_CHECK_LIB(c, dlopen,
+	         DYNAMIC_LD_LIBS="",
+	         AC_CHECK_LIB(dl, dlopen,
+             	              DYNAMIC_LD_LIBS="-ldl",
+	                      AC_MSG_ERROR(dynamic linker needed)))
+    AC_SUBST(DYNAMIC_LD_LIBS)
+    ;;
+esac
 
 dnl ---------------------------------------------
 dnl cflags
