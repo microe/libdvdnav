@@ -37,8 +37,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <dvdread/ifo_types.h>
-#include <dvdread/ifo_read.h>
+#include "ifo_types.h"
+#include "ifo_read.h"
 
 #include "dvdnav_internal.h"
 
@@ -1841,6 +1841,10 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.58  2003/04/27 01:26:18  jcdutton
+ * Modified libdvdnav to do without libdvdread.
+ * Use internal ifo tools.
+ *
  * Revision 1.57  2003/04/21 13:24:31  mroi
  * some code beautification:
  * * rename vm_resume to vm_jump_resume for consistency's sake

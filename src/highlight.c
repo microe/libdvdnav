@@ -26,7 +26,7 @@
 #endif
 
 #include <assert.h>
-#include <dvdread/nav_types.h>
+#include "nav_types.h"
 #include "dvdnav_internal.h"
 
 /*
@@ -35,7 +35,7 @@
 
 #ifdef BUTTON_TESTING
 
-#include <dvdread/nav_print.h>
+#include "nav_print.h"
 
 static void print_time(dvd_time_t *dtime) {
   const char *rate;

@@ -26,7 +26,7 @@
 #define VMCMD_H_INCLUDED
 
 #include <inttypes.h>
-#include <dvdread/ifo_types.h> /*  Only for vm_cmd_t  */
+#include "ifo_types.h" /*  Only for vm_cmd_t  */
 #include "dvdnav_internal.h"
 
 #ifdef TRACE

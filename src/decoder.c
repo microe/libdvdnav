@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>  /* For memset */
-#include <dvdread/ifo_types.h> /* vm_cmd_t */
+#include "ifo_types.h" /* vm_cmd_t */
 #include <assert.h>
 #include "dvdnav_internal.h"
 

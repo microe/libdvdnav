@@ -28,9 +28,9 @@
 #ifndef DVDNAV_EVENTS_H_INCLUDED
 #define DVDNAV_EVENTS_H_INCLUDED
 
-#include <dvdread/ifo_types.h>
-#include <dvdread/dvd_reader.h>
-#include <dvdread/nav_types.h>
+#include "ifo_types.h"
+#include "dvd_reader.h"
+#include "nav_types.h"
 
 
 /*

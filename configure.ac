@@ -15,7 +15,7 @@ dnl Making releases: DVDNAV_SUB += 1; change LT_* accordingly
 dnl --------------------------------------------------------------
 DVDNAV_MAJOR=0
 DVDNAV_MINOR=1
-DVDNAV_SUB=8
+DVDNAV_SUB=9
 DVDNAV_PRE="cvs"
 
 AC_SUBST(DVDNAV_MAJOR)
@@ -37,7 +37,7 @@ dnl    if (any interfaces have been _removed_ or incompatibly changed)
 dnl       AGE = 0;
 dnl }
 LT_CURRENT=3
-LT_AGE=2
+LT_AGE=3
 LT_REVISION=0
 
 AC_SUBST(LT_CURRENT)
@@ -155,22 +155,6 @@ AC_CHECK_LIB(c, dlopen,
              	          DYNAMIC_LD_LIBS="-ldl",
 	                  AC_MSG_ERROR(dynamic linker needed)))
 AC_SUBST(DYNAMIC_LD_LIBS)
-
-dnl ---------------------------------------------
-dnl Check for DVDReader
-dnl ---------------------------------------------
-AC_CHECK_LIB(dvdread,
-	     DVDOpen,
-	     [
-		DVDREAD_LIBS="-ldvdread"
-		AC_DEFINE(HAVE_LIBDVDREAD, 1, [Define this if you have libdvdread installed])
-		AC_CHECK_LIB(dvdread,
-			UDFReadLB,
-			[AC_MSG_ERROR(You need at least libdvdread 0.9.x or higher)],
-			[:])
-	     ],
- 	     AC_MSG_ERROR(Could not find libdvdread. It is needed))
-AC_SUBST(DVDREAD_LIBS)
 
 dnl ---------------------------------------------
 dnl cflags

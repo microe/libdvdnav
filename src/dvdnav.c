@@ -33,7 +33,7 @@
 #include "dvdnav_internal.h"
 #include "read_cache.h"
 
-#include <dvdread/nav_read.h>
+#include "nav_read.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1090,6 +1090,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.53  2003/04/27 01:26:18  jcdutton
+ * Modified libdvdnav to do without libdvdread.
+ * Use internal ifo tools.
+ *
  * Revision 1.52  2003/04/06 13:05:45  mroi
  * report start of PG as well
  *
