@@ -202,7 +202,7 @@ static void print_reg_or_data(command_t* command, int immediate, int start) {
 
 static void print_reg_or_data_2(command_t* command, int immediate, int start) {
   if(immediate)
-    fprintf(MSG_OUT, "0x%x", vm_getbits(command, start - 9, 7));
+    fprintf(MSG_OUT, "0x%x", vm_getbits(command, start - 1, 7));
   else
     fprintf(MSG_OUT, "g[%" PRIu8 "]", vm_getbits(command, start - 4, 4));
 }

@@ -110,11 +110,11 @@ static uint16_t eval_reg(command_t* command, uint8_t reg) {
 /* Eval register or immediate data.
    AAAA_AAAA BBBB_BBBB, if immediate use all 16 bits for data else use
    lower eight bits for the system or general purpose register. */
-static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t byte) {
+static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t start) {
   if(imm) { /*  immediate */
-    return vm_getbits(command, 63 - (byte*8), 16);
+    return vm_getbits(command, start, 16);
   } else {
-    return eval_reg(command, vm_getbits(command, 63 - ((byte + 1)*8), 8));
+    return eval_reg(command, vm_getbits(command, (start - 8), 8));
   }
 }
 
@@ -122,11 +122,11 @@ static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t byte) 
    xBBB_BBBB, if immediate use all 7 bits for data else use
    lower four bits for the general purpose register number. */
 /* Evaluates gprm or data depending on bit, data is in byte n */
-uint16_t eval_reg_or_data_2(command_t* command, int32_t imm, int32_t byte) {
+uint16_t eval_reg_or_data_2(command_t* command, int32_t imm, int32_t start) {
   if(imm) /* immediate */
-    return vm_getbits(command, 63 - ((byte*8)+1), 7);
+    return vm_getbits(command, (start - 1), 7);
   else
-    return get_GPRM(command->registers, (vm_getbits(command, 63 - ((byte*8)+4), 4)) );
+    return get_GPRM(command->registers, (vm_getbits(command, (start - 4), 4)) );
 }
 
 
@@ -160,7 +160,7 @@ static int32_t eval_if_version_1(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
     return eval_compare(op, eval_reg(command, vm_getbits(command, 39, 8)), 
-                            eval_reg_or_data(command, vm_getbits(command, 55, 1), 4));
+                            eval_reg_or_data(command, vm_getbits(command, 55, 1), 31));
   }
   return 1;
 }
@@ -182,7 +182,7 @@ static int32_t eval_if_version_3(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
     return eval_compare(op, eval_reg(command, vm_getbits(command, 47, 8)), 
-                            eval_reg_or_data(command, vm_getbits(command, 55, 1), 6));
+                            eval_reg_or_data(command, vm_getbits(command, 55, 1), 15));
   }
   return 1;
 }
@@ -194,7 +194,7 @@ static int32_t eval_if_version_4(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
     return eval_compare(op, eval_reg(command, vm_getbits(command, 51, 4)), 
-                            eval_reg_or_data(command, vm_getbits(command, 55, 1), 4));
+                            eval_reg_or_data(command, vm_getbits(command, 55, 1), 31));
   }
   return 1;
 }
@@ -358,7 +358,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
     case 1: /*  Set system reg 1 &| 2 &| 3 (Audio, Subp. Angle) */
       for(i = 1; i <= 3; i++) {
         if(vm_getbits(command, 63 - ((2 + i)*8), 1)) {
-          data = eval_reg_or_data_2(command, vm_getbits(command, 60, 1), 2 + i);
+          data = eval_reg_or_data_2(command, vm_getbits(command, 60, 1), (47 - (i*8)));
           if(cond) {
             command->registers->SPRM[i] = data;
           }
@@ -366,7 +366,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       }
       break;
     case 2: /*  Set system reg 9 & 10 (Navigation timer, Title PGC number) */
-      data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 2);
+      data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 47);
       data2 = vm_getbits(command, 23, 8); /*  ?? size */
       if(cond) {
 	command->registers->SPRM[9] = data; /*  time */
@@ -374,7 +374,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       }
       break;
     case 3: /*  Mode: Counter / Register + Set */
-      data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 2);
+      data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 47);
       data2 = vm_getbits(command, 19, 4);
       if(vm_getbits(command, 23, 1)) {
 	command->registers->GPRM_mode[data2] |= 1; /* Set bit 0 */
@@ -386,7 +386,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
       }
       break;
     case 6: /*  Set system reg 8 (Highlighted button) */
-      data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 4); /*  Not system reg!! */
+      data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 31); /*  Not system reg!! */
       if(cond) {
 	command->registers->SPRM[8] = data;
       }
@@ -459,7 +459,7 @@ static void eval_set_version_1(command_t* command, int32_t cond) {
   uint8_t  op   = vm_getbits(command, 59, 4);
   uint8_t  reg  = vm_getbits(command, 35, 4); /* FIXME: This is different from vmcmd.c!!! */
   uint8_t  reg2 = vm_getbits(command, 19, 4);
-  uint16_t data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 4);
+  uint16_t data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 31);
 
   if(cond) {
     eval_set_op(command, op, reg, reg2, data);
@@ -472,7 +472,7 @@ static void eval_set_version_2(command_t* command, int32_t cond) {
   uint8_t  op   = vm_getbits(command, 59, 4);
   uint8_t  reg  = vm_getbits(command, 51, 4);
   uint8_t  reg2 = vm_getbits(command, 35, 4); /* FIXME: This is different from vmcmd.c!!! */
-  uint16_t data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 2);
+  uint16_t data = eval_reg_or_data(command, vm_getbits(command, 60, 1), 47);
 
   if(cond) {
     eval_set_op(command, op, reg, reg2, data);
