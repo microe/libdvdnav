@@ -34,6 +34,30 @@
 #include <assert.h>
 #include "dvdnav_internal.h"
 
+uint32_t vm_getbits(command_t *command, int start, int count) {
+  uint64_t result = 0;
+  uint64_t bit_mask=0xffffffffffffffff;  /* I could put -1 instead */
+  uint64_t examining = 0;
+  int32_t  bits;
+
+  if (count == 0) return 0;
+
+  if ( ((start - count) < -1) ||
+       (count > 32) ||
+       (start > 63) ||
+       (count < 0) ||
+       (start < 0) ) {
+    fprintf(MSG_OUT, "libdvdnav: Bad call to vm_getbits. Parameter out of range\n");
+    assert(0);
+  }
+  bit_mask >>= 63 - start;
+  bits = start + 1 - count;
+  examining = ((bit_mask >> bits) << bits );
+  command->examined |= examining;
+  result = (command->instruction & bit_mask) >> bits;
+  return (uint32_t) result;
+}
+
 static uint16_t get_GPRM(registers_t* registers, uint8_t reg) {
   if (registers->GPRM_mode[reg] & 0x01) {
     struct timeval current_time, time_offset;
