@@ -138,6 +138,7 @@ struct dvdnav_s {
   int at_soc;      /* Are we at the start of a cell? */
   int still_frame; /* >=0 send still frame event with len still_frame
                     * -1 don't send event. */
+  int skip_still;  /* Set when skipping a still */
   int jumping;     /* non-zero if we are in the process of jumping */
   int seeking;     /* non-zero if we are in the process of seeking */
   int stop;        /* Are we stopped? (note not paused, actually stopped) */

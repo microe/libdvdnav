@@ -243,6 +243,7 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   this->expecting_nav_packet = 1;
   this->at_soc = 1;
   this->position_current.still = 0;
+  this->skip_still = 0;
   this->jumping = 0;
   this->seeking = 0;
   this->stop = 0;
@@ -642,14 +643,17 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   //  if (0) {
     dvdnav_highlight_event_t hevent;
     dvdnav_highlight_area_t highlight;
+    dvdnav_status_t status;
 
    
     /* Fill in highlight struct with appropriate values */
-    //if(this->hli_state != 0) {
-      if (1) {
+    if(this->hli_state != 0) {
+    //  if (1) {
       hevent.display = 1;
-      dvdnav_get_highlight_area(&this->pci , this->position_next.button, 0,
+      status = dvdnav_get_highlight_area(&this->pci , this->position_next.button, 0,
                                            &highlight);
+      
+      fprintf(stderr,"libdvdnav:read_block_loop: button area status = %d\n", status);
       /* Copy current button bounding box. */
       hevent.sx = highlight.sx;
       hevent.sy = highlight.sy;
@@ -662,17 +666,19 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 
     } else {
       hevent.display = 0;
+      status = S_OK;
     }
-   // FIXME: Change this to DVDNAV_BUTTON 
-    (*event) = DVDNAV_HIGHLIGHT;
-    memcpy(buf, &(hevent), sizeof(hevent));
-    (*len) = sizeof(hevent);
-    
     this->highlight_changed = 0;
     this->position_current.button = this->position_next.button;
     
-    pthread_mutex_unlock(&this->vm_lock); 
-    return S_OK;
+    if (status) {
+   // FIXME: Change this to DVDNAV_BUTTON 
+      (*event) = DVDNAV_HIGHLIGHT;
+      (*len) = sizeof(hevent);
+      memcpy(buf, &(hevent), sizeof(hevent));
+      pthread_mutex_unlock(&this->vm_lock); 
+      return S_OK;
+    }
   }
 
   /* Check to see if we need to change the currently opened VOB */
@@ -776,10 +782,12 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
       fprintf(stderr, "Still set to %x\n", this->position_next.still);
       this->position_current.still = this->position_next.still;
 
-      if(this->position_current.still == 0) {
+      if( this->position_current.still == 0 || this->skip_still ) {
         vm_get_next_cell(this->vm);
         vm_position_get(this->vm,&this->position_next);
         /* FIXME: Need to set vobu_start, vobu_next */
+        this->position_current.still = 0; /* still gets activated at end of cell */
+        this->skip_still = 0;
         this->position_current.cell = this->position_next.cell;
         this->position_current.vobu_start = this->position_next.vobu_start;
         this->vobu.vobu_start = this->position_next.vobu_start; 
@@ -1001,6 +1009,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.10  2002/04/23 00:07:16  jcdutton
+ * Name stills work better.
+ *
  * Revision 1.9  2002/04/22 22:00:48  jcdutton
  * Start of rewrite of libdvdnav. Still need to re-implement seeking.
  *

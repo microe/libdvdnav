@@ -48,6 +48,7 @@ dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
    return S_ERR;
 
   this->position_current.still = 0;
+  this->skip_still = 1;
 
   return S_OK;
 }
