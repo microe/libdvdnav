@@ -915,7 +915,7 @@ static link_t play_PGC_PG(vm_t *vm, int pgN) {
   link_t link_values;
   
 #ifdef TRACE
-  fprintf(MSG_OUT, "libdvdnav: play_PGC:");
+  fprintf(MSG_OUT, "libdvdnav: play_PGC_PG:");
   if((vm->state).domain != FP_DOMAIN) {
     fprintf(MSG_OUT, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
   } else {
@@ -1214,7 +1214,6 @@ static int process_command(vm_t *vm, link_t link_values) {
     case LinkTopPG:
       /* Link to Top of Program */
       /* BUTTON number:data1 */
-      fprintf(MSG_OUT, "libdvdnav: FIXME: LinkTopPG. This should start the current PG again.\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PG(vm);
@@ -1808,6 +1807,12 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.51  2003/04/01 11:35:39  mroi
+ * * fix TRACE output for play_PGC_PG
+ * * remove FIXME output for LinkTopPG, I have seen a disc which makes heavy use of
+ *   this command and it works fine, so I think we can assume that our implementation
+ *   is correct
+ *
  * Revision 1.50  2003/03/29 12:21:15  mroi
  * dvd_read_name can be static and does not need the whole vm_t*
  *
