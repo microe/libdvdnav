@@ -22,44 +22,62 @@
  *
  */
 
+/*
+ * Various useful structs and enums for DVDs.
+ */
+
 #ifndef DVD_H_INCLUDED
 #define DVD_H_INCLUDED
 
 #include <inttypes.h>
 
-/**
- * \file dvd_types.h
- *
- * Various useful structs and enums for DVDs.
- */
 
-/**
- * DVD Domain
+/*
+ * DVD Menu ID
+ * (see dvdnav_menu_call())
  */
 typedef enum {
-  DVD_DOMAIN_FirstPlay,  /**< First Play Domain */
-  DVD_DOMAIN_VMG,        /**< Video Manager Domain */
-  DVD_DOMAIN_VTSMenu,    /**< Video Title Set Menu Domain */
-  DVD_DOMAIN_VTSTitle,   /**< Video Title Set Domain */
-  DVD_DOMAIN_Stop        /**< Stop Domain */
-} DVDDomain_t;
-
-/**
- * DVD Menu
- */
-typedef enum {
-  DVD_MENU_Escape     = 0, /**< TBD */
-  DVD_MENU_Title      = 2, /**< TBD */
-  DVD_MENU_Root       = 3, /**< TBD */
-  DVD_MENU_Subpicture = 4, /**< TBD */
-  DVD_MENU_Audio      = 5, /**< TBD */
-  DVD_MENU_Angle      = 6, /**< TBD */
-  DVD_MENU_Part       = 7  /**< TBD */
+  /* When used in VTS domain, DVD_MENU_Escape behaves like DVD_MENU_Title,
+   * but from within a menu domain, DVD_MENU_Escape resumes playback. */
+  DVD_MENU_Escape     = 0,
+  DVD_MENU_Title      = 2,
+  DVD_MENU_Root       = 3,
+  DVD_MENU_Subpicture = 4,
+  DVD_MENU_Audio      = 5,
+  DVD_MENU_Angle      = 6,
+  DVD_MENU_Part       = 7
 } DVDMenuID_t;
 
-/**
- * User operations
+
+/*
+ * Structure containing info on highlight areas
+ * (see dvdnav_get_highlight_area())
  */
+typedef struct {
+  uint32_t palette;     /* The CLUT entries for the highlight palette 
+			   (4-bits per entry -> 4 entries) */
+  uint16_t sx,sy,ex,ey; /* The start/end x,y positions */
+  uint32_t pts;         /* Highlight PTS to match with SPU */
+
+  /* button number for the SPU decoder/overlaying engine */
+  uint32_t buttonN;
+} dvdnav_highlight_area_t;
+
+
+/* the following types are currently unused */
+
+#if 0
+
+/* Domain */
+typedef enum {
+  DVD_DOMAIN_FirstPlay,  /* First Play Domain */
+  DVD_DOMAIN_VMG,        /* Video Manager Domain */
+  DVD_DOMAIN_VTSMenu,    /* Video Title Set Menu Domain */
+  DVD_DOMAIN_VTSTitle,   /* Video Title Set Domain */
+  DVD_DOMAIN_Stop        /* Stop Domain */
+} DVDDomain_t;
+
+/* User operation permissions */
 typedef enum {
   UOP_FLAG_TitleOrTimePlay            = 0x00000001, 
   UOP_FLAG_ChapterSearchOrPlay        = 0x00000002, 
@@ -88,10 +106,7 @@ typedef enum {
   UOP_FLAG_VideoPresModeChange        = 0x01000000 
 } DVDUOP_t;
 
-
-/**
- * Parental Level
- */
+/* Parental Level */
 typedef enum {
   DVD_PARENTAL_LEVEL_1 = 1,
   DVD_PARENTAL_LEVEL_2 = 2,
@@ -104,38 +119,30 @@ typedef enum {
   DVD_PARENTAL_LEVEL_None = 15
 } DVDParentalLevel_t;
 
-/**
- * Language ID (ISO-639 language code)
- */
+/* Language ID (ISO-639 language code) */
 typedef uint16_t DVDLangID_t;
 
-/**
- * Country ID (ISO-3166 country code)
- */
+/* Country ID (ISO-3166 country code) */
 typedef uint16_t DVDCountryID_t;
 
-/**
- * Register
- */
+/* Register */
 typedef uint16_t DVDRegister_t;
-
 typedef enum {
   DVDFalse = 0,
   DVDTrue = 1
 } DVDBool_t; 
-
 typedef DVDRegister_t DVDGPRMArray_t[16];
 typedef DVDRegister_t DVDSPRMArray_t[24];
 
+/* Navigation */
 typedef int DVDStream_t;
-
-/**
- * Angle number (1-9 or default?)
- */
-typedef int DVDAngle_t;
-
 typedef int DVDPTT_t;
 typedef int DVDTitle_t;
+
+/* Angle number (1-9 or default?) */
+typedef int DVDAngle_t;
+
+/* Timecode */
 typedef struct {
   uint8_t Hours;
   uint8_t Minutes;
@@ -143,56 +150,43 @@ typedef struct {
   uint8_t Frames;
 } DVDTimecode_t;
 
-/** 
- * Subpicture stream number (0-31,62,63)
- */
+/* Subpicture stream number (0-31,62,63) */
 typedef int DVDSubpictureStream_t;  
 
-/** 
- * Audio stream number (0-7, 15(none))
- */
+/* Audio stream number (0-7, 15(none)) */
 typedef int DVDAudioStream_t;  
 
-
-/**
- * The audio application mode
- */
+/* The audio application mode */
 typedef enum {
-  DVD_AUDIO_APP_MODE_None     = 0, /**< app mode none     */
-  DVD_AUDIO_APP_MODE_Karaoke  = 1, /**< app mode karaoke  */
-  DVD_AUDIO_APP_MODE_Surround = 2, /**< app mode surround */
-  DVD_AUDIO_APP_MODE_Other    = 3  /**< app mode other    */
+  DVD_AUDIO_APP_MODE_None     = 0,
+  DVD_AUDIO_APP_MODE_Karaoke  = 1,
+  DVD_AUDIO_APP_MODE_Surround = 2,
+  DVD_AUDIO_APP_MODE_Other    = 3
 } DVDAudioAppMode_t;
 
-/**
- * The audio format
- */
+/* The audio format */
 typedef enum {
-  DVD_AUDIO_FORMAT_AC3       = 0, /**< Dolby AC-3 */
-  DVD_AUDIO_FORMAT_MPEG1     = 1, /**< MPEG-1 */
-  DVD_AUDIO_FORMAT_MPEG1_DRC = 2, /**< MPEG-1 with dynamic range control */
-  DVD_AUDIO_FORMAT_MPEG2     = 3, /**< MPEG-2 */
-  DVD_AUDIO_FORMAT_MPEG2_DRC = 4, /**< MPEG-2 with dynamic range control */
-  DVD_AUDIO_FORMAT_LPCM      = 5, /**< Linear Pulse Code Modulation */
-  DVD_AUDIO_FORMAT_DTS       = 6, /**< Digital Theater Systems */
-  DVD_AUDIO_FORMAT_SDDS      = 7, /**< Sony Dynamic Digital Sound */
-  DVD_AUDIO_FORMAT_Other     = 8  /**< Other format*/
+  DVD_AUDIO_FORMAT_AC3       = 0,
+  DVD_AUDIO_FORMAT_MPEG1     = 1,
+  DVD_AUDIO_FORMAT_MPEG1_DRC = 2,
+  DVD_AUDIO_FORMAT_MPEG2     = 3,
+  DVD_AUDIO_FORMAT_MPEG2_DRC = 4,
+  DVD_AUDIO_FORMAT_LPCM      = 5,
+  DVD_AUDIO_FORMAT_DTS       = 6,
+  DVD_AUDIO_FORMAT_SDDS      = 7,
+  DVD_AUDIO_FORMAT_Other     = 8
 } DVDAudioFormat_t;
 
-/**
- * Audio language extension
- */
+/* Audio language extension */
 typedef enum {
-  DVD_AUDIO_LANG_EXT_NotSpecified       = 0, /**< TBD */
-  DVD_AUDIO_LANG_EXT_NormalCaptions     = 1, /**< TBD */
-  DVD_AUDIO_LANG_EXT_VisuallyImpaired   = 2, /**< TBD */
-  DVD_AUDIO_LANG_EXT_DirectorsComments1 = 3, /**< TBD */
-  DVD_AUDIO_LANG_EXT_DirectorsComments2 = 4  /**< TBD */
+  DVD_AUDIO_LANG_EXT_NotSpecified       = 0,
+  DVD_AUDIO_LANG_EXT_NormalCaptions     = 1,
+  DVD_AUDIO_LANG_EXT_VisuallyImpaired   = 2,
+  DVD_AUDIO_LANG_EXT_DirectorsComments1 = 3,
+  DVD_AUDIO_LANG_EXT_DirectorsComments2 = 4
 } DVDAudioLangExt_t;
 
-/**
- * Subpicture language extension
- */
+/* Subpicture language extension */
 typedef enum {
   DVD_SUBPICTURE_LANG_EXT_NotSpecified  = 0,
   DVD_SUBPICTURE_LANG_EXT_NormalCaptions  = 1,
@@ -207,9 +201,7 @@ typedef enum {
   DVD_SUBPICTURE_LANG_EXT_ChildrensDirectorsComments  = 15,
 } DVDSubpictureLangExt_t;  
 
-/**
- * Karaoke Downmix mode
- */
+/* Karaoke Downmix mode */
 typedef enum {
   DVD_KARAOKE_DOWNMIX_0to0 = 0x0001,
   DVD_KARAOKE_DOWNMIX_1to0 = 0x0002,
@@ -226,9 +218,9 @@ typedef enum {
   DVD_KARAOKE_DOWNMIX_Lto1 = 0x2000,
   DVD_KARAOKE_DOWNMIX_Rto1 = 0x4000
 } DVDKaraokeDownmix_t;
-
 typedef int DVDKaraokeDownmixMask_t;
 
+/* Display mode */
 typedef enum {
   DVD_DISPLAY_MODE_ContentDefault = 0,
   DVD_DISPLAY_MODE_16x9 = 1,
@@ -236,11 +228,7 @@ typedef enum {
   DVD_DISPLAY_MODE_4x3Letterboxed = 3  
 } DVDDisplayMode_t;
 
-typedef int DVDAudioSampleFreq_t;  /**< TBD */
-typedef int DVDAudioSampleQuant_t; /**< TBD */
-typedef int DVDChannelNumber_t;    /**< TBD */
-
-
+/* Audio attributes */
 typedef struct {
   DVDAudioAppMode_t     AppMode;
   DVDAudioFormat_t      AudioFormat;
@@ -251,19 +239,21 @@ typedef struct {
   DVDAudioSampleQuant_t SampleQuantization;
   DVDChannelNumber_t    NumberOfChannels;
 } DVDAudioAttributes_t;
+typedef int DVDAudioSampleFreq_t;
+typedef int DVDAudioSampleQuant_t;
+typedef int DVDChannelNumber_t;
 
+/* Subpicture attributes */
 typedef enum {
   DVD_SUBPICTURE_TYPE_NotSpecified = 0,
   DVD_SUBPICTURE_TYPE_Language     = 1,
   DVD_SUBPICTURE_TYPE_Other        = 2
 } DVDSubpictureType_t;
-
 typedef enum {
   DVD_SUBPICTURE_CODING_RunLength = 0,
   DVD_SUBPICTURE_CODING_Extended  = 1,
   DVD_SUBPICTURE_CODING_Other     = 2
 } DVDSubpictureCoding_t;
-
 typedef struct {
   DVDSubpictureType_t    Type;
   DVDSubpictureCoding_t  CodingMode;
@@ -271,8 +261,7 @@ typedef struct {
   DVDSubpictureLangExt_t LanguageExtension;
 } DVDSubpictureAttributes_t;
 
-typedef int DVDVideoCompression_t; /**< TBD */
-
+/* Video attributes */
 typedef struct {
   DVDBool_t PanscanPermitted;
   DVDBool_t LetterboxPermitted;
@@ -285,16 +274,8 @@ typedef struct {
   DVDBool_t Line21Field2InGop;
   int more_to_come;
 } DVDVideoAttributes_t;
+typedef int DVDVideoCompression_t;
 
-/**
- * Atructure containing info on highlight areas.
- */
-typedef struct {
-  uint32_t palette;  /*!< The CLUT entries for the highlight palette
-                        (4-bits per entry -> 4 entries) */
-  uint16_t sx,sy,ex,ey; /*!< The start/end x,y positions */
-  uint32_t pts;         /*!< Highlight PTS to match with SPU */
-  uint32_t buttonN;     /*!< Button number for the SPU decoder. */
-} dvdnav_highlight_area_t;
+#endif
 
 #endif /* DVD_H_INCLUDED */
