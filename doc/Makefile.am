@@ -1,4 +1,4 @@
-EXTRA_DIST = doxy.conf
+EXTRA_DIST = doxy.conf mainpage.cpp tutorial.cpp
 
 all: docs
 
