@@ -65,7 +65,7 @@
  * functionality! 
  */
 
-#elif defined(__FreeBSD__) || defined(__sun) || defined(__bsdi__)
+#elif defined(__FreeBSD__) || defined(__sun) || defined(__bsdi__) || defined(_MSC_VER)
 #define B2N_16(x) \
  x = ((((x) & 0xff00) >> 8) | \
       (((x) & 0x00ff) << 8))

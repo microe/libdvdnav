@@ -167,7 +167,7 @@ static void navPrint_BTNIT(btni_t *btni_table, int btngr_ns, int btn_ns) {
 	printf("left %d, ", btni->left);
 	printf("right %d\n", btni->right);
 	
-	// ifoPrint_COMMAND(&btni->cmd);
+	/* ifoPrint_COMMAND(&btni->cmd); */
 	printf("\n");
       }
     }

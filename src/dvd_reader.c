@@ -326,16 +326,22 @@ dvd_reader_t *DVDOpen( const char *path )
 
 #else
 
+    /* Try to open libdvdcss or fall back to standard functions */
+    have_css = dvdinput_setup();
+    
     ret = stat( path, &fileinfo );
     if( ret < 0 ) {
+
+        /* maybe "host:port" url? try opening it with acCeSS library */
+        if( strchr(path,':') ) {
+          return DVDOpenImageFile( path, have_css );
+        }
+      
 	/* If we can't stat the file, give up */
 	fprintf( stderr, "libdvdread: Can't stat %s\n", path );
 	perror("");
 	return 0;
     }
-
-    /* Try to open libdvdcss or fall back to standard functions */
-    have_css = dvdinput_setup();
 
     /* First check if this is a block/char device or a file*/
     if( S_ISBLK( fileinfo.st_mode ) || 
@@ -953,7 +959,7 @@ int32_t DVDFileSeek( dvd_file_t *dvd_file, int32_t offset )
 
 ssize_t DVDReadBytes( dvd_file_t *dvd_file, void *data, size_t byte_size )
 {
-    unsigned char *secbuf;
+    unsigned char *secbuf_base, *secbuf;
     unsigned int numsec, seek_sector, seek_byte;
     int ret;
     
@@ -967,8 +973,9 @@ ssize_t DVDReadBytes( dvd_file_t *dvd_file, void *data, size_t byte_size )
     numsec = ( ( seek_byte + byte_size ) / DVD_VIDEO_LB_LEN ) +
       ( ( ( seek_byte + byte_size ) % DVD_VIDEO_LB_LEN ) ? 1 : 0 );
     
-    secbuf = (unsigned char *) malloc( numsec * DVD_VIDEO_LB_LEN );
-    if( !secbuf ) {
+    secbuf_base = (unsigned char *) malloc( numsec * DVD_VIDEO_LB_LEN + 2048 );
+    secbuf = (unsigned char *)(((int)secbuf_base & ~2047) + 2048);
+    if( !secbuf_base ) {
 	fprintf( stderr, "libdvdread: Can't allocate memory " 
 		 "for file read!\n" );
         return 0;
@@ -983,12 +990,12 @@ ssize_t DVDReadBytes( dvd_file_t *dvd_file, void *data, size_t byte_size )
     }
 
     if( ret != (int) numsec ) {
-        free( secbuf );
+        free( secbuf_base );
         return ret < 0 ? ret : 0;
     }
 
     memcpy( data, &(secbuf[ seek_byte ]), byte_size );
-    free( secbuf );
+    free( secbuf_base );
 
     dvd_file->seek_pos += byte_size;
     return byte_size;
@@ -1020,9 +1027,10 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 	if( dvd_file != NULL ) {
 	    ssize_t bytes_read;
 	    size_t file_size = dvd_file->filesize * DVD_VIDEO_LB_LEN;
-	    char *buffer = malloc( file_size );
+	    char *buffer_base = malloc( file_size + 2048 );
+	    char *buffer = (unsigned char *)(((int)buffer_base & ~2047) + 2048);
 	    
-	    if( buffer == NULL ) {
+	    if( buffer_base == NULL ) {
 		fprintf( stderr, "libdvdread: DVDDiscId, failed to "
 			 "allocate memory for file read!\n" );
 		return -1;
@@ -1032,13 +1040,14 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 		fprintf( stderr, "libdvdread: DVDDiscId read returned %d bytes"
 			 ", wanted %d\n", bytes_read, file_size );
 		DVDCloseFile( dvd_file );
+		free( buffer_base );
 		return -1;
 	    }
 	    
 	    md5_process_bytes( buffer, file_size,  &ctx );
 	    
 	    DVDCloseFile( dvd_file );
-	    free( buffer );
+	    free( buffer_base );
 	}
     }
     md5_finish_ctx( &ctx, discid );
@@ -1051,7 +1060,7 @@ int DVDISOVolumeInfo( dvd_reader_t *dvd,
 		      char *volid, unsigned int volid_size,
 		      unsigned char *volsetid, unsigned int volsetid_size )
 {
-  unsigned char *buffer;
+  unsigned char *buffer, *buffer_base;
   int ret;
 
   /* Check arguments. */
@@ -1063,8 +1072,10 @@ int DVDISOVolumeInfo( dvd_reader_t *dvd,
     return -1;
   }
   
-  buffer = malloc( DVD_VIDEO_LB_LEN );
-  if( buffer == NULL ) {
+  buffer_base = malloc( DVD_VIDEO_LB_LEN + 2048 );
+  buffer = (unsigned char *)(((int)buffer_base & ~2047) + 2048);
+
+  if( buffer_base == NULL ) {
     fprintf( stderr, "libdvdread: DVDISOVolumeInfo, failed to "
 	     "allocate memory for file read!\n" );
     return -1;
@@ -1074,6 +1085,7 @@ int DVDISOVolumeInfo( dvd_reader_t *dvd,
   if( ret != 1 ) {
     fprintf( stderr, "libdvdread: DVDISOVolumeInfo, failed to "
 	     "read ISO9660 Primary Volume Descriptor!\n" );
+    free( buffer_base );
     return -1;
   }
   
@@ -1099,6 +1111,7 @@ int DVDISOVolumeInfo( dvd_reader_t *dvd,
     }
     memcpy(volsetid, &buffer[190], volsetid_size);
   }
+  free( buffer_base );
   return 0;
 }
 

@@ -73,7 +73,7 @@ static void ifoPrint_CMD(int row, vm_cmd_t *command) {
     printf("%02x ", command->bytes[i]);
   printf("| ");
 
-  //vmcmd(command);
+  /* vmcmd(command); */
   printf("\n");
 }
 
@@ -129,19 +129,19 @@ static void ifoPrint_video_attributes(video_attr_t *attr) {
     printf("(please send a bug report) ");
   }
   
-  // Wide is allways allowed..!!!
+  /*  Wide is allways allowed..!!! */
   switch(attr->permitted_df) {
   case 0:
     printf("pan&scan+letterboxed ");
     break;
   case 1:
-    printf("only pan&scan "); //??
+    printf("only pan&scan "); /* ?? */
     break;
   case 2:
     printf("only letterboxed ");
     break;
   case 3:
-    // not specified
+    /* not specified */
     break;
   default:
     printf("(please send a bug report)");
@@ -198,7 +198,7 @@ static void ifoPrint_video_attributes(video_attr_t *attr) {
   if(attr->film_mode) {
     printf("film");
   } else {
-    printf("video"); //camera
+    printf("video"); /* camera */
   }
 }
 
@@ -251,7 +251,7 @@ static void ifoPrint_audio_attributes(audio_attr_t *attr) {
   
   switch(attr->lang_type) {
   case 0:
-    // not specified
+    /* not specified */
     CHECK_VALUE(attr->lang_code == 0 || attr->lang_code == 0xffff);
     break;
   case 1:
@@ -264,7 +264,7 @@ static void ifoPrint_audio_attributes(audio_attr_t *attr) {
 
   switch(attr->application_mode) {
   case 0:
-    // not specified
+    /* not specified */
     break;
   case 1:
     printf("karaoke mode ");
@@ -311,19 +311,19 @@ static void ifoPrint_audio_attributes(audio_attr_t *attr) {
   case 0:
     printf("Not specified ");
     break;
-  case 1: // Normal audio
+  case 1: /* Normal audio */
     printf("Normal Caption ");
     break;
-  case 2: // visually imparied
+  case 2: /* visually imparied */
     printf("Audio for visually impaired ");
     break;
-  case 3: // Directors 1
+  case 3: /* Directors 1 */
     printf("Director's comments 1 ");
     break;
-  case 4: // Directors 2
+  case 4: /* Directors 2 */
     printf("Director's comments 2 ");
     break;
-    //case 4: // Music score ?    
+    /* case 4: Music score ? */
   default:
     printf("(please send a bug report) ");
   }
@@ -913,7 +913,7 @@ void ifoPrint_C_ADT(c_adt_t *c_adt) {
   int i, entries;
   
   printf("Number of VOBs in this VOBS: %i\n", c_adt->nr_of_vobs);
-  //entries = c_adt->nr_of_vobs;
+  /* entries = c_adt->nr_of_vobs; */
   entries = (c_adt->last_byte + 1 - C_ADT_SIZE)/sizeof(c_adt_t);
   
   for(i = 0; i < entries; i++) {
@@ -1066,7 +1066,7 @@ void ifoPrint(dvd_reader_t *dvd, int title) {
     printf("\nText Data Manager Information\n");
     printf(  "-----------------------------\n");
     if(ifohandle->txtdt_mgi) {
-      //ifoPrint_TXTDT_MGI(&(vmgi->txtdt_mgi));
+      /* ifoPrint_TXTDT_MGI(&(vmgi->txtdt_mgi)); */
     } else {
       printf("No Text Data Manager Information present\n");
     }

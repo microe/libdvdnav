@@ -36,7 +36,7 @@
 #endif
 
 #include "md5.h"
-//#include "unlocked-io.h"
+/* #include "unlocked-io.h" */
 
 #ifdef _LIBC
 # include <endian.h>
