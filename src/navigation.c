@@ -60,8 +60,8 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int32_t *titles) {
     printerr("Passed a NULL pointer.");
     return DVDNAV_STATUS_ERR;
   }
-  if(!this->started) {
-    printerr("Virtual DVD machine not started.");
+  if (!this->vm->vmgi) {
+    printerr("Bad VM state.");
     return DVDNAV_STATUS_ERR;
   }
 
@@ -75,8 +75,8 @@ dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *this, int32_t title, int32_
     printerr("Passed a NULL pointer.");
     return DVDNAV_STATUS_ERR;
   }
-  if(!this->started) {
-    printerr("Virtual DVD machine not started.");
+  if (!this->vm->vmgi) {
+    printerr("Bad VM state.");
     return DVDNAV_STATUS_ERR;
   }
   if ((title < 1) || (title > vm_get_vmgi(this->vm)->tt_srpt->nr_of_srpts) ) {
@@ -100,6 +100,11 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int32_t *title, int32_
   pthread_mutex_lock(&this->vm_lock);
   if (!this->vm->vtsi || !this->vm->vmgi) {
     printerr("Bad VM state.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return DVDNAV_STATUS_ERR;
+  }
+  if (!this->started) {
+    printerr("Virtual DVD machine not started.");
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
@@ -149,6 +154,11 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int32_t title, int32_t part) {
     printerr("Bad VM state.");
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
+  }
+  if (!this->started) {
+    /* don't report an error but be nice */
+    vm_start(this->vm);
+    this->started = 1;
   }
   if (!this->vm->state.pgc) {
     printerr("No current PGC.");
