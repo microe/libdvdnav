@@ -332,9 +332,9 @@ int vm_start_title(vm_t *vm, int tt) {
 int vm_jump_prog(vm_t *vm, int pr) {
   link_t link_values;
 
-  (vm->state).pgN = pr; /*  ?? */
 
   set_PGC(vm, get_PGCN(vm));
+  (vm->state).pgN = pr; /*  ?? set_PGC() clobbers pgN */
   link_values = play_PG(vm); 
   link_values = process_command(vm, link_values);
   assert(link_values.command == PlayThis);
@@ -1145,9 +1145,9 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert(0);
       
     case LinkTopC:
-      /* Link to Top?? Cell. What is TopC */
+      /* Restart playing from the beginning of the current Cell. */
       /* BUTTON number:data1 */
-      fprintf(stderr, "libdvdnav: FIXME: LinkTopC. What is LinkTopC?\n");
+      fprintf(stderr, "libdvdnav: FIXME: LinkTopC. Replay current Cell\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_Cell(vm);
@@ -1199,9 +1199,9 @@ static link_t process_command(vm_t *vm, link_t link_values)
       break;
       
     case LinkTopPGC:
-      /* Link to Top Program Chain */
+      /* Restart playing from beginning of current Program Chain */
       /* BUTTON number:data1 */
-      fprintf(stderr, "libdvdnav: FIXME: LinkTopPGC. What is LinkTopPGC?\n");
+      fprintf(stderr, "libdvdnav: FIXME: LinkTopPGC. Restart from beginning of current Program Chain\n");
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
       link_values = play_PGC(vm);
@@ -1521,7 +1521,7 @@ static int set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn)
 
 static int set_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int part)
 {
-  int pgcN, pgN;
+  int pgcN, pgN, res;
   
   (vm->state).domain = VTS_DOMAIN;
   if(vtsN != (vm->state).vtsN)
@@ -1542,9 +1542,9 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int /* is this really */ vts_ttn, int
   (vm->state).vtsN = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
   /* Any other registers? */
   
-  (vm->state).pgN = pgN; /*  ?? */
-  
-  return set_PGC(vm, pgcN);
+  res = set_PGC(vm, pgcN);   // This clobber's state.pgN (sets it to 1), but we don't want clobbering here.
+  (vm->state).pgN = pgN; /*  Part?? */
+  return res;
 }
 
 
@@ -1565,6 +1565,9 @@ static int set_MENU(vm_t *vm, int menu)
   return set_PGC(vm, get_ID(vm, menu));
 }
 
+/* Search for entry_id match of the PGC Category in the current VTS PGCIT table.
+ * Return pgcN based on entry_id match.
+ */
 static int get_ID(vm_t *vm, int id)
 {
   int pgcN, i;
@@ -1583,6 +1586,7 @@ static int get_ID(vm_t *vm, int id)
     }
   }
   fprintf(stderr, "** No such id/menu (%d) entry PGC\n", id);
+  assert(0);
   return -1; /*  error */
 }
 
@@ -1598,14 +1602,15 @@ static int set_PGC(vm_t *vm, int pgcN)
   
   assert(pgcit != NULL); /*  ?? Make this return -1 instead */
   if(pgcN < 1 || pgcN > pgcit->nr_of_pgci_srp) {
-/*    if(pgcit->nr_of_pgci_srp != 1)  */
-     return -1; /* error */
-/*   pgcN = 1; */
+    fprintf(stderr, "** No such pgcN = %d\n", pgcN);
+    assert(0);
+    return -1; /* error */
   }
   
   /* (vm->state).pgcN = pgcN; */
   (vm->state).pgc = pgcit->pgci_srp[pgcN - 1].pgc;
-  
+  (vm->state).pgN = 1;
+ 
   if((vm->state).domain == VTS_DOMAIN)
     (vm->state).TT_PGCN_REG = pgcN;
 
@@ -1750,6 +1755,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.21  2002/07/03 02:41:31  jcdutton
+ * Fix another long standing bug.
+ * Now changing PGC will force a start at the first PG of the PGC.
+ *
  * Revision 1.20  2002/07/02 22:57:10  jcdutton
  * Rename some of the functions in vm.c to help readability.
  * Hopefully fix __FUNCTION__ problem. Use __func_ as recommended in C99.
