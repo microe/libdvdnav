@@ -723,8 +723,12 @@ void ifo_print_PGC(pgc_t *pgc) {
   
   for(i = 0; i < 32; i++) {
     if(pgc->subp_control[i] & 0x80000000) { /* The 'is present' bit */
-      printf("Subpicture stream %2i control: %08x\n", 
-	     i, pgc->subp_control[i]);
+      printf("Subpicture stream %2i control: %08x: 4:3=%d, Wide=%d, Letterbox=%d, Pan-Scan=%d\n", 
+	     i, pgc->subp_control[i],
+	     (pgc->subp_control[i] >>24) & 0x1f,
+	     (pgc->subp_control[i] >>16) & 0x1f,
+	     (pgc->subp_control[i] >>8) & 0x1f,
+	     (pgc->subp_control[i] ) & 0x1f);
     }
   }
   
@@ -1164,6 +1168,9 @@ void ifo_print(dvd_reader_t *dvd, int title) {
 
 /*
  * $Log$
+ * Revision 1.2  2004/09/27 12:24:01  jcdutton
+ * Add extra info to printout when using ifo_dump.
+ *
  * Revision 1.1  2004/01/11 21:43:13  mroi
  * big build system changes
  *  * cleaned up all Makefiles and added a Makefile.common
