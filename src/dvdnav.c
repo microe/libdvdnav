@@ -141,7 +141,7 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   }
   /* clear everything except path, file, vm, mutex, readahead */
 
-  // path
+  /* path */
   if (this->file) DVDCloseFile(this->file);
   this->file = NULL;
   this->open_vtsN = -1;
@@ -156,12 +156,10 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   this->stop = 0;
   this->spu_clut_changed = 0;
   this->started=0;
-  // this->use_read_ahead
+  /* this->use_read_ahead */
 
-  this->cache_start_sector = -1;
-  this->cache_block_count = 0;
-  this->cache_valid = 0;
-
+  dvdnav_read_cache_clear(this->cache);
+  
   return S_OK;
 }
 
@@ -206,6 +204,9 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
     this->started = 1;
   }
 
+  /* Start the read-ahead cache. */
+  this->cache = dvdnav_read_cache_new(this);
+  
   (*dest) = this;
   return S_OK;
 }
@@ -218,6 +219,14 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(stderr,"dvdnav:close:called\n");
 #endif
+
+  /* Stop caching */
+
+  if(this->cache) {
+    dvdnav_read_cache_free(this->cache);
+    this->cache = NULL;
+  }
+  
   if (this->file) {
     DVDCloseFile(this->file);
 #ifdef LOG_DEBUG
@@ -610,7 +619,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     dvdnav_vts_change_event_t vts_event;
     
     if(this->file) {
-      dvdnav_read_cache_clear(this);
+      dvdnav_read_cache_clear(this->cache);
       DVDCloseFile(this->file);
       this->file = NULL;
     }
@@ -641,7 +650,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     
     this->position_current.vts = this->position_next.vts; 
     this->position_current.domain = this->position_next.domain;
-    dvdnav_read_cache_clear(this);
+    dvdnav_read_cache_clear(this->cache);
     this->file = DVDOpenFile(vm_get_dvd_reader(this->vm), vtsN, domain);
     vts_event.new_vtsN = this->position_next.vts; 
     vts_event.new_domain = this->position_next.domain; 
@@ -758,7 +767,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
      *        This is so RSM resumes to the VOBU level and not just the CELL level.
      *        This should be implemented with a new Public API call.
      */
-    dvdnav_pre_cache_blocks(this, this->vobu.vobu_start+1, this->vobu.vobu_length);
+    dvdnav_pre_cache_blocks(this->cache, this->vobu.vobu_start+1, this->vobu.vobu_length);
     
     /* Successfully got a NAV packet */
     (*event) = DVDNAV_NAV_PACKET;
@@ -774,7 +783,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     return S_ERR;
   }
 
-  result = dvdnav_read_cache_block(this, this->vobu.vobu_start + this->vobu.blockN, 1, buf);
+  result = dvdnav_read_cache_block(this->cache, this->vobu.vobu_start + this->vobu.blockN, 1, buf);
   if(result <= 0) {
     printerr("Error reading from DVD.");
     pthread_mutex_unlock(&this->vm_lock); 
@@ -928,6 +937,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.18  2002/05/30 09:52:29  richwareham
+ * 'Objectified' the read-ahead cache in preparation to implement a 'proper' threaded cache a-la that recommended in the DVD Demystified book.
+ *
  * Revision 1.17  2002/05/09 11:57:24  richwareham
  * Angles now work (still a few wrinkles though -- e.g. angle does not reset to '1' when returning to menus)
  *

@@ -57,6 +57,8 @@
 #define DVD_VIDEO_LB_LEN 2048
 #endif
 
+typedef struct read_cache_s read_cache_t;
+
 /*
  * These are defined here because they are
  * not in ifo_types.h, they maybe one day 
@@ -140,15 +142,13 @@ struct dvdnav_s {
   pthread_mutex_t vm_lock;
 
   /* Highlight */
-  int hli_state;  /* State of highlight 0 - disabled, 1 - selected,
-		 2 - activated */
-  /* Read-ahead cache. */
-  uint8_t      *cache_buffer;
-  int32_t      cache_start_sector; /* -1 means cache invalid */
-  size_t       cache_block_count;
-  size_t       cache_malloc_size;
-  int          cache_valid;
-  
+  int hli_state;  /* State of highlight: 0 - disabled,
+		                         1 - selected,
+                         		 2 - activated */
+
+  /* Read-ahead cache */
+  read_cache_t *cache;
+
   /* Errors */
   char err_str[MAX_ERR_LEN];
 };

@@ -26,11 +26,23 @@
 
 #include "dvdnav_internal.h"
 
+/* Opaque cache type -- defined in dvdnav_internal.h */
+/* typedef struct read_cache_s read_cache_t; */
+
+/* EXPERIMENTAL: Setting the following to 1 will use an experimental multi-threaded
+ *               read-ahead cache. 
+ */
+#define _MULTITHREAD_ 0
+
+/* Constructor/destructors */
+read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self);
+void dvdnav_read_cache_free(read_cache_t* self);
+
 /* This function MUST be called whenever self->file changes. */
-void dvdnav_read_cache_clear(dvdnav_t *self);
+void dvdnav_read_cache_clear(read_cache_t *self);
 /* This function is called just after reading the NAV packet. */
-void dvdnav_pre_cache_blocks(dvdnav_t *self, int sector, size_t block_count);
+void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count);
 /* This function will do the cache read */
-int dvdnav_read_cache_block(dvdnav_t *self, int sector, size_t block_count, uint8_t *buf);
+int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, uint8_t *buf);
 
 #endif /* __DVDNAV_READ_CACHE_H */
