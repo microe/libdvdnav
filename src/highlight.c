@@ -217,7 +217,7 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int* button) {
   return S_OK;
 }
 
-btni_t *__get_current_button(dvdnav_t *this) {
+btni_t *__get_current_button(dvdnav_t *this, pci_t *pci) {
   int button = 0;
 
   if(dvdnav_get_current_highlight(this, &button) != S_OK) {
@@ -228,16 +228,16 @@ btni_t *__get_current_button(dvdnav_t *this) {
   nav_print_PCI(&(this->pci));
 #endif
   
-  return &(this->pci.hli.btnit[button-1]);
+  return &(pci->hli.btnit[button-1]);
 }
 
-dvdnav_status_t dvdnav_button_auto_action(dvdnav_t *this) {
+dvdnav_status_t dvdnav_button_auto_action(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(this)) == NULL) {
+  if((button_ptr = __get_current_button(this, pci)) == NULL) {
     return S_ERR;
   }
   if (button_ptr->auto_action_mode == 1) {
@@ -247,74 +247,74 @@ dvdnav_status_t dvdnav_button_auto_action(dvdnav_t *this) {
 }
 
 
-dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this) {
+dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(this)) == NULL) {
+  if((button_ptr = __get_current_button(this, pci)) == NULL) {
     return S_ERR;
   }
 
-  dvdnav_button_select(this, button_ptr->up);
-  if (dvdnav_button_auto_action(this) ) {
-    dvdnav_button_activate(this);
+  dvdnav_button_select(this, pci, button_ptr->up);
+  if (dvdnav_button_auto_action(this, pci) ) {
+    dvdnav_button_activate(this, pci);
   }
  
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this) {
+dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(this)) == NULL) {
+  if((button_ptr = __get_current_button(this, pci)) == NULL) {
     return S_ERR;
   }
 
-  dvdnav_button_select(this, button_ptr->down);
-  if (dvdnav_button_auto_action(this) ) {
-    dvdnav_button_activate(this);
+  dvdnav_button_select(this, pci, button_ptr->down);
+  if (dvdnav_button_auto_action(this, pci) ) {
+    dvdnav_button_activate(this, pci);
   }
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this) {
+dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(this)) == NULL) {
+  if((button_ptr = __get_current_button(this, pci)) == NULL) {
     printerr("Error fetching information on current button.");
     return S_ERR;
   }
 
-  dvdnav_button_select(this, button_ptr->right);
-  if (dvdnav_button_auto_action(this) ) {
-    dvdnav_button_activate(this);
+  dvdnav_button_select(this, pci, button_ptr->right);
+  if (dvdnav_button_auto_action(this, pci) ) {
+    dvdnav_button_activate(this, pci);
   }
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this) {
+dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
   
   if(!this)
    return S_ERR;
 
-  if((button_ptr = __get_current_button(this)) == NULL) {
+  if((button_ptr = __get_current_button(this, pci)) == NULL) {
     return S_ERR;
   }
 
-  dvdnav_button_select(this, button_ptr->left);
-  if (dvdnav_button_auto_action(this) ) {
-    dvdnav_button_activate(this);
+  dvdnav_button_select(this, pci, button_ptr->left);
+  if (dvdnav_button_auto_action(this, pci) ) {
+    dvdnav_button_activate(this, pci);
   }
   
   return S_OK;
@@ -357,7 +357,7 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
+dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
   int button;
   btni_t *button_ptr = NULL;
   
@@ -374,7 +374,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
 /* FIXME: dvdnav_button_select should really return a
  * special case for explicit NO-BUTTONS.
  */
-  if(dvdnav_button_select(this, button) != S_OK) {
+  if(dvdnav_button_select(this, pci, button) != S_OK) {
     /* Special code to handle still menus with no buttons.
      * the navigation is expected to report to the appicatino that a STILL is
      * underway. In turn, the application is supposed to report to the user
@@ -395,7 +395,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
     return S_ERR;
   }
   /* FIXME: The button command should really be passed in the API instead. */ 
-  button_ptr = __get_current_button(this);
+  button_ptr = __get_current_button(this, pci);
   /* Finally, make the VM execute the appropriate code and
    * scedule a jump */
 #ifdef BUTTON_TESTING
@@ -435,7 +435,7 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cm
   return S_OK;
 }  
 
-dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
+dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int button) {
   
   if(!this) {
    printerrf("Unable to select button number %i as this state bad",
@@ -449,7 +449,7 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
   
   /* Set the highlight SPRM if the passed button was valid*/
   /* FIXME: this->pci should be provided by the application. */
-  if((button <= 0) || (button > this->pci.hli.hl_gi.btn_ns)) {
+  if((button <= 0) || (button > pci->hli.hl_gi.btn_ns)) {
     printerrf("Unable to select button number %i as it doesn't exist",
 	      button);
     return S_ERR;
@@ -463,18 +463,18 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, 
+dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, pci_t *pci, 
 						  int button) {
   /* A trivial function */
-  if(dvdnav_button_select(this, button) != S_ERR) {
-    return dvdnav_button_activate(this);
+  if(dvdnav_button_select(this, pci, button) != S_ERR) {
+    return dvdnav_button_activate(this, pci);
   }
   
   /* Should never get here without an error */
   return S_ERR;
 }
 
-dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, int x, int y) {
+dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int x, int y) {
   int button, cur_button;
   uint32_t best,dist;
   int mx,my,dx,dy,d;
@@ -492,7 +492,7 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, int x, int y) {
   dist = 0x08000000; /* >> than  (720*720)+(567*567); */
   
   /* Loop through each button */
-  for(button=1; button <= this->pci.hli.hl_gi.btn_ns; button++) {
+  for(button=1; button <= pci->hli.hl_gi.btn_ns; button++) {
     btni_t *button_ptr = NULL;
     button_ptr = &(this->pci.hli.btnit[button-1]);
     if((x >= button_ptr->x_start) && (x <= button_ptr->x_end) &&
@@ -514,17 +514,17 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, int x, int y) {
     /* As an efficiency measure, only re-select the button
      * if it is different to the previously selected one. */
     if(best != cur_button) {
-      dvdnav_button_select(this, best);
+      dvdnav_button_select(this, pci, best);
     }
   }
   
   return S_OK;
 }
 
-dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *this, int x, int y) {
+dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *this, pci_t *pci, int x, int y) {
   /* A trivial function */
-  if(dvdnav_mouse_select(this, x,y) != S_ERR) {
-    return dvdnav_button_activate(this);
+  if(dvdnav_mouse_select(this, pci, x,y) != S_ERR) {
+    return dvdnav_button_activate(this, pci);
   }
   
   /* Should never get here without an error */

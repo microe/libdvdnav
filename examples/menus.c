@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
 	  }
 
 	  printf("Selecting button %i\n", button);
-	  dvdnav_button_select_and_activate(dvdnav, button);
+	  dvdnav_button_select_and_activate(dvdnav, pci, button);
 	}
       }
       break;
