@@ -76,33 +76,33 @@ typedef struct {
  */
 typedef struct {
 #ifdef WORDS_BIGENDIAN
-  unsigned int mpeg_version         : 2;
-  unsigned int video_format         : 2;
-  unsigned int display_aspect_ratio : 2;
-  unsigned int permitted_df         : 2;
+  unsigned char mpeg_version         : 2;
+  unsigned char video_format         : 2;
+  unsigned char display_aspect_ratio : 2;
+  unsigned char permitted_df         : 2;
   
-  unsigned int line21_cc_1          : 1;
-  unsigned int line21_cc_2          : 1;
-  unsigned int unknown1             : 1;
-  unsigned int bit_rate             : 1;
+  unsigned char line21_cc_1          : 1;
+  unsigned char line21_cc_2          : 1;
+  unsigned char unknown1             : 1;
+  unsigned char bit_rate             : 1;
   
-  unsigned int picture_size         : 2;
-  unsigned int letterboxed          : 1;
-  unsigned int film_mode            : 1;
+  unsigned char picture_size         : 2;
+  unsigned char letterboxed          : 1;
+  unsigned char film_mode            : 1;
 #else
-  unsigned int permitted_df         : 2;
-  unsigned int display_aspect_ratio : 2;
-  unsigned int video_format         : 2;
-  unsigned int mpeg_version         : 2;
+  unsigned char permitted_df         : 2;
+  unsigned char display_aspect_ratio : 2;
+  unsigned char video_format         : 2;
+  unsigned char mpeg_version         : 2;
   
-  unsigned int film_mode            : 1;
-  unsigned int letterboxed          : 1;
-  unsigned int picture_size         : 2;
+  unsigned char film_mode            : 1;
+  unsigned char letterboxed          : 1;
+  unsigned char picture_size         : 2;
   
-  unsigned int bit_rate             : 1;
-  unsigned int unknown1             : 1;
-  unsigned int line21_cc_2          : 1;
-  unsigned int line21_cc_1          : 1;
+  unsigned char bit_rate             : 1;
+  unsigned char unknown1             : 1;
+  unsigned char line21_cc_2          : 1;
+  unsigned char line21_cc_1          : 1;
 #endif
 } ATTRIBUTE_PACKED video_attr_t;
 
@@ -111,25 +111,25 @@ typedef struct {
  */
 typedef struct {
 #ifdef WORDS_BIGENDIAN
-  unsigned int audio_format           : 3;
-  unsigned int multichannel_extension : 1;
-  unsigned int lang_type              : 2;
-  unsigned int application_mode       : 2;
+  unsigned char audio_format           : 3;
+  unsigned char multichannel_extension : 1;
+  unsigned char lang_type              : 2;
+  unsigned char application_mode       : 2;
   
-  unsigned int quantization           : 2;
-  unsigned int sample_frequency       : 2;
-  unsigned int unknown1               : 1;
-  unsigned int channels               : 3;
+  unsigned char quantization           : 2;
+  unsigned char sample_frequency       : 2;
+  unsigned char unknown1               : 1;
+  unsigned char channels               : 3;
 #else
-  unsigned int application_mode       : 2;
-  unsigned int lang_type              : 2;
-  unsigned int multichannel_extension : 1;
-  unsigned int audio_format           : 3;
+  unsigned char application_mode       : 2;
+  unsigned char lang_type              : 2;
+  unsigned char multichannel_extension : 1;
+  unsigned char audio_format           : 3;
   
-  unsigned int channels               : 3;
-  unsigned int unknown1               : 1;
-  unsigned int sample_frequency       : 2;
-  unsigned int quantization           : 2;
+  unsigned char channels               : 3;
+  unsigned char unknown1               : 1;
+  unsigned char sample_frequency       : 2;
+  unsigned char quantization           : 2;
 #endif
   uint16_t lang_code;
   uint8_t  lang_extension;
@@ -138,28 +138,28 @@ typedef struct {
   union {
     struct ATTRIBUTE_PACKED {
 #ifdef WORDS_BIGENDIAN
-      unsigned int unknown4           : 1;
-      unsigned int channel_assignment : 3;
-      unsigned int version            : 2;
-      unsigned int mc_intro           : 1; /* probably 0: true, 1:false */
-      unsigned int mode               : 1; /* Karaoke mode 0: solo 1: duet */
+      unsigned char unknown4           : 1;
+      unsigned char channel_assignment : 3;
+      unsigned char version            : 2;
+      unsigned char mc_intro           : 1; /* probably 0: true, 1:false */
+      unsigned char mode               : 1; /* Karaoke mode 0: solo 1: duet */
 #else
-      unsigned int mode               : 1;
-      unsigned int mc_intro           : 1;
-      unsigned int version            : 2;
-      unsigned int channel_assignment : 3;
-      unsigned int unknown4           : 1;
+      unsigned char mode               : 1;
+      unsigned char mc_intro           : 1;
+      unsigned char version            : 2;
+      unsigned char channel_assignment : 3;
+      unsigned char unknown4           : 1;
 #endif
     } karaoke;
     struct ATTRIBUTE_PACKED {
 #ifdef WORDS_BIGENDIAN
-      unsigned int unknown5           : 4;
-      unsigned int dolby_encoded      : 1; /* suitable for surround decoding */
-      unsigned int unknown6           : 3;
+      unsigned char unknown5           : 4;
+      unsigned char dolby_encoded      : 1; /* suitable for surround decoding */
+      unsigned char unknown6           : 3;
 #else
-      unsigned int unknown6           : 3;
-      unsigned int dolby_encoded      : 1;
-      unsigned int unknown5           : 4;
+      unsigned char unknown6           : 3;
+      unsigned char dolby_encoded      : 1;
+      unsigned char unknown5           : 4;
 #endif
     } surround;
   } app_info;
@@ -195,29 +195,29 @@ typedef struct {
   unsigned int ach4_gmBe  : 1;
   unsigned int ach4_seBe  : 1;
 #else
-  unsigned int ach0_gme   : 1;
-  unsigned int zero1      : 7;
+  unsigned char ach0_gme   : 1;
+  unsigned char zero1      : 7;
 
-  unsigned int ach1_gme   : 1;
-  unsigned int zero2      : 7;
+  unsigned char ach1_gme   : 1;
+  unsigned char zero2      : 7;
 
-  unsigned int ach2_gm2e  : 1;
-  unsigned int ach2_gm1e  : 1;
-  unsigned int ach2_gv2e  : 1;
-  unsigned int ach2_gv1e  : 1;
-  unsigned int zero3      : 4;
+  unsigned char ach2_gm2e  : 1;
+  unsigned char ach2_gm1e  : 1;
+  unsigned char ach2_gv2e  : 1;
+  unsigned char ach2_gv1e  : 1;
+  unsigned char zero3      : 4;
 
-  unsigned int ach3_se2e  : 1;
-  unsigned int ach3_gmAe  : 1;
-  unsigned int ach3_gv2e  : 1;
-  unsigned int ach3_gv1e  : 1;
-  unsigned int zero4      : 4;
+  unsigned char ach3_se2e  : 1;
+  unsigned char ach3_gmAe  : 1;
+  unsigned char ach3_gv2e  : 1;
+  unsigned char ach3_gv1e  : 1;
+  unsigned char zero4      : 4;
 
-  unsigned int ach4_seBe  : 1;
-  unsigned int ach4_gmBe  : 1;
-  unsigned int ach4_gv2e  : 1;
-  unsigned int ach4_gv1e  : 1;
-  unsigned int zero5      : 4;
+  unsigned char ach4_seBe  : 1;
+  unsigned char ach4_gmBe  : 1;
+  unsigned char ach4_gv2e  : 1;
+  unsigned char ach4_gv1e  : 1;
+  unsigned char zero5      : 4;
 #endif
   uint8_t zero6[19];
 } ATTRIBUTE_PACKED multichannel_ext_t;
@@ -238,13 +238,13 @@ typedef struct {
    * lang extension: if type == 1 contains the lang extension
    */
 #ifdef WORDS_BIGENDIAN
-  unsigned int code_mode : 3;
-  unsigned int zero1     : 3;
-  unsigned int type      : 2;
+  unsigned char code_mode : 3;
+  unsigned char zero1     : 3;
+  unsigned char type      : 2;
 #else
-  unsigned int type      : 2;
-  unsigned int zero1     : 3;
-  unsigned int code_mode : 3;
+  unsigned char type      : 2;
+  unsigned char zero1     : 3;
+  unsigned char code_mode : 3;
 #endif
   uint8_t  zero2;
   uint16_t lang_code;
@@ -289,16 +289,16 @@ typedef struct {
   unsigned int restricted       : 1;  /**< ?? drop out of fastforward? */
   unsigned int unknown2         : 6;
 #else
-  unsigned int seamless_angle   : 1;
-  unsigned int stc_discontinuity: 1;
-  unsigned int interleaved      : 1;
-  unsigned int seamless_play    : 1;
-  unsigned int block_type       : 2;
-  unsigned int block_mode       : 2;
+  unsigned char seamless_angle   : 1;
+  unsigned char stc_discontinuity: 1;
+  unsigned char interleaved      : 1;
+  unsigned char seamless_play    : 1;
+  unsigned char block_type       : 2;
+  unsigned char block_mode       : 2;
   
-  unsigned int unknown2         : 6;
-  unsigned int restricted       : 1;
-  unsigned int playback_mode    : 1;
+  unsigned char unknown2         : 6;
+  unsigned char restricted       : 1;
+  unsigned char playback_mode    : 1;
 #endif
   uint8_t still_time;
   uint8_t cell_cmd_nr;
@@ -431,9 +431,9 @@ typedef struct {
   unsigned int block_type : 2;
   unsigned int unknown1   : 4;
 #else
-  unsigned int unknown1   : 4;
-  unsigned int block_type : 2;
-  unsigned int block_mode : 2;
+  unsigned char unknown1   : 4;
+  unsigned char block_type : 2;
+  unsigned char block_mode : 2;
 #endif  
   uint16_t ptl_id_mask;
   uint32_t pgc_start_byte;
@@ -569,14 +569,14 @@ typedef struct {
   unsigned int chapter_search_or_play    : 1; /* UOP 1 */
   unsigned int title_or_time_play        : 1; /* UOP 0 */
 #else
-  unsigned int title_or_time_play        : 1;
-  unsigned int chapter_search_or_play    : 1;
-  unsigned int jlc_exists_in_tt_dom      : 1;
-  unsigned int jlc_exists_in_button_cmd  : 1;
-  unsigned int jlc_exists_in_prepost_cmd : 1;
-  unsigned int jlc_exists_in_cell_cmd    : 1;
-  unsigned int multi_or_random_pgc_title : 1;
-  unsigned int zero_1                    : 1;
+  unsigned char title_or_time_play        : 1;
+  unsigned char chapter_search_or_play    : 1;
+  unsigned char jlc_exists_in_tt_dom      : 1;
+  unsigned char jlc_exists_in_button_cmd  : 1;
+  unsigned char jlc_exists_in_prepost_cmd : 1;
+  unsigned char jlc_exists_in_cell_cmd    : 1;
+  unsigned char multi_or_random_pgc_title : 1;
+  unsigned char zero_1                    : 1;
 #endif
 } ATTRIBUTE_PACKED playback_type_t;
 
