@@ -39,6 +39,20 @@ dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
 
   this->position_current.still = 0;
   this->skip_still = 1;
+  this->sync_wait = 0;
+  this->sync_wait_skip = 1;
+
+  return S_OK;
+}
+
+dvdnav_status_t dvdnav_wait_skip(dvdnav_t *this) {
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return S_ERR;
+  }
+
+  this->sync_wait = 0;
+  this->sync_wait_skip = 1;
 
   return S_OK;
 }

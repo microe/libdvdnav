@@ -141,6 +141,8 @@ struct dvdnav_s {
   
   /* Flags */
   int skip_still;                 /* Set when skipping a still */
+  int sync_wait;                  /* applications should wait till they are in sync with us */
+  int sync_wait_skip;             /* Set when skipping wait state */
   int spu_clut_changed;           /* The SPU CLUT changed */ 
   int started;                    /* vm_start has been called? */
   int use_read_ahead;             /* 1 - use read-ahead cache, 0 - don't */

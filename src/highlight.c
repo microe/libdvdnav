@@ -372,6 +372,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
       /* In still, but no buttons. */
       vm_get_next_cell(this->vm);
       this->position_current.still = 0;
+      this->sync_wait = 0;
       pthread_mutex_unlock(&this->vm_lock);
       /* clear error message */
       printerr("");
@@ -419,6 +420,7 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cm
   }
   /* Always remove still, because some still menus have no buttons. */
   this->position_current.still = 0;
+  this->sync_wait = 0;
   pthread_mutex_unlock(&this->vm_lock);
   return S_OK;
 }  

@@ -84,6 +84,13 @@ int main(int argc, char **argv) {
 	dvdnav_still_skip(dvdnav);
        }
       break;
+     case DVDNAV_WAIT:
+       {
+	/* applications with fifos should wait here until they are empty */
+	printf("Skipping wait condition\n");
+	dvdnav_wait_skip(dvdnav);
+       }
+      break;
      case DVDNAV_SPU_CLUT_CHANGE:
        {
        }

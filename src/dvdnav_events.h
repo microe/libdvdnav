@@ -47,6 +47,7 @@
 #define DVDNAV_HIGHLIGHT		 9 /*!< Change highlight region */
 #define DVDNAV_SPU_CLUT_CHANGE		10 /*!< SPU CLUT changed */
 #define DVDNAV_HOP_CHANNEL		12 /*!< Sent when non-seemless stream change has happed */
+#define DVDNAV_WAIT			13 /*!< The application should wait for its fifos to run dry */
 
 
 /*** EVENT TYPES ***/
