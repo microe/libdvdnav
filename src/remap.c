@@ -51,7 +51,7 @@ struct remap_s {
     struct block_s *blocks;
 };
 
-remap_t* remap_new( char *title) {
+static remap_t* remap_new( char *title) {
     remap_t *map = malloc( sizeof(remap_t));
     map->title = strdup(title);
     map->maxblocks = 0;
@@ -142,10 +142,8 @@ static void remap_add_node( remap_t *map, block_t block) {
     }
 }
 
-int parseblock( 
-	char *buf, int *dom, int *tt, int *pg, 
-	unsigned long *start, unsigned long *end) 
-{
+static int parseblock(char *buf, int *dom, int *tt, int *pg, 
+		      unsigned long *start, unsigned long *end) {
     long tmp;
     char *tok;
     char *epos;

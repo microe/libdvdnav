@@ -144,9 +144,6 @@ typedef enum {
   PartitionCache, RootICBCache, LBUDFCache, MapCache, AVDPCache, PVDCache
 } UDFCacheType;
 
-extern void *GetUDFCacheHandle(dvd_reader_t *device);
-extern void SetUDFCacheHandle(dvd_reader_t *device, void *cache);
-
 void FreeUDFCache(void *cache)
 {
   struct udf_cache *c = (struct udf_cache *)cache;

@@ -125,7 +125,8 @@ static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t start)
    xBBB_BBBB, if immediate use all 7 bits for data else use
    lower four bits for the general purpose register number. */
 /* Evaluates gprm or data depending on bit, data is in byte n */
-uint16_t eval_reg_or_data_2(command_t* command, int32_t imm, int32_t start) {
+static uint16_t eval_reg_or_data_2(command_t* command, 
+				   int32_t imm, int32_t start) {
   if(imm) /* immediate */
     return vm_getbits(command, (start - 1), 7);
   else
