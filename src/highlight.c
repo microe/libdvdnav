@@ -212,7 +212,26 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
+/* FIXME: dvdnav_button_select should really return a
+ * special case for explicit NO-BUTTONS.
+ */
   if(dvdnav_button_select(this, button) != S_OK) {
+    /* Special code to handle still menus with no buttons.
+     * the navigation is expected to report to the appicatino that a STILL is
+     * underway. In turn, the application is supposed to report to the user
+     * that the playback is pause. The user is then expected to undo the pause.
+     * ie: hit play. At that point, the navigation should release the still and
+     * go to the next Cell.
+     * Explanation by Mathieu Lavage <mathieu_lacage@realmagic.fr>
+     * Code added by jcdutton.
+     */
+    if (this->position_current.still != 0) {
+      /* In still, but no buttons. */
+      vm_get_next_cell(this->vm);
+      this->position_current.still = 0;
+      pthread_mutex_unlock(&this->vm_lock);
+      return S_OK;
+    }
     pthread_mutex_unlock(&this->vm_lock); 
     return S_ERR;
   }
@@ -245,6 +264,7 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
 #endif
   
   /* Set the highlight SPRM if the passed button was valid*/
+  /* FIXME: this->pci should be provided by the application. */
   if((button <= 0) || (button > this->pci.hli.hl_gi.btn_ns)) {
     printerrf("Unable to select button number %i as it doesn't exist",
 	      button);
