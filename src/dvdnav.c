@@ -383,11 +383,7 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
  *   printf("\n");
  */
     if(p[0] == 0x00) {
-#ifdef HAVE_DVDREAD9
       navRead_PCI(nav_pci, p+1);
-#else
-      navRead_PCI(nav_pci, p+1, nPacketLen - 1);
-#endif
     }
 
     p += nPacketLen;
@@ -397,11 +393,7 @@ int dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t* nav_dsi, pci_t* nav_
       nPacketLen = p[4] << 8 | p[5];
       p += 6;
       /* dprint("NAV DSI packet\n");  */
-#ifdef HAVE_DVDREAD9
       navRead_DSI(nav_dsi, p+1);
-#else
-      navRead_DSI(nav_dsi, p+1, sizeof(dsi_t));
-#endif
 
     } 
     return 1;
@@ -937,6 +929,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.19  2002/05/30 23:15:14  richwareham
+ * First draft of removing HAVE_DVDREAD9
+ *
  * Revision 1.18  2002/05/30 09:52:29  richwareham
  * 'Objectified' the read-ahead cache in preparation to implement a 'proper' threaded cache a-la that recommended in the DVD Demystified book.
  *

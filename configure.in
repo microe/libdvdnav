@@ -163,10 +163,9 @@ AC_CHECK_LIB(dvdread,
 	     AC_DEFINE(HAVE_LIBDVDREAD)
  	     AC_CHECK_LIB(dvdread,
                           UDFReadLB,
-                          [ :
+                          [ AC_MSG_ERROR(You need at least libdvdread 0.9.x or higher)
                           ],
-                          [ AC_DEFINE(HAVE_LIBDVDREAD)
-                            AC_DEFINE(HAVE_DVDREAD9)
+                          [ :
                           ])
 	     ],
  	     AC_MSG_ERROR(Could not find libdvdread. It is needed))
