@@ -553,7 +553,8 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
     return S_OK;
   }
 
-  if(self->expecting_nav_packet) {
+  if(self->expecting_nav_packet || 
+    (self->jumping) ) {
     dvdnav_nav_packet_event_t nav_event;
 
     /* Perform the jump if necessary (this is always a 
@@ -986,6 +987,10 @@ dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.4  2002/04/06 18:31:50  jcdutton
+ * Some cleaning up.
+ * changed exit(1) to assert(0) so they actually get seen by the user so that it helps developers more.
+ *
  * Revision 1.3  2002/04/02 18:22:27  richwareham
  * Added reset patch from Kees Cook <kees@outflux.net>
  *

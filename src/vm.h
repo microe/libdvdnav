@@ -91,40 +91,40 @@ typedef struct {
 
 /* Initialisation & destruction */
 vm_t* vm_new_vm();
-void vm_free_vm(vm_t *self);
+void vm_free_vm(vm_t *vm);
 
 /* IFO access */
-ifo_handle_t *vm_get_vmgi(vm_t *self);
-ifo_handle_t *vm_get_vtsi(vm_t *self);
+ifo_handle_t *vm_get_vmgi(vm_t *vm);
+ifo_handle_t *vm_get_vtsi(vm_t *vm);
 
 /* Reader Access */
-dvd_reader_t *vm_get_dvd_reader(vm_t *self);
+dvd_reader_t *vm_get_dvd_reader(vm_t *vm);
 
 /* Jumping */
-int vm_start_title(vm_t *self, int tt);
-int vm_jump_prog(vm_t *self, int pr);
+int vm_start_title(vm_t *vm, int tt);
+int vm_jump_prog(vm_t *vm, int pr);
 
 /* Other calls */
-int vm_reset(vm_t *self, char *dvdroot); /*  , register_t regs); */
-int vm_start(vm_t *self);
-int vm_eval_cmd(vm_t *self, vm_cmd_t *cmd);
-int vm_get_next_cell(vm_t *self);
-int vm_menu_call(vm_t *self, DVDMenuID_t menuid, int block);
-int vm_resume(vm_t *self);
-int vm_go_up(vm_t *self);
-int vm_top_pg(vm_t *self);
-int vm_next_pg(vm_t *self);
-int vm_prev_pg(vm_t *self);
-int vm_get_audio_stream(vm_t *self, int audioN);
-int vm_get_audio_active_stream(vm_t *self);
-int vm_get_subp_stream(vm_t *self, int subpN);
-int vm_get_subp_active_stream(vm_t *self);
-void vm_get_angle_info(vm_t *self, int *num_avail, int *current);
-void vm_get_audio_info(vm_t *self, int *num_avail, int *current);
-void vm_get_subp_info(vm_t *self, int *num_avail, int *current);
-subp_attr_t vm_get_subp_attr(vm_t *self, int streamN);
-audio_attr_t vm_get_audio_attr(vm_t *self, int streamN);
-void vm_get_video_res(vm_t *self, int *width, int *height);
+int vm_reset(vm_t *vm, char *dvdroot); /*  , register_t regs); */
+int vm_start(vm_t *vm);
+int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd);
+int vm_get_next_cell(vm_t *vm);
+int vm_menu_call(vm_t *vm, DVDMenuID_t menuid, int block);
+int vm_resume(vm_t *vm);
+int vm_go_up(vm_t *vm);
+int vm_top_pg(vm_t *vm);
+int vm_next_pg(vm_t *vm);
+int vm_prev_pg(vm_t *vm);
+int vm_get_audio_stream(vm_t *vm, int audioN);
+int vm_get_audio_active_stream(vm_t *vm);
+int vm_get_subp_stream(vm_t *vm, int subpN);
+int vm_get_subp_active_stream(vm_t *vm);
+void vm_get_angle_info(vm_t *vm, int *num_avail, int *current);
+void vm_get_audio_info(vm_t *vm, int *num_avail, int *current);
+void vm_get_subp_info(vm_t *vm, int *num_avail, int *current);
+subp_attr_t vm_get_subp_attr(vm_t *vm, int streamN);
+audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN);
+void vm_get_video_res(vm_t *vm, int *width, int *height);
 
 #endif /* VM_HV_INCLUDED */
 

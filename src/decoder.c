@@ -30,6 +30,7 @@
 #include <inttypes.h>
 #include <string.h>  /* For memset */
 #include <dvdread/ifo_types.h> /* vm_cmd_t */
+#include <assert.h>
 #include "vmcmd.h"
 #include "decoder.h"
 
@@ -349,7 +350,7 @@ static bool eval_system_set(int cond, link_t *return_values) {
       data2 = bits(5, 4, 4);
       if(bits(5, 0, 1)) {
 	fprintf(stderr, "Detected SetGPRMMD Counter!! This is unsupported.\n");
-	/* exit(-1); */
+	assert(0);
       } else {
 	;
       }
@@ -459,7 +460,7 @@ static int eval_command(uint8_t *bytes, link_t *return_values) {
       res = eval_special_instruction(cond);
       if(res == -1) {
 	fprintf(stderr, "Unknown Instruction!\n");
-	/* exit(0); */
+	assert(0);
       }
       break;
     case 1: /*  Link/jump instructions */
