@@ -198,6 +198,6 @@ struct dvdnav_s {
 #endif /* WIN32 */
 #endif
 #define printerr(str) \
-	do { if (this) strncpy(this->err_str, str, MAX_ERR_LEN); } while (0)
+	do { if (this) strncpy(this->err_str, str, MAX_ERR_LEN - 1); } while (0)
 
 #endif /* DVDNAV_INTERNAL_H_INCLUDED */
