@@ -8,6 +8,7 @@ libdvdnav (0.1.6) unstable; urgency=low
   * releasing stills when jumping to menu fixes some state inconsistencies
   * do not assume PGs to be physically layed out in sequence on the disc
   * optional PGC based seeking
+  * new event on cell changes for timing info
 
 libdvdnav (0.1.5) unstable; urgency=low
   * some bugfixes
