@@ -1722,6 +1722,14 @@ static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang)
 	    (char)(lang >> 8), (char)(lang & 0xff),
  	    (char)(h->pgci_ut->lu[0].lang_code >> 8),
 	    (char)(h->pgci_ut->lu[0].lang_code & 0xff));
+    fprintf(stderr, "Menu Languages available: ");
+    for(i=0;i< h->pgci_ut->nr_of_lus;i++) {
+      fprintf(stderr, "%c%c ",
+ 	    (char)(h->pgci_ut->lu[0].lang_code >> 8),
+	    (char)(h->pgci_ut->lu[0].lang_code & 0xff));
+    }
+    fprintf(stderr, "\n");
+
     i = 0; /*  error? */
   }
   
@@ -1755,6 +1763,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.22  2002/07/04 00:38:51  jcdutton
+ * Add some menu language printf's.
+ *
  * Revision 1.21  2002/07/03 02:41:31  jcdutton
  * Fix another long standing bug.
  * Now changing PGC will force a start at the first PG of the PGC.
