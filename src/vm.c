@@ -251,8 +251,7 @@ dvd_reader_t *vm_get_dvd_reader(vm_t *vm) {
 
 /* Basic Handling */
 
-void vm_start(vm_t *vm)
-{
+void vm_start(vm_t *vm) {
   /* Set pgc to FP (First Play) pgc */
   set_FP_PGC(vm);
   process_command(vm, play_PGC(vm));
@@ -265,7 +264,7 @@ void vm_stop(vm_t *vm) {
   }
   if(vm->vtsi) {
     ifoClose(vm->vtsi);
-    vm->vmgi=NULL;
+    vm->vtsi=NULL;
   }
   if(vm->dvd) {
     DVDClose(vm->dvd);
@@ -364,6 +363,46 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
 }
 
 
+/* copying and merging */
+
+vm_t *vm_new_copy(vm_t *source) {
+  vm_t *target = vm_new_vm();
+  int vtsN;
+  int pgcN = get_PGCN(source);
+  int pgN  = (source->state).pgN;
+  
+  assert(pgcN);
+  
+  memcpy(target, source, sizeof(vm_t));
+  
+  /* open a new vtsi handle, because the copy might switch to another VTS */
+  target->vtsi = NULL;
+  vtsN = (target->state).vtsN;
+  (target->state).vtsN = 0;
+  ifoOpenNewVTSI(target, target->dvd, vtsN);
+  
+  /* restore pgc pointer into the new vtsi */
+  if (!set_PGCN(target, pgcN))
+    assert(0);
+  (target->state).pgN = pgN;
+  
+  return target;
+}
+
+void vm_merge(vm_t *target, vm_t *source) {
+  if(target->vtsi)
+    ifoClose(target->vtsi);
+  memcpy(target, source, sizeof(vm_t));
+  memset(source, 0, sizeof(vm_t));
+}
+
+void vm_free_copy(vm_t *vm) {
+  if(vm->vtsi)
+    ifoClose(vm->vtsi);
+  free(vm);
+}
+
+
 /* regular playback */
 
 void vm_position_get(vm_t *vm, vm_position_t *position) {
@@ -458,6 +497,7 @@ int vm_jump_prev_pg(vm_t *vm) {
     /* first program -> move to last program of previous PGC */
     if ((vm->state).pgc->prev_pgc_nr && set_PGCN(vm, (vm->state).pgc->prev_pgc_nr)) {
       process_command(vm, play_PGC(vm));
+      vm_jump_pg(vm, (vm->state).pgc->nr_of_programs);
       return 1;
     }
     return 0;
@@ -919,10 +959,11 @@ static link_t play_PGC_post(vm_t *vm) {
 #ifdef TRACE
   fprintf(MSG_OUT, "libdvdnav: ** Fell of the end of the pgc, continuing in NextPGC\n");
 #endif
-  assert((vm->state).pgc->next_pgc_nr != 0);
   /* Should end up in the STOP_DOMAIN if next_pgc is 0. */
-  if(!set_PGCN(vm, (vm->state).pgc->next_pgc_nr))
-    assert(0);
+  if(!set_PGCN(vm, (vm->state).pgc->next_pgc_nr)) {
+    link_values.command = Exit;
+    return link_values;
+  }
   return play_PGC(vm);
 }
 
@@ -1299,8 +1340,8 @@ static int process_command(vm_t *vm, link_t link_values) {
       break;
       
     case Exit:
-      fprintf(MSG_OUT, "libdvdnav: FIXME:in trouble...Link Exit - CRASHING!!!\n");
-      assert(0); /*  What should we do here?? */
+      vm->stopped = 1;
+      return 0;
       
     case JumpTT:
       /* Jump to VTS Title Domain */
@@ -1742,6 +1783,11 @@ void vm_position_print(vm_t *vm, vm_position_t *position) {
 
 /*
  * $Log$
+ * Revision 1.44  2003/03/12 11:38:10  mroi
+ * - provide the means to make copies of the VM to try certain operations on a copy and
+ *   merge the changes back on success
+ * - do not trigger an assertion when falling off a program chain, but stop the VM
+ *
  * Revision 1.43  2003/02/20 15:32:19  mroi
  * big libdvdnav cleanup, quoting the ChangeLog:
  *   * some bugfixes

@@ -113,7 +113,7 @@ typedef struct {
 #define PTL_REG      registers.SPRM[13]
 
 /* Initialisation & destruction */
-vm_t* vm_new_vm();
+vm_t *vm_new_vm();
 void  vm_free_vm(vm_t *vm);
 
 /* IFO access */
@@ -127,6 +127,11 @@ dvd_reader_t *vm_get_dvd_reader(vm_t *vm);
 void vm_start(vm_t *vm);
 void vm_stop(vm_t *vm);
 int  vm_reset(vm_t *vm, const char *dvdroot);
+
+/* copying and merging  - useful for try-running an operation */
+vm_t *vm_new_copy(vm_t *vm);
+void  vm_merge(vm_t *target, vm_t *source);
+void  vm_free_copy(vm_t *vm);
 
 /* regular playback */
 void vm_position_get(vm_t *vm, vm_position_t *position);
