@@ -12,7 +12,8 @@ libdvdnav_la_SOURCES = decoder.c dvdnav.c vm.c vmcmd.c \
 libdvdnav_la_LIBADD = @DYNAMIC_LD_LIBS@
 
 libdvdnav_la_LDFLAGS = $(THREAD_LIBS) \
-	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
+        -export-symbols-regex "(^dvdnav.*|^nav.*|^ifo.*)"
 #	-release $(DVDNAV_MAJOR).$(DVDNAV_MINOR).$(DVDNAV_SUB)
 
 include_HEADERS = dvdnav.h dvdnav_events.h dvd_types.h \

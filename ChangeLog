@@ -1,3 +1,6 @@
+libdvdnav (0.1.10)
+  * filter the symbols that we export.
+
 libdvdnav (0.1.9)
   * libdvdnav does not depend on libdvdread any more. It has it's own version.
   * fix some situations where an unlucky user could trigger assertions
