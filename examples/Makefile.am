@@ -1,5 +1,6 @@
 bin_PROGRAMS=menus
 CFLAGS=-I../src/ 
+LDFLAGS=-L../src/
 
 menus_SOURCES=menus.c
 menus_LDADD=-ldvdnav
