@@ -110,8 +110,9 @@ static void vm_print_current_domain_state(vm_t *vm) {
       fprintf(MSG_OUT, "libdvdnav: Unknown Domain: -\n");
       break;
   }
-  fprintf(MSG_OUT, "libdvdnav: VTS:%d PG:%u CELL:%u BLOCK:%u VTS_TTN:%u TTN:%u TT_PGCN:%u\n", 
+  fprintf(MSG_OUT, "libdvdnav: VTS:%d PGC:%d PG:%u CELL:%u BLOCK:%u VTS_TTN:%u TTN:%u TT_PGCN:%u\n", 
                    (vm->state).vtsN,
+                   get_PGCN(vm),
                    (vm->state).pgN,
                    (vm->state).cellN,
                    (vm->state).blockN,
@@ -1684,7 +1685,7 @@ static int get_PGCN(vm_t *vm)
   }
   fprintf(MSG_OUT, "libdvdnav: get_PGCN failed. Trying to find pgcN in domain %d \n", 
          (vm->state).domain);
-  assert(0); 
+  /* assert(0);*/ 
   return -1; /*  error */
 }
 
@@ -1817,6 +1818,7 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
     pgcit = get_MENU_PGCIT(vm, vm->vtsi, (vm->state).registers.SPRM[0]);
     break;
   case VMGM_DOMAIN:
+  case FP_DOMAIN:
     pgcit = get_MENU_PGCIT(vm, vm->vmgi, (vm->state).registers.SPRM[0]);
     break;
   default:
@@ -1832,6 +1834,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.31  2002/09/01 10:57:15  jcdutton
+ * Add a bit more debug info. Now print PGCN in debug.
+ *
  * Revision 1.30  2002/08/31 10:51:01  jcdutton
  * Handle badly written DVDs better.
  * If a Cell has a Cell command pointer, but the PGC Cell command list does not have an
