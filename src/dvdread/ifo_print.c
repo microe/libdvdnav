@@ -704,6 +704,10 @@ static void ifo_print_CELL_POSITION(cell_position_t *cell_position, int nr) {
 void ifo_print_PGC(pgc_t *pgc) {
   int i;
   
+  if (!pgc) {
+    printf("None\n");
+    return;
+  }
   printf("Number of Programs: %i\n", pgc->nr_of_programs);
   printf("Number of Cells: %i\n", pgc->nr_of_cells);
   /* Check that time is 0:0:0:0 also if nr_of_programs==0 */
@@ -1168,6 +1172,9 @@ void ifo_print(dvd_reader_t *dvd, int title) {
 
 /*
  * $Log$
+ * Revision 1.3  2004/10/22 11:36:19  jcdutton
+ * Stop seg fault when using ifo_dump.
+ *
  * Revision 1.2  2004/09/27 12:24:01  jcdutton
  * Add extra info to printout when using ifo_dump.
  *
