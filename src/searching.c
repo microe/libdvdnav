@@ -410,6 +410,14 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, unsigned int *pos,
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
   }
+  if (this->position_current.hop_channel  != this->vm->hop_channel ||
+      this->position_current.domain       != state->domain         ||
+      this->position_current.vts          != state->vtsN           ||
+      this->position_current.cell_restart != state->cell_restart) {
+    printerr("New position not yet determined.");
+    pthread_mutex_unlock(&this->vm_lock);
+    return S_ERR;
+  }
 
   /* Get current sector */
   cur_sector = this->vobu.vobu_start + this->vobu.blockN;
