@@ -172,7 +172,11 @@ static dvd_input_t file_open(const char *target)
   }
   
   /* Open the device */
+#ifndef _MSC_VER
   dev->fd = open(target, O_RDONLY);
+#else
+  dev->fd = open(target, O_RDONLY | O_BINARY);
+#endif
   if(dev->fd < 0) {
     perror("libdvdread: Could not open input");
     free(dev);

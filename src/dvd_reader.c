@@ -51,9 +51,9 @@
 
 #define DEFAULT_UDF_CACHE_LEVEL 1
 
-/**/
-#define WIN32_CSS 0
-/**/
+#ifdef _MSC_VER
+#define fchdir chdir
+#endif
 
 struct dvd_reader_s {
     /* Basic information. */
@@ -298,43 +298,53 @@ static char *bsd_block2char( const char *path )
 }
 #endif
 
-dvd_reader_t *DVDOpen( const char *path )
+dvd_reader_t *DVDOpen( const char *ppath )
 {
-#ifndef _MSC_VER
     struct stat fileinfo;
     int ret;
-#endif /* _MSC_VER */
-
     int have_css;
-
+	dvd_reader_t *ret_val = NULL;
     char *dev_name = 0;
-
-    if( path == NULL )
-      return 0;
+	char *path;
 
 #ifdef _MSC_VER
+	int len;
+#endif
 
+    if( ppath == NULL )
+      return 0;
+
+	path = strdup(ppath);
+	
     /* Try to open libdvdcss or fall back to standard functions */
     have_css = dvdinput_setup();
 
-    return DVDOpenImageFile( path, have_css );
-
-#else
-
-    /* Try to open libdvdcss or fall back to standard functions */
-    have_css = dvdinput_setup();
+#ifdef _MSC_VER
+	/* Strip off the trailing \ if it is not a drive */
+	len = strlen(path);
+	if ((len > 1) && 
+		(path[len - 1] == '\\')  && 
+		(path[len - 2] != ':'))
+	{
+		path[len-1] = '\0';
+	}
+#endif
     
     ret = stat( path, &fileinfo );
+
     if( ret < 0 ) {
 
         /* maybe "host:port" url? try opening it with acCeSS library */
         if( strchr(path,':') ) {
-          return DVDOpenImageFile( path, have_css );
+			ret_val = DVDOpenImageFile( path, have_css );
+			free(path);
+	        return ret_val;
         }
       
 	/* If we can't stat the file, give up */
 	fprintf( stderr, "libdvdread: Can't stat %s\n", path );
 	perror("");
+	free(path);
 	return 0;
     }
 
@@ -347,12 +357,15 @@ dvd_reader_t *DVDOpen( const char *path )
 	 * Block devices and regular files are assumed to be DVD-Video images.
 	 */
 #if defined(__sun)
-	return DVDOpenImageFile( sun_block2char( path ), have_css );
+	ret_val = DVDOpenImageFile( sun_block2char( path ), have_css );
 #elif defined(SYS_BSD)
-	return DVDOpenImageFile( bsd_block2char( path ), have_css );
+	ret_val = DVDOpenImageFile( bsd_block2char( path ), have_css );
 #else
-	return DVDOpenImageFile( path, have_css );
+	ret_val = DVDOpenImageFile( path, have_css );
 #endif
+
+	free(path);
+	return ret_val;
 
     } else if( S_ISDIR( fileinfo.st_mode ) ) {
 	dvd_reader_t *auth_drive = 0;
@@ -364,7 +377,10 @@ dvd_reader_t *DVDOpen( const char *path )
 #endif
 
 	/* XXX: We should scream real loud here. */
-	if( !(path_copy = strdup( path ) ) ) return 0;
+	if( !(path_copy = strdup( path ) ) ) {
+		free(path);	
+		return 0;
+	}
 
 	/* Resolve any symlinks and get the absolut dir name. */
 	{
@@ -449,13 +465,23 @@ dvd_reader_t *DVDOpen( const char *path )
             }
             fclose( mntfile );
 	}
+#elif defined(_MSC_VER)
+    auth_drive = DVDOpenImageFile( path, have_css );
 #endif
+
+#ifndef _MSC_VER
 	if( !dev_name ) {
 	  fprintf( stderr, "libdvdread: Couldn't find device name.\n" );
 	} else if( !auth_drive ) {
 	    fprintf( stderr, "libdvdread: Device %s inaccessible, "
 		     "CSS authentication not available.\n", dev_name );
 	}
+#else
+	if( !auth_drive ) {
+	    fprintf( stderr, "libdvdread: Device %s inaccessible, "
+		     "CSS authentication not available.\n", dev_name );
+	}
+#endif
 
 	free( dev_name );
 	free( path_copy );
@@ -463,17 +489,22 @@ dvd_reader_t *DVDOpen( const char *path )
         /**
          * If we've opened a drive, just use that.
          */
-        if( auth_drive ) return auth_drive;
+	if( auth_drive ) {
+		free(path);
+		return auth_drive;
+	}
 
         /**
          * Otherwise, we now try to open the directory tree instead.
          */
-        return DVDOpenPath( path );
+        ret_val = DVDOpenPath( path );
+		free( path );
+		return ret_val;
     }
-#endif /* _MSC_VER */
 
     /* If it's none of the above, screw it. */
     fprintf( stderr, "libdvdread: Could not open %s\n", path );
+	free( path );
     return 0;
 }
 
