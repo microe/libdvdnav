@@ -1602,6 +1602,9 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part) {
 
 static int set_FP_PGC(vm_t *vm) {  
   (vm->state).domain = FP_DOMAIN;
+  if (!vm->vmgi->first_play_pgc) {
+    return set_PGCN(vm, 1);
+  }
   (vm->state).pgc = vm->vmgi->first_play_pgc;
   (vm->state).pgcN = vm->vmgi->vmgi_mat->first_play_pgc;
   return 1;
