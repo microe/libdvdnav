@@ -741,7 +741,8 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     /* Perform the jump if necessary (this is always a 
      * VOBU boundary). */
 
-    result = DVDReadBlocks(this->file, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
+    //result = DVDReadBlocks(this->file, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
+    result = dvdnav_read_cache_block(this->cache, this->vobu.vobu_start + this->vobu.vobu_next, 1, buf);
 
     if(result <= 0) {
       printerr("Error reading NAV packet.");
@@ -761,7 +762,15 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
      *        This is so RSM resumes to the VOBU level and not just the CELL level.
      *        This should be implemented with a new Public API call.
      */
-    dvdnav_pre_cache_blocks(this->cache, this->vobu.vobu_start+1, this->vobu.vobu_length);
+    /* We cache one past the end of the VOBU, 
+     * in the hope it might catch the next NAV packet as well.
+     * This reduces the amount of read commands sent to the DVD device.
+     * A cache miss will only happen for 3 reasons.
+     * 1) Seeking
+     * 2) Menu change
+     * 3) The next VOBU does not immeadiately follow the current one. E.g. Multi Angles, ILVU.
+     */
+    dvdnav_pre_cache_blocks(this->cache, this->vobu.vobu_start+1, this->vobu.vobu_length+1);
     
     /* Successfully got a NAV packet */
     (*event) = DVDNAV_NAV_PACKET;
@@ -931,6 +940,10 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.22  2002/06/25 13:37:11  jcdutton
+ * Revert back to old read_cache method.
+ * Some new optimizations added to the old read_cache method, thus reducing the amount of calls to read blocks from the DVD device.
+ *
  * Revision 1.21  2002/06/06 15:03:09  richwareham
  * Biiiiiiig change to let doxygen generate some docs for the library. Note that I'm in no way sure that the autoconf stuff plays nice.
  *

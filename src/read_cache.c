@@ -30,7 +30,8 @@
 #include <pthread.h>
 
 /* Read-ahead cache structure. */
-#if _MULTITHREAD_
+#if 0
+/* #if _MULTITHREAD_ */
 
 /* For the multithreaded cache, the cache is a ring buffer + writing
  * thread that continuously reads data into the buffer until it is
@@ -73,15 +74,16 @@ struct read_cache_s {
 };
 #endif
 
-#if _MULTITHREAD_
-
-#define _MT_TRACE 0
+#define _MT_TRACE 1
 
 #if _MT_TRACE
-#define ddprintf(fmt, args...) fprintf(stderr, __FUNCTION__ ": " fmt, ##args);
+#define dprintf(fmt, args...) fprintf(stderr, "%s: " fmt,  __FUNCTION__, ##args);
 #else
-#define sdprintf(fmt, args...) /* Nowt */
+#define dprintf(fmt, args...) /* Nowt */
 #endif
+
+#if 0
+/* #if _MULTITHREAD_ */
 
 void * read_cache_read_thread (void * this_gen) {
   int cont = 1;
@@ -387,12 +389,12 @@ int dvdnav_read_cache_block( read_cache_t *self, int sector, size_t block_count,
 	return DVD_VIDEO_LB_LEN;
       }
     }
-  } else {
-    result = DVDReadBlocks( self->dvd_self->file, sector, block_count, buf);
-    return result;
+  //} else {
+  //  result = DVDReadBlocks( self->dvd_self->file, sector, block_count, buf);
+  //  return result;
   }
   
-  dprintf("DVD read cache miss! sector=%d, start=%d\n", sector, self->cache_start_sector); 
+  dprintf("DVD read cache miss! sector=%d, start=%d, end=%d\n", sector, self->cache_start_sector, self->cache_block_count + self->cache_start_sector); 
   result = DVDReadBlocks( self->dvd_self->file, sector, block_count, buf);
   return result;
 }
