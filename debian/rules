@@ -76,8 +76,10 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_install --sourcedir=debian/tmp
-	dh_installexamples
+	dh_install -plibdvdnav$(major) --sourcedir=debian/tmp usr/lib/libdvdnav*.so.*
+	dh_installexamples -plibdvdnav$(major) src/FELLOWSHIP.map
 	dh_installdocs -A AUTHORS README TODO
+	dh_installdocs -plibdvdnav$(major) src/README.MAP
 	dh_installman -plibdvdnav-dev debian/dvdnav-config.1
 	mkdir -p debian/libdvdnav$(major)/usr/share/bug/libdvdnav$(major)
 	install -m 644 debian/bug-presubj \
