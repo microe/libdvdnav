@@ -1,12 +1,21 @@
-libdvdnav (0.1.0+20020517-1) unstable; urgency=low
+libdvdnav (0.1.1-1) unstable; urgency=low
 
-  * Prepare for next release of xine-dvdnav
-  * Add manual page for dvdnav-config.
-  * Print message before filing bugs.
-  * Add AUTHORS
-  * Fix inclusion of config.h
+  * New upstream version. (closes: #148495)
+  * Include TODO
 
- -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Thu, 16 May 2002 21:58:24 +0200
+ -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Sat,  1 Jun 2002 17:47:59 +0200
+
+libdvdnav (0.1.0-2) unstable; urgency=low
+
+  * Add manual page dvdnav-config.1
+  * Add bug-presubj on Daniel's request
+  * Get dvdnav.c:1.17 from CVS to fix angle support
+  * Merge patch from Jamie Wilkinson (#146699)
+  * Rerun automake to fix dependencies
+  * Ack NMU from siggi
+  * Fix include in examples/menus.c
+
+ -- Philipp Hahn <pmhahn@titan.lahn.de>  Thu, 23 May 2002 09:41:15 +0200
 
 libdvdnav (0.1.0-1.1) unstable; urgency=low
 
