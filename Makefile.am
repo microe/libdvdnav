@@ -3,6 +3,16 @@ SUBDIRS = src misc m4
 EXTRA_DIST = debian/README.debian debian/changelog debian/control debian/copyright debian/dirs \
 	debian/libdvdnav1.files debian/rules libdvdnav.spec
 
+debug:
+	@list='$(SUBDIRS)'; for subdir in $$list; do \
+	  (cd $$subdir && $(MAKE) $@) || exit;\
+	done;
+
+install-debug: debug
+	@list='$(SUBDIRS)'; for subdir in $$list; do \
+	  (cd $$subdir && $(MAKE) $@) || exit; \
+	done;
+
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#* 
 	-rm -f $(PACKAGE)_$(VERSION).tar.gz

@@ -2,6 +2,9 @@ EXTRA_DIST = autogen.sh  dvdnav-config.in
 
 bin_SCRIPTS = dvdnav-config
 
+debug:
+install-debug: install
+
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#*
 

@@ -139,8 +139,15 @@ AC_CHECK_LIB(dvdread,
  	     AC_MSG_ERROR(Could not find libdvdread. It is needed))
 AC_SUBST(DVDREAD_LIBS)
 
+dnl
+dnl *CFLAGS*
+dnl
+
 dnl Common cflags for all platforms
 COMMON_CFLAGS="-Wall -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE"
+GLOBAL_CFLAGS="$GLOBAL_CFLAGS -O3 $COMMON_CFLAGS"
+DEBUG_CFLAGS="$DEBUG_CFLAGS -O3 $COMMON_CFLAGS -g -DDEBUG"
+
 
 dnl
 dnl Get where .m4 should be installed.

@@ -1,3 +1,7 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+@TOP@
+
 /* Define this if you're running x86 architecture */
 #undef __i386__
 
@@ -21,3 +25,6 @@
 
 /* Define this if you have libdvdread 0.9.0+ installed */
 #undef HAVE_DVDREAD9
+
+@BOTTOM@
+#endif /* _CONFIG_H_ */
