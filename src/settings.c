@@ -33,11 +33,13 @@
 /* Characteristics/setting API calls */
 
 dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int *region) {
-  if(!this)
-   return S_ERR;
+  if(!this) {
+    printerr("Passed a NULL this pointer");
+    return S_ERR;
+  }
 
   if(!region) {
-    printerr("Passed a NULL pointer");
+    printerr("Passed a NULL region pointer");
     return S_ERR;
   }
 
@@ -75,11 +77,13 @@ dvdnav_status_t dvdnav_set_readahead_flag(dvdnav_t *this, int use_readahead) {
 }
 
 dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *this, int* flag) {
-  if(!this)
-   return S_ERR;
+  if(!this) {
+    printerr("Passed a NULL this pointer");
+    return S_ERR;
+  }
 
   if(!flag) {
-    printerr("Passed a NULL pointer");
+    printerr("Passed a NULL flag pointer");
     return S_ERR;
   }
 
@@ -88,9 +92,16 @@ dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *this, int* flag) {
 }
 
 static dvdnav_status_t set_language_register(dvdnav_t *this, char *code, int reg) {
-  if(!this)
+  if(!this ) {
+    printerr("Passed a NULL this pointer");
     return S_ERR;
+  }
     
+  if(!code) {
+    printerr("Passed a NULL code pointer");
+    return S_ERR;
+  }
+
   if(!code[0] || !code[1]) {
     printerr("Passed illegal language code");
     return S_ERR;
