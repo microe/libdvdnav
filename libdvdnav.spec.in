@@ -44,7 +44,7 @@ rm -r $RPM_BUILD_ROOT
 @INSTALL_M4_TRUE@@ACLOCAL_DIR@/dvdnav.m4
 
 %changelog
-* Sun Mar 11 2002 Daniel Caujolle-Bert <f1rmb@users.sourceforge.net>
+* Sun Mar 18 2002 Daniel Caujolle-Bert <f1rmb@users.sourceforge.net>
 - Add missing files. Fix rpm generation.
 * Tue Mar 12 2002 Rich Wareham <richwareham@users.sourceforge.net>
 - Canabalisation to form libdvdnav spec file.
