@@ -181,7 +181,7 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   struct timeval time;
   
   /* Create a new structure */
-  fprintf(MSG_OUT, "libdvdnav: Using dvdnav version (devel-ref:jcd1) from http://dvd.sf.net\n");
+  fprintf(MSG_OUT, "libdvdnav: Using dvdnav version %s from http://dvd.sf.net\n", VERSION);
 
   (*dest) = NULL;
   this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
@@ -1010,6 +1010,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.38  2002/09/19 04:48:28  jcdutton
+ * Update version info.
+ * The "note2" bit if to help developers know which version of libdvdnav the user is using.
+ *
  * Revision 1.37  2002/09/18 14:26:42  mroi
  * fix possible unlock on not locked mutex
  *
