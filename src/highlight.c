@@ -25,9 +25,9 @@
 #include "config.h"
 #endif
 
-/*
+
 #define BUTTON_TESTING
-*/
+
 #include <assert.h>
 
 #include <dvdnav.h>
@@ -38,9 +38,174 @@
 
 #ifdef BUTTON_TESTING
 #include <dvdread/nav_print.h>
+#include "vmcmd.h"
+
+static void print_time(dvd_time_t *dtime) {
+  const char *rate;
+  assert((dtime->hour>>4) < 0xa && (dtime->hour&0xf) < 0xa);
+  assert((dtime->minute>>4) < 0x7 && (dtime->minute&0xf) < 0xa);
+  assert((dtime->second>>4) < 0x7 && (dtime->second&0xf) < 0xa);
+  assert((dtime->frame_u&0xf) < 0xa);
+
+  fprintf(MSG_OUT,"%02x:%02x:%02x.%02x",
+         dtime->hour,
+         dtime->minute,
+         dtime->second,
+         dtime->frame_u & 0x3f);
+  switch((dtime->frame_u & 0xc0) >> 6) {
+  case 1:
+    rate = "25.00";
+    break;
+  case 3:
+    rate = "29.97";
+    break;
+  default:
+    rate = "(please send a bug report)";
+    break;
+  }
+  fprintf(MSG_OUT," @ %s fps", rate);
+}
+
+static void nav_print_PCI_GI(pci_gi_t *pci_gi) {
+  int i;
+
+  fprintf(MSG_OUT,"pci_gi:\n");
+  fprintf(MSG_OUT,"nv_pck_lbn    0x%08x\n", pci_gi->nv_pck_lbn);
+  fprintf(MSG_OUT,"vobu_cat      0x%04x\n", pci_gi->vobu_cat);
+  fprintf(MSG_OUT,"vobu_uop_ctl  0x%08x\n", *(uint32_t*)&pci_gi->vobu_uop_ctl);
+  fprintf(MSG_OUT,"vobu_s_ptm    0x%08x\n", pci_gi->vobu_s_ptm);
+  fprintf(MSG_OUT,"vobu_e_ptm    0x%08x\n", pci_gi->vobu_e_ptm);
+  fprintf(MSG_OUT,"vobu_se_e_ptm 0x%08x\n", pci_gi->vobu_se_e_ptm);
+  fprintf(MSG_OUT,"e_eltm        ");
+  print_time(&pci_gi->e_eltm);
+  fprintf(MSG_OUT,"\n");
+
+  fprintf(MSG_OUT,"vobu_isrc     \"");
+  for(i = 0; i < 32; i++) {
+    char c = pci_gi->vobu_isrc[i];
+    if((c >= ' ') && (c <= '~'))
+      fprintf(MSG_OUT,"%c", c);
+    else
+      fprintf(MSG_OUT,".");
+  }
+  fprintf(MSG_OUT,"\"\n");
+}
+
+static void nav_print_NSML_AGLI(nsml_agli_t *nsml_agli) {
+  int i, j = 0;
+
+  for(i = 0; i < 9; i++)
+    j |= nsml_agli->nsml_agl_dsta[i];
+  if(j == 0)
+    return;
+
+  fprintf(MSG_OUT,"nsml_agli:\n");
+  for(i = 0; i < 9; i++)
+    if(nsml_agli->nsml_agl_dsta[i])
+      fprintf(MSG_OUT,"nsml_agl_c%d_dsta  0x%08x\n", i + 1,
+             nsml_agli->nsml_agl_dsta[i]);
+}
+
+static void nav_print_HL_GI(hl_gi_t *hl_gi, int *btngr_ns, int *btn_ns) {
+
+  if((hl_gi->hli_ss & 0x03) == 0)
+    return;
+
+  fprintf(MSG_OUT,"hl_gi:\n");
+  fprintf(MSG_OUT,"hli_ss        0x%01x\n", hl_gi->hli_ss & 0x03);
+  fprintf(MSG_OUT,"hli_s_ptm     0x%08x\n", hl_gi->hli_s_ptm);
+  fprintf(MSG_OUT,"hli_e_ptm     0x%08x\n", hl_gi->hli_e_ptm);
+  fprintf(MSG_OUT,"btn_se_e_ptm  0x%08x\n", hl_gi->btn_se_e_ptm);
+
+  *btngr_ns = hl_gi->btngr_ns;
+  fprintf(MSG_OUT,"btngr_ns      %d\n",  hl_gi->btngr_ns);
+  fprintf(MSG_OUT,"btngr%d_dsp_ty    0x%02x\n", 1, hl_gi->btngr1_dsp_ty);
+  fprintf(MSG_OUT,"btngr%d_dsp_ty    0x%02x\n", 2, hl_gi->btngr2_dsp_ty);
+  fprintf(MSG_OUT,"btngr%d_dsp_ty    0x%02x\n", 3, hl_gi->btngr3_dsp_ty);
+
+  fprintf(MSG_OUT,"btn_ofn       %d\n", hl_gi->btn_ofn);
+  *btn_ns = hl_gi->btn_ns;
+  fprintf(MSG_OUT,"btn_ns        %d\n", hl_gi->btn_ns);
+  fprintf(MSG_OUT,"nsl_btn_ns    %d\n", hl_gi->nsl_btn_ns);
+  fprintf(MSG_OUT,"fosl_btnn     %d\n", hl_gi->fosl_btnn);
+  fprintf(MSG_OUT,"foac_btnn     %d\n", hl_gi->foac_btnn);
+}
+
+static void nav_print_BTN_COLIT(btn_colit_t *btn_colit) {
+  int i, j;
+
+  j = 0;
+  for(i = 0; i < 6; i++)
+    j |= btn_colit->btn_coli[i/2][i&1];
+  if(j == 0)
+    return;
+
+  fprintf(MSG_OUT,"btn_colit:\n");
+  for(i = 0; i < 3; i++)
+    for(j = 0; j < 2; j++)
+      fprintf(MSG_OUT,"btn_cqoli %d  %s_coli:  %08x\n",
+             i, (j == 0) ? "sl" : "ac",
+             btn_colit->btn_coli[i][j]);
+}
+
+static void nav_print_BTNIT(btni_t *btni_table, int btngr_ns, int btn_ns) {
+  int i, j, k;
+
+  fprintf(MSG_OUT,"btnit:\n");
+  fprintf(MSG_OUT,"btngr_ns: %i\n", btngr_ns);
+  fprintf(MSG_OUT,"btn_ns: %i\n", btn_ns);
+
+  if(btngr_ns == 0)
+    return;
+
+  for(i = 0; i < btngr_ns; i++) {
+    for(j = 0; j < (36 / btngr_ns); j++) {
+      if(j < btn_ns) {
+        btni_t *btni = &btni_table[(36 / btngr_ns) * i + j];
+
+        fprintf(MSG_OUT,"group %d btni %d:  ", i+1, j+1);
+        fprintf(MSG_OUT,"btn_coln %d, auto_action_mode %d\n",
+               btni->btn_coln, btni->auto_action_mode);
+        fprintf(MSG_OUT,"coords   (%d, %d) .. (%d, %d)\n",
+               btni->x_start, btni->y_start, btni->x_end, btni->y_end);
+
+        fprintf(MSG_OUT,"up %d, ", btni->up);
+        fprintf(MSG_OUT,"down %d, ", btni->down);
+        fprintf(MSG_OUT,"left %d, ", btni->left);
+        fprintf(MSG_OUT,"right %d\n", btni->right);
+        for(k = 0; k < 8; k++) {
+          fprintf(MSG_OUT, "%02x ", btni->cmd.bytes[k]);
+        }
+        fprintf(MSG_OUT, "| ");
+        vmPrint_mnemonic(&btni->cmd);
+        fprintf(MSG_OUT, "\n\n");
+      }
+    }
+  }
+}
+
+static void nav_print_HLI(hli_t *hli) {
+  int btngr_ns = 0, btn_ns = 0;
+
+  fprintf(MSG_OUT,"hli:\n");
+  nav_print_HL_GI(&hli->hl_gi, & btngr_ns, & btn_ns);
+  nav_print_BTN_COLIT(&hli->btn_colit);
+  nav_print_BTNIT(hli->btnit, btngr_ns, btn_ns);
+}
+
+void nav_print_PCI(pci_t *pci) {
+  fprintf(MSG_OUT,"pci packet:\n");
+  nav_print_PCI_GI(&pci->pci_gi);
+  nav_print_NSML_AGLI(&pci->nsml_agli);
+  nav_print_HLI(&pci->hli);
+}
+
+
 #endif
 
 /* Highlighting API calls */
+
+
 
 dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int* button) {
   if(!this)
@@ -60,7 +225,7 @@ btni_t *__get_current_button(dvdnav_t *this) {
     return NULL;
   }
 #ifdef BUTTON_TESTING
-  navPrint_PCI(&(this->pci));
+  nav_print_PCI(&(this->pci));
 #endif
   
   return &(this->pci.hli.btnit[button-1]);
