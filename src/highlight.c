@@ -410,6 +410,31 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this) {
   return S_OK;
 }
 
+dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cmd_t *cmd)
+{
+  if(!this || !this->vm) 
+    return S_ERR;
+  pthread_mutex_lock(&this->vm_lock); 
+  /* make the VM execute the appropriate code and
+   * schedule a jump */
+#ifdef BUTTON_TESTING
+  fprintf(MSG_OUT, "libdvdnav:dvdnav_button_activate_cmd: Evaluating Button Activation commands.\n");
+#endif
+  if(button > 0) {
+    printerrf("Select button number %i\n ",
+	      button);
+    this->vm->state.HL_BTNN_REG = (button << 10);
+    if( (vm_eval_cmd(this->vm, cmd)) == 1) {
+      /* Command caused a jump */
+      this->vm->hop_channel++;
+    }
+  }
+  /* Always remove still, because some still menus have no buttons. */
+  this->position_current.still = 0;
+  pthread_mutex_unlock(&this->vm_lock);
+  return S_OK;
+}  
+
 dvdnav_status_t dvdnav_button_select(dvdnav_t *this, int button) {
   
   if(!this) {

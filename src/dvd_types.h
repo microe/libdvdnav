@@ -296,5 +296,4 @@ typedef struct {
   uint32_t buttonN;     /*!< Button number for the SPU decoder. */
 } dvdnav_highlight_area_t;
 
-
 #endif /* DVD_H_INCLUDED */

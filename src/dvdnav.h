@@ -41,6 +41,7 @@ extern "C" {
 #include "dvd_types.h"
 
 #include <dvdread/dvd_reader.h>
+#include <dvdread/ifo_types.h> /* For vm_cmd_t */
 
 /**
  * Opaque data-type can be viewed as a 'DVD handle'. You should get
@@ -573,6 +574,14 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *self, int button);
  * \param button 1..39 -- Button number to activate.
  */
 dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *self, int button);
+
+/**
+ * Activate (press) a button and execute specified command.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param cmd DVD Command to execute.
+ */
+dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *self, int32_t button, vm_cmd_t *cmd);
 
 /**
  * Select button at specified (image) co-ordinates.
