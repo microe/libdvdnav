@@ -2,6 +2,8 @@
     dvdnav_{title,part}_play() works again
   * removed wrong SPU stream change event filter
     (fixes unwanted subtitles in the trailer of "Girl, interrupted", RC2)
+  * fixed error "Expected NAV packet but none found." occuring sometimes
+    on resume from menu
 
 libdvdnav (0.1.10)
   * filter the symbols that we export.

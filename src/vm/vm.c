@@ -1343,10 +1343,11 @@ static int process_command(vm_t *vm, link_t link_values) {
 	  (vm->state).pgN = 1;
 	  link_values = play_PG(vm);
 	} else { 
-	  /* (vm->state).pgN = ?? this gets the righ value in set_PGN() below */
+	  /* (vm->state).pgN = ?? this gets the right value in set_PGN() below */
 	  (vm->state).cellN = (vm->state).rsm_cellN;
 	  link_values.command = PlayThis;
-	  link_values.data1 = (vm->state).rsm_blockN;
+	  link_values.data1 = (vm->state).rsm_blockN & 0xffff;
+	  link_values.data2 = (vm->state).rsm_blockN >> 16;
 	  if(!set_PGN(vm)) {
 	    /* Were at the end of the PGC, should not happen for a RSM */
 	    assert(0);
@@ -1549,7 +1550,7 @@ static int process_command(vm_t *vm, link_t link_values) {
 #endif
     
   }
-  (vm->state).blockN = link_values.data1;
+  (vm->state).blockN = link_values.data1 | (link_values.data2 << 16);
   return 1;
 }
 
