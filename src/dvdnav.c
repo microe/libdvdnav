@@ -654,9 +654,9 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     stream_change->physical_pan_scan  = vm_get_subp_active_stream(this->vm, 2);
     this->position_current.spu_channel = this->position_next.spu_channel;
 #ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_wide=%d\n",stream_change.physical_wide);
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_letterbox=%d\n",stream_change.physical_letterbox);
-    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_pan_scan=%d\n",stream_change.physical_pan_scan);
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_wide=%d\n",stream_change->physical_wide);
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_letterbox=%d\n",stream_change->physical_letterbox);
+    fprintf(MSG_OUT, "libdvdnav: SPU_STREAM_CHANGE stream_id_pan_scan=%d\n",stream_change->physical_pan_scan);
 #endif
     if (stream_change->physical_wide != -1 &&
         stream_change->physical_letterbox != -1 &&
@@ -681,7 +681,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
     stream_change->physical = vm_get_audio_active_stream( this->vm );
     this->position_current.audio_channel = this->position_next.audio_channel;
 #ifdef LOG_DEBUG
-    fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
+    fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change->physical);
 #endif
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
@@ -1079,6 +1079,10 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.50  2003/04/01 11:30:56  mroi
+ * merge James fixes from xine-lib cvs back into libdvdnav cvs so they will not be lost
+ * on syncing
+ *
  * Revision 1.49  2003/04/01 11:28:54  mroi
  * some more sanity checking will prevent segfaults in these functions
  *
