@@ -203,6 +203,11 @@ AM_CONDITIONAL(INSTALL_M4, test x"$ACLOCAL_DIR" != "x")
 
 
 dnl
+dnl Check for doxygen (dynamic documentation generator)
+dnl
+AC_CHECK_PROG(DOXYGEN, doxygen, doxygen, no)
+
+dnl
 dnl Some include paths ( !!! DO NOT REMOVE !!! )
 dnl
 INCLUDES='-I$(top_srcdir) $(DVDNAV_CFLAGS)'
