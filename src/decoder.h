@@ -25,7 +25,6 @@
 #ifndef DECODER_H_INCLUDED
 #define DECODER_H_INCLUDED
 
-#include "config.h"
 #include <inttypes.h>
 #include <sys/time.h>
 

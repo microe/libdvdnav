@@ -25,7 +25,6 @@
 #ifndef VMCMD_H_INCLUDED
 #define VMCMD_H_INCLUDED
 
-#include "config.h"
 #include <inttypes.h>
 #include <dvdread/ifo_types.h> /*  Only for vm_cmd_t  */
 #include "decoder.h"

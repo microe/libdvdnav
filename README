@@ -1,0 +1,7 @@
+This library is based on Ogle-code, but will be rewritten in the time comming.
+It's hosted on http://dvd.sourceforge.net/. Please report bugs to the
+developers mailinglist at mailto:dvd-devel@lists.sourceforge.net
+
+The library is currently used by the following projects:
+  menu - A simple example program to demonstrate some features
+  xine-dvdnav - A full-featuted DVD plugin for xine

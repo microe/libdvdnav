@@ -30,6 +30,8 @@ endif
 #major=`ls src/.libs/lib*.so.* | \
 # awk '{if (match($$0,/\.so\.[0-9]+$$/)) print substr($$0,RSTART+4)}'`
 
+LIBPACKAGE := libdvdnav1
+
 config.status: configure
 	dh_testdir
 	# Add here commands to configure the package.
@@ -82,7 +84,7 @@ binary-arch: build install
 	dh_movefiles
 
 #	dh_installdebconf	
-	dh_installdocs
+	dh_installdocs -A AUTHORS NEWS README
 	dh_installexamples
 #	dh_installmenu
 #	dh_installlogrotate
@@ -91,8 +93,10 @@ binary-arch: build install
 #	dh_installmime
 #	dh_installinit
 #	dh_installcron
-#	dh_installman
+	dh_installman
 #	dh_installinfo
+	dh_installdirs -p ${LIBPACKAGE} usr/share/bug/${LIBPACKAGE}/
+	cp debian/bug-presubj debian/${LIBPACKAGE}/usr/share/bug/${LIBPACKAGE}/presubj
 #	dh_undocumented
 	dh_installchangelogs ChangeLog
 	dh_link

@@ -1,3 +1,13 @@
+libdvdnav (0.1.0+20020517-1) unstable; urgency=low
+
+  * Prepare for next release of xine-dvdnav
+  * Add manual page for dvdnav-config.
+  * Print message before filing bugs.
+  * Add AUTHORS
+  * Fix inclusion of config.h
+
+ -- Philipp Matthias Hahn <pmhahn@titan.lahn.de>  Thu, 16 May 2002 21:58:24 +0200
+
 libdvdnav (0.1.0-1.1) unstable; urgency=low
 
   * Prepared for first 'real' release.

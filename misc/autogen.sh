@@ -5,7 +5,7 @@
 
 DIE=0
 
-PROG=xine-lib
+PROG=libdvdnav
 
 # Check how echo works in this /bin/sh
 case `echo -n` in
