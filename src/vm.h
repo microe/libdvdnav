@@ -116,7 +116,7 @@ typedef struct {
 #define PTL_REG      registers.SPRM[13]
 
 /* Initialisation & destruction */
-vm_t *vm_new_vm();
+vm_t *vm_new_vm(void);
 void  vm_free_vm(vm_t *vm);
 
 /* IFO access */
