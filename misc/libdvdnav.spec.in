@@ -3,20 +3,20 @@
 %define ver     @SPEC_VERSION@
 %define rel     0
 
-Name: %{name}
-Summary: DVD Navigation library
-Version: %{ver}
-Release: %{rel}
-Group: Development/Libraries
-Copyright: GPL
-Url: http://dvd.sourceforge.net/
-Source: %{name}-%{version}.tar.gz
-Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
-##Requires: 
+Name:		%{name}
+Summary:	DVD Navigation library
+Version:	%{ver}
+Release:	%{rel}
+Group:		Development/Libraries
+Copyright:	GPL
+Url:		http://dvd.sourceforge.net/
+Source:		%{name}-%{version}.tar.gz
+Buildroot:	%{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 libdvdnav provides support to applications wishing to make use of advanced
-DVD features.
+DVD navigation features.
+
 %prep
 %setup
 
@@ -26,13 +26,10 @@ make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-#ROOT=$RPM_BUILD_ROOT 
 make install-strip DESTDIR=$RPM_BUILD_ROOT
 
 %clean
 rm -r $RPM_BUILD_ROOT
-
-%post
 
 %files
 %defattr(-,root,root)
