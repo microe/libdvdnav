@@ -88,7 +88,7 @@ struct read_cache_s {
 };
 #endif
 
-#define _MT_TRACE 1
+#define _MT_TRACE 0
 
 #if _MT_TRACE
 #define dprintf(fmt, args...) fprintf(stderr, "%s: "fmt,  __func__ , ## args);
