@@ -11,7 +11,7 @@ dnl --------------------------------------------------------------
 AC_PREREQ(2.53)
 
 dnl --------------------------------------------------------------
-dnl Making releases: DVDNAV_SUB += 1; change LT_* accordingly
+dnl Making releases: DVDNAV_SUB += 1; change DVDNAV_LT_* accordingly
 dnl --------------------------------------------------------------
 DVDNAV_MAJOR=0
 DVDNAV_MINOR=2
@@ -22,15 +22,15 @@ AC_SUBST(DVDNAV_MAJOR)
 AC_SUBST(DVDNAV_MINOR)
 AC_SUBST(DVDNAV_SUB)
 
-dnl The libtool version numbers (LT_*); Don't even think about faking this!
+dnl The libtool version numbers (DVDNAV_LT_*); Don't even think about faking this!
 dnl 
 dnl immediately before every release do:
 dnl ===================================
 dnl if (the interface is totally unchanged from previous release)
-dnl    LT_REVISION ++;
+dnl    DVDNAV_LT_REVISION ++;
 dnl else { /* interfaces have been added, removed or changed */
-dnl    LT_REVISION = 0;
-dnl    LT_CURRENT ++;
+dnl    DVDNAV_LT_REVISION = 0;
+dnl    DVDNAV_LT_CURRENT ++;
 dnl    if (any interfaces have been _added_ since last release)
 dnl       AGE ++;
 dnl    if (any interfaces have been _removed_ or _incompatibly changed_)
@@ -38,22 +38,22 @@ dnl       AGE = 0;
 dnl }
 dnl 
 dnl If you want to know more about what you are doing, here are some details:
-dnl  * LT_CURRENT is the current API version
-dnl  * LT_REVISION is an internal revision number which is increased when the API
+dnl  * DVDNAV_LT_CURRENT is the current API version
+dnl  * DVDNAV_LT_REVISION is an internal revision number which is increased when the API
 dnl    itself did not change
-dnl  * LT_AGE is the number of previous API versions still supported by this library
+dnl  * DVDNAV_LT_AGE is the number of previous API versions still supported by this library
 dnl  * libtool has its own numbering scheme, because local library numbering schemes
 dnl    are platform dependent
 dnl  * in Linux, the library will be named
-dnl    libname.so.(LT_CURRENT - LT_AGE).LT_AGE.LT_REVISION
+dnl    libname.so.(DVDNAV_LT_CURRENT - DVDNAV_LT_AGE).DVDNAV_LT_AGE.DVDNAV_LT_REVISION
 
-LT_CURRENT=5
-LT_AGE=1
-LT_REVISION=0
+DVDNAV_LT_CURRENT=5
+DVDNAV_LT_AGE=1
+DVDNAV_LT_REVISION=0
 
-AC_SUBST(LT_CURRENT)
-AC_SUBST(LT_AGE)
-AC_SUBST(LT_REVISION)
+AC_SUBST(DVDNAV_LT_CURRENT)
+AC_SUBST(DVDNAV_LT_AGE)
+AC_SUBST(DVDNAV_LT_REVISION)
 
 PACKAGE="libdvdnav"
 RELEASE="1"
