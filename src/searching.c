@@ -221,14 +221,24 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
 }
 
 dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int part) {
+
+  if((!this) || (!this->vm) )
+    return S_ERR;
+
   return S_OK;
 }
 
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
   dvd_state_t *state;
+
+  if((!this) || (!this->vm) )
+    return S_ERR;
+
   state = &(this->vm->state);
+  if((!state) || (!state->pgc) )
+    return S_ERR;
+
   /* Make sure this is not the first chapter */
-  
   if(state->pgN <= 1 ) {
     fprintf(stderr,"dvdnav: at first chapter. prev chapter failed.\n");
     return S_ERR;
@@ -243,6 +253,9 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
 
 dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 
+  if((!this) || (!this->vm) )
+    return S_ERR;
+    
   fprintf(stderr,"dvdnav: top chapter. NOP.\n");
   
   return S_OK;
@@ -250,7 +263,14 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 
 dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
   dvd_state_t *state;
+
+  if((!this) || (!this->vm) )
+    return S_ERR;
+
   state = &(this->vm->state);
+  if((!state) || (!state->pgc) )
+    return S_ERR;
+
   /* Make sure this is not the last chapter */
   if(state->pgN >= state->pgc->nr_of_programs) {
     fprintf(stderr,"dvdnav: at last chapter. next chapter failed.\n");
@@ -266,6 +286,9 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   dvd_state_t *state;
+
+  if((!this) || (!this->vm) )
+    return S_ERR;
 
   pthread_mutex_lock(&this->vm_lock); 
   state = &(this->vm->state);
