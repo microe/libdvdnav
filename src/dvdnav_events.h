@@ -21,6 +21,10 @@
  *
  */
 
+/*
+ * This header defines events and event types 
+ */
+
 #ifndef DVDNAV_EVENTS_H_INCLUDED
 #define DVDNAV_EVENTS_H_INCLUDED
 
@@ -28,103 +32,212 @@
 #include <dvdread/dvd_reader.h>
 #include <dvdread/nav_types.h>
 
-/**
- * \file dvdnav_events.h
- * This header defines events and event types 
+
+/*
+ * DVDNAV_BLOCK_OK
+ *
+ * A regular data block from the DVD has been returned.
+ * This one should be demuxed and decoded for playback.
  */
-
-/*** EVENTS ***/
-
-#define DVDNAV_BLOCK_OK			 0 /*!< The next block was returned */
-#define DVDNAV_NOP			 1 /*!< No action should be taken */
-#define DVDNAV_STILL_FRAME		 2 /*!< The preceeding block was the last in a still frame */
-#define DVDNAV_SPU_STREAM_CHANGE	 3 /*!< The SPU stream was changed */
-#define DVDNAV_AUDIO_STREAM_CHANGE	 4 /*!< The Audio stream was changed */
-#define DVDNAV_VTS_CHANGE		 5 /*!< We have changed VTS */ 
-#define DVDNAV_CELL_CHANGE		 6 /*!< We have jumped to a new cell */
-#define DVDNAV_NAV_PACKET		 7 /*!< The packet just passed was a NAV packet */
-#define DVDNAV_STOP			 8 /*!< The last block was final, no more are coming */
-#define DVDNAV_HIGHLIGHT		 9 /*!< Change highlight region */
-#define DVDNAV_SPU_CLUT_CHANGE		10 /*!< SPU CLUT changed */
-#define DVDNAV_HOP_CHANNEL		12 /*!< Sent when non-seemless stream change has happed */
-#define DVDNAV_WAIT			13 /*!< The application should wait for its fifos to run dry */
+#define DVDNAV_BLOCK_OK			 0
 
 
-/*** EVENT TYPES ***/
-
-/**
- * Structure providing information on DVDNAV_STILL_FRAME events.
+/*
+ * DVDNAV_NOP
+ *
+ * Just ignore this.
  */
+#define DVDNAV_NOP			 1
+
+
+/*
+ * DVDNAV_STILL_FRAME
+ *
+ * We have reached a still frame. The player application should wait
+ * the amount of time specified by the still's length while still handling
+ * user input to make menus and other interactive stills work.
+ * The last delivered frame should be kept showing.
+ * Once the still has timed out, call dvdnav_skip_still().
+ * A length of 0xff means an infinite still which has to be skipped
+ * indirectly by some user interaction.
+ */
+#define DVDNAV_STILL_FRAME		 2
+
 typedef struct {
-  int length;   /*!<
-		  The length (in seconds) the still frame
-		  should be displayed for, or 0xff if
-		  indefinite. */
+  /* The length (in seconds) the still frame should be displayed for,
+   * or 0xff if infinite. */
+  int length;
 } dvdnav_still_event_t;
 
-/**
- * Structure providing information on DVDNAV_SPU_STREAM_CHANGE events.
+
+/*
+ * DVDNAV_SPU_STREAM_CHANGE
+ *
+ * Inform the SPU decoding/overlaying engine to switch SPU channels.
  */
+#define DVDNAV_SPU_STREAM_CHANGE	 3
+
 typedef struct {
-  int physical_wide;      /*!< The physical (MPEG) stream number for widescreen display. */
-  int physical_letterbox; /*!< The physical (MPEG) stream number for letterboxed display. */
-  int physical_pan_scan;  /*!< The physical (MPEG) stream number for pan&scan display. */
-  int logical;            /*!< The logical (DVD) stream number. */
+  /* The physical (MPEG) stream number for widescreen SPU display.
+   * Use this, if you blend the SPU on an anamorphic image before
+   * unsqueezing it. */
+  int physical_wide;
+
+  /* The physical (MPEG) stream number for letterboxed display.
+   * Use this, if you blend the SPU on an anamorphic image after
+   * unsqueezing it. */
+  int physical_letterbox;
+
+  /* The physical (MPEG) stream number for pan&scan display.
+   * Use this, if you blend the SPU on an anamorphic image after
+   * unsqueezing it the pan&scan way. */
+  int physical_pan_scan;
+  
+  /* The logical (DVD) stream number. */
+  int logical;
 } dvdnav_spu_stream_change_event_t;
 
-/**
- * Structure providing information on DVDNAV_AUDIO_STREAM_CHANGE events.
+
+/*
+ * DVDNAV_AUDIO_STREAM_CHANGE
+ *
+ * Inform the audio decoder to switch channels.
  */
+#define DVDNAV_AUDIO_STREAM_CHANGE	 4
+
 typedef struct {
-  int physical; /*!< The physical (MPEG) stream number. */
-  int logical;  /*!< The logical (DVD) stream number.   */
+  /* The physical (MPEG) stream number. */
+  int physical;
+
+  /* The logical (DVD) stream number. */
+  int logical;
 } dvdnav_audio_stream_change_event_t;
 
-/**
- * Structure providing information on DVDNAV_VTS_CHANGE events.
+
+/*
+ * DVDNAV_VTS_CHANGE
+ *
+ * Some status information like video aspect and video scale permissions do
+ * not change inside a VTS. Therefore this event can be used to query such
+ * information only when necessary and update the decoding/displaying
+ * accordingly.
  */
+#define DVDNAV_VTS_CHANGE		 5
+
 typedef struct {
-  int old_vtsN;                 /*!< The old VTS number */
-  dvd_read_domain_t old_domain; /*!< The old domain */
-  int new_vtsN;                 /*!< The new VTS number */
-  dvd_read_domain_t new_domain; /*!< The new domain */
+  int old_vtsN;                 /* the old VTS number */
+  dvd_read_domain_t old_domain; /* the old domain */
+  int new_vtsN;                 /* the new VTS number */
+  dvd_read_domain_t new_domain; /* the new domain */
 } dvdnav_vts_change_event_t;
 
-/**
- * Structure providing information on DVDNAV_CELL_CHANGE events.
+
+/*
+ * DVDNAV_CELL_CHANGE
+ *
+ * Some status information like the current Title and Part numbers do not
+ * change inside a cell. Therefore this event can be used to query such
+ * information only when necessary and update the decoding/displaying
+ * accordingly.
+ * Some useful information for accurate time display is also reported
+ * together with this event.
  */
+#define DVDNAV_CELL_CHANGE		 6
+
 typedef struct {
-  int     cellN;       /*!< The new cell number */
-  int     pgN;         /*!< The current program number */
-  int64_t cell_length; /*!< The length of the current cell in PTS ticks */
-  int64_t pg_length;   /*!< The length of the current program in PTS ticks */
-  int64_t pgc_length;  /*!< The length of the current program chain in PTS ticks */
+  int     cellN;       /* the new cell number */
+  int     pgN;         /* the current program number */
+  int64_t cell_length; /* the length of the current cell in PTS ticks */
+  int64_t pg_length;   /* the length of the current program in PTS ticks */
+  int64_t pgc_length;  /* the length of the current program chain in PTS ticks */
+  int64_t cell_start;  /* the start time of the current cell relatively to the PGC in PTS ticks */
 } dvdnav_cell_change_event_t;
 
-/* FIXME: These are unused. */
-#if 0
-/**
- * Structure providing information on DVDNAV_NAV_PACKET events.
- */
-typedef struct {
-  pci_t *pci;
-  dsi_t *dsi;
-} dvdnav_nav_packet_event_t;
-#endif
 
-/**
- * Structure providing information on DVDNAV_HIGHLIGHT events.
- * The event only fills in display and buttonN.
- * The rest can be get with dvdnav_get_highlight_area().
+/*
+ * DVDNAV_NAV_PACKET
+ *
+ * NAV packets are useful for various purposes. They define the button
+ * highlight areas and VM commands of DVD menus, so they should in any
+ * case be sent to the SPU decoder/overlaying engine for the menus to work.
+ * NAV packets also provide a way to detect PTS discontinuities, because
+ * they carry the start and end PTS values for the current VOBU.
+ * (pci.vobu_s_ptm and pci.vobu_e_ptm) Whenever the start PTS of the
+ * current NAV does not match the end PTS of the previous NAV, a PTS
+ * discontinuity has occured.
+ * NAV packets can also be used for time display, because they are
+ * timestamped relatively to the current Cell.
  */
+#define DVDNAV_NAV_PACKET		 7
+
+
+/*
+ * DVDNAV_STOP
+ *
+ * Applications should end playback here. A subsequent dvdnav_get_next_block()
+ * call will restart the VM from the beginning of the DVD.
+ */
+#define DVDNAV_STOP			 8
+
+
+/*
+ * DVDNAV_HIGHLIGHT
+ *
+ * The current button highlight changed. Inform the overlaying engine to
+ * highlight a different button. Please note, that at the moment only mode 1
+ * highlights are reported this way. That means, when the button highlight
+ * has been moved around by some function call, you will receive an event
+ * telling you the new button. But when a button gets activated, you have
+ * to handle the mode 2 highlighting (that is some different colour the
+ * button turns to on activation) in your application.
+ */
+#define DVDNAV_HIGHLIGHT		 9
+
 typedef struct {
-  int display;          /*!< 0 - hide, 1 - show, entries below only guaranteed useful
-						 if this is '1' */
-  uint32_t palette;     /*!< The CLUT entries for the highlight palette 
-			     (4-bits per entry -> 4 entries) */
-  uint16_t sx,sy,ex,ey; /*!< The start/end x,y positions */
-  uint32_t pts;         /*!< Highlight PTS to match with SPU */
-  uint32_t buttonN;     /*!< Button number for the SPU decoder. */
+  /* highlight mode: 0 - hide, 1 - show, 2 - activate, currently always 1 */
+  int display;
+
+  /* FIXME: these fields are currently not set */
+  uint32_t palette;     /* The CLUT entries for the highlight palette 
+			   (4-bits per entry -> 4 entries) */
+  uint16_t sx,sy,ex,ey; /* The start/end x,y positions */
+  uint32_t pts;         /* Highlight PTS to match with SPU */
+
+  /* button number for the SPU decoder/overlaying engine */
+  uint32_t buttonN;
 } dvdnav_highlight_event_t;
+
+
+/*
+ * DVDNAV_SPU_CLUT_CHANGE
+ *
+ * Inform the SPU decoder/overlaying engine to update its colour lookup table.
+ * The CLUT is given as 16 uint32_t's in the buffer.
+ */
+#define DVDNAV_SPU_CLUT_CHANGE		10
+
+
+/*
+ * DVDNAV_HOP_CHANNEL
+ *
+ * A non-seamless operation has been performed. Applications can drop all
+ * their internal fifo's content, which will speed up the response.
+ */
+#define DVDNAV_HOP_CHANNEL		12
+
+
+/*
+ * DVDNAV_WAIT
+ *
+ * We have reached a point in DVD playback, where timing is critical.
+ * Player application with internal fifos can introduce state
+ * inconsistencies, because libdvdnav is always the fifo's length
+ * ahead in the stream compared to what the application sees.
+ * Such applications should wait until their fifos are empty
+ * when they receive this type of event.
+ * Once this is achieved, call dvdnav_skip_wait().
+ */
+#define DVDNAV_WAIT			13
+
 
 #endif /* DVDNAV_EVENTS_H_INCLUDED */
