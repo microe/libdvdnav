@@ -1,3 +1,10 @@
+libdvdnav (0.1.9-2) unstable; urgency=low
+
+  * Add automake1.7 to Build-Depends, so configure finds aclocal and installs
+    dvdnav.m4 (closes: #195204).
+
+ -- Philipp Matthias Hahn <pmhahn@debian.org>  Thu, 29 May 2003 16:49:39 +0200
+
 libdvdnav (0.1.9-1) unstable; urgency=low
 
   * New upstream release. (0.1.7 was not released)
