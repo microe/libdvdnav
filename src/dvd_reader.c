@@ -779,8 +779,6 @@ int UDFReadBlocksRaw( dvd_reader_t *device, uint32_t lb_number,
 			 int encrypted )
 {
    int ret;
-   printf("UDFReadBlocksRAW: lb_number = 0x%x, block_count = 0x%x\n",
-           lb_number, block_count);
    if( !device->dev ) {
      	fprintf( stderr, "libdvdread: Fatal error in block read.\n" );
 	return 0;
@@ -791,11 +789,9 @@ int UDFReadBlocksRaw( dvd_reader_t *device, uint32_t lb_number,
      	fprintf( stderr, "libdvdread: Can't seek to block %u\n", lb_number );
 	return 0;
    }
-   printf("UDFReadBlocksRAW: seek done\n");
 
    ret = dvdinput_read( device->dev, (char *) data, 
 			 (int) block_count, encrypted );
-   printf("UDFReadBlocksRAW: read done\n");
    return ret;
 }
 
@@ -809,8 +805,6 @@ static int DVDReadBlocksUDF( dvd_file_t *dvd_file, uint32_t offset,
 			     size_t block_count, unsigned char *data,
 			     int encrypted )
 {
-    printf("DVDReadBlocksUDF: offset = 0x%x, block_count = 0x%x, RAW = 0x%x\n",
-            offset, block_count, dvd_file->lb_start);
     return UDFReadBlocksRaw( dvd_file->dvd, dvd_file->lb_start + offset,
 			     block_count, data, encrypted );
 }
@@ -893,7 +887,6 @@ ssize_t DVDReadBlocks( dvd_file_t *dvd_file, int offset,
 		       size_t block_count, unsigned char *data )
 {
     int ret;
-    printf("DVDReadBlocks: offset = 0x%x to 0x%x.\n",offset, block_count);  
     /* Check arguments. */
     if( dvd_file == NULL || offset < 0 || data == NULL )
       return -1;
@@ -902,22 +895,18 @@ ssize_t DVDReadBlocks( dvd_file_t *dvd_file, int offset,
     if( dvd_file->dvd->css_title != dvd_file->css_title ) {
       dvd_file->dvd->css_title = dvd_file->css_title;
       if( dvd_file->dvd->isImageFile ) {
-        printf("DVDReadBlocks: dvdinput_title: isImageFile\n");
 	dvdinput_title( dvd_file->dvd->dev, (int)dvd_file->lb_start );
       } 
       /* Here each vobu has it's own dvdcss handle, so no need to update 
       else {
-        printf("DVDReadBlocks: dvdinput_title: !isImageFile\n");
 	dvdinput_title( dvd_file->title_devs[ 0 ], (int)dvd_file->lb_start );
       }*/
     }
     
     if( dvd_file->dvd->isImageFile ) {
-        printf("DVDReadBlocks: DVDReadBlocksUDF: isImageFile\n");
 	ret = DVDReadBlocksUDF( dvd_file, (uint32_t)offset, 
 				block_count, data, DVDINPUT_READ_DECRYPT );
     } else {
-        printf("DVDReadBlocks: DVDReadBlocksPATH: !isImageFile\n");
 	ret = DVDReadBlocksPath( dvd_file, (unsigned int)offset, 
 				 block_count, data, DVDINPUT_READ_DECRYPT );
     }
