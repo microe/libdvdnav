@@ -5,7 +5,10 @@ LDFLAGS = -L$(top_srcdir)/src/
 
 noinst_PROGRAMS = menus
 
+AM_CFLAGS=-I$(top_srcdir)/src/
+
 menus_SOURCES = menus.c
+menus_LDFLAGS=-L$(top_srcdir)/src/
 menus_LDADD = $(top_builddir)/src/libdvdnav.la
 
 debug:

@@ -1,6 +1,6 @@
-CFLAGS = @GLOBAL_CFLAGS@ @THREAD_CFLAGS@
-
 lib_LTLIBRARIES = libdvdnav.la
+
+AM_CFLAGS = @GLOBAL_CFLAGS@ @THREAD_CFLAGS@
 
 libdvdnav_la_SOURCES = decoder.c dvdnav.c vm.c vmcmd.c \
 		       read_cache.c navigation.c highlight.c \
