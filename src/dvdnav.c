@@ -35,6 +35,191 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+/*
+ * NOTE:
+ *      All NLCK_*() function are not mutex locked, this made them reusable in
+ *      a locked context. Take care.
+ *
+ */
+
+/* Current domain (backend to dvdnav_is_domain_() funcs) */
+static int8_t NLCK_dvdnav_is_domain(dvdnav_t *self, domain_t domain) {
+  dvd_state_t  *state;
+  
+  if((!self) || (!self->started) || (!self->vm))
+    return -1;
+  
+  state = &(self->vm->state);
+
+  if(!state)
+    return -1;
+
+  return (state->domain == domain) ? 1 : 0;
+}
+
+static int8_t _dvdnav_is_domain(dvdnav_t *self, domain_t domain) {
+  int8_t        retval;
+  
+  pthread_mutex_lock(&self->vm_lock); 
+  retval = NLCK_dvdnav_is_domain(self, domain);
+  pthread_mutex_unlock(&self->vm_lock);
+  
+  return retval;
+}
+
+static uint8_t NLCK_dvdnav_get_video_aspect(dvdnav_t *self) {
+  dvd_state_t    *state;
+  ifo_handle_t   *vtsi, *vmgi;
+  uint8_t         aspect = 0;
+  
+  if(!self)
+    return aspect;
+  
+  state = &(self->vm->state);
+  vtsi  = self->vm->vtsi;
+  vmgi  = self->vm->vmgi;
+  
+  if(NLCK_dvdnav_is_domain(self, VTS_DOMAIN)) {
+    aspect = vtsi->vtsi_mat->vts_video_attr.display_aspect_ratio;  
+  } else if(NLCK_dvdnav_is_domain(self, VTSM_DOMAIN)) {
+    aspect = vtsi->vtsi_mat->vtsm_video_attr.display_aspect_ratio;
+  } else if(NLCK_dvdnav_is_domain(self, VMGM_DOMAIN)) {
+    aspect = vmgi->vmgi_mat->vmgm_video_attr.display_aspect_ratio;
+  }
+  
+  return aspect;
+}
+
+#if 0 /* hide it, avoid c compiler warning */
+static video_attr_t *NLCK_dvdnav_get_video_attr(dvdnav_t *self) {
+  video_attr_t   *attr = NULL;
+  ifo_handle_t   *vtsi, *vmgi;
+  
+  vtsi  = self->vm->vtsi;
+  vmgi  = self->vm->vmgi;
+  
+  if(NLCK_dvdnav_is_domain(self, VTS_DOMAIN))
+    attr = &(vtsi->vtsi_mat->vts_video_attr);
+  else if(NLCK_dvdnav_is_domain(self, VTSM_DOMAIN))
+    attr = &(vtsi->vtsi_mat->vtsm_video_attr);
+  else if(NLCK_dvdnav_is_domain(self, VMGM_DOMAIN) || NLCK_dvdnav_is_domain(self, FP_DOMAIN))
+    attr = &(vmgi->vmgi_mat->vmgm_video_attr);
+
+  return attr;
+}
+#endif
+
+static audio_attr_t *NLCK_dvdnav_get_audio_attr(dvdnav_t *self, int stream_num) {
+  audio_attr_t   *attr = NULL;
+  ifo_handle_t   *vtsi, *vmgi;
+  
+  vtsi  = self->vm->vtsi;
+  vmgi  = self->vm->vmgi;
+  
+  if(NLCK_dvdnav_is_domain(self, VTS_DOMAIN))
+    attr = &(vtsi->vtsi_mat->vts_audio_attr[stream_num]);
+  else if(NLCK_dvdnav_is_domain(self, VTSM_DOMAIN))
+    attr = &(vtsi->vtsi_mat->vtsm_audio_attr);
+  else if(NLCK_dvdnav_is_domain(self, VMGM_DOMAIN) || NLCK_dvdnav_is_domain(self, FP_DOMAIN))
+    attr = &(vmgi->vmgi_mat->vmgm_audio_attr);
+
+  return attr;
+}
+
+static subp_attr_t *NLCK_dvdnav_get_subp_attr(dvdnav_t *self, int stream_num) {
+  subp_attr_t    *attr = NULL;
+  ifo_handle_t   *vtsi, *vmgi;
+  
+  vtsi  = self->vm->vtsi;
+  vmgi  = self->vm->vmgi;
+  
+  if(NLCK_dvdnav_is_domain(self, VTS_DOMAIN))
+    attr = &(vtsi->vtsi_mat->vts_subp_attr[stream_num]);
+  else if(NLCK_dvdnav_is_domain(self, VTSM_DOMAIN))
+    attr = &(vtsi->vtsi_mat->vtsm_subp_attr);
+  else if(NLCK_dvdnav_is_domain(self, VMGM_DOMAIN) || NLCK_dvdnav_is_domain(self, FP_DOMAIN))
+    attr = &(vmgi->vmgi_mat->vmgm_subp_attr);
+
+  return attr;
+}
+
+static int8_t NCLK_dvdnav_get_audio_logical_stream(dvdnav_t *self, uint8_t audio_num) {
+  dvd_state_t *state;
+  int8_t       logical = -1;
+  
+  if(!NLCK_dvdnav_is_domain(self, VTS_DOMAIN))
+    audio_num = 0;
+  
+  state = &(self->vm->state);
+  
+  if(audio_num < 8) {
+    if(state->pgc->audio_control[audio_num] & (1 << 15)) {
+      logical = (state->pgc->audio_control[audio_num] >> 8) & 0x07;  
+    }
+  }
+  
+  return logical;
+}
+
+static int8_t NCLK_dvdnav_get_spu_logical_stream(dvdnav_t *self, uint8_t subp_num) {
+  dvd_state_t *state;
+  uint8_t      aspect;
+  int8_t       logical = -1;
+  
+  if(!NLCK_dvdnav_is_domain(self, VTS_DOMAIN))
+    subp_num = 0;
+  
+  aspect = NLCK_dvdnav_get_video_aspect(self);
+  
+  state = &(self->vm->state);
+  
+  if(logical < 32) {
+    
+    if(state->pgc->subp_control[subp_num] & (1 << 31)) {
+      switch(aspect) {
+      case 0:
+	logical = (int8_t) (state->pgc->subp_control[subp_num] >> 24) & 0x1f;
+	break;
+      case 3:
+	logical = (int8_t) (state->pgc->subp_control[subp_num] >> 16) & 0x1f;
+	break;
+      }
+    }
+  }
+  
+  return logical;
+}
+
+static int8_t NLCK_dvdnav_get_active_spu_stream(dvdnav_t *self) {
+  dvd_state_t  *state;
+  int8_t        subp_num;
+  int           stream_num;
+  
+  state      = &(self->vm->state);
+  subp_num   = state->SPST_REG & ~0x40;
+  stream_num = NCLK_dvdnav_get_spu_logical_stream(self, subp_num);
+  
+  if(stream_num == -1)
+    for(subp_num = 0; subp_num < 32; subp_num++)
+      if(state->pgc->subp_control[subp_num] & (1 << 31)) {
+	stream_num = NCLK_dvdnav_get_spu_logical_stream(self, subp_num);
+	break;
+      }
+  
+  return stream_num;
+}
+
+uint8_t dvdnav_get_video_aspect(dvdnav_t *self) {
+  uint8_t         retval;
+  
+  pthread_mutex_lock(&self->vm_lock); 
+  retval = NLCK_dvdnav_get_video_aspect(self);
+  pthread_mutex_unlock(&self->vm_lock); 
+  
+  return retval;
+}
+
 dvdnav_status_t dvdnav_clear(dvdnav_t * self) {
   if (!self) {
     printerr("Passed a NULL pointer");
@@ -398,7 +583,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
     (*event) = DVDNAV_SPU_STREAM_CHANGE;
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE\n");
     (*len) = sizeof(dvdnav_stream_change_event_t);
-    stream_change.physical= vm_get_subp_active_stream( self->vm );
+    stream_change.physical = vm_get_subp_active_stream( self->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
     self->spu_stream_changed = 0;
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
@@ -709,222 +894,74 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
 }
 
 uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *self, uint8_t stream) {
-  ifo_handle_t *vtsi;
-  dvd_state_t  *state;
+  audio_attr_t  *attr = NULL;
   
   if(!self)
     return -1;
   
   pthread_mutex_lock(&self->vm_lock); 
-
-  vtsi = self->vm->vtsi;
-  state = &(self->vm->state);
-
-  if((vtsi == NULL) || (state == NULL) || (state->domain != VTS_DOMAIN))
-    goto __failed;
-  
-  if(stream >= vtsi->vtsi_mat->nr_of_vts_audio_streams)
-    goto __failed;
-  
-  if(vtsi->vtsi_mat->vts_audio_attr[stream].lang_type != 1)
-    goto __failed;
-  
+  attr = NLCK_dvdnav_get_audio_attr(self, stream);
   pthread_mutex_unlock(&self->vm_lock); 
-  return vtsi->vtsi_mat->vts_audio_attr[stream].lang_code;
   
- __failed:
-  pthread_mutex_unlock(&self->vm_lock); 
-  return 0xffff;
+  if(attr == NULL)
+    return 0xffff;
+  
+  return attr->lang_code;
 }
 
-int8_t dvdnav_audio_logical_to_physical(dvdnav_t *self, uint8_t logical) {
-  audio_status_t *audio_status;
-  dvd_state_t    *state;
-  int             i = 0;
+int8_t dvdnav_get_audio_logical_stream(dvdnav_t *self, uint8_t audio_num) {
+  int8_t       retval;
   
   if(!self)
     return -1;
   
   pthread_mutex_lock(&self->vm_lock); 
-  
-  state = &(self->vm->state);
-  
-  if((!state) || (!state->pgc) || (!state->pgc->audio_control))
-    goto __failed;
-  
-  if(logical > 7) {
-    fprintf(stderr, "Invalid logical audio channel: %i\n", logical);
-    goto __failed;
-  }
-
-  while (i < 8) {
-    audio_status = (audio_status_t*) &(state->pgc->audio_control[i]);
-
-    if(!audio_status)
-      goto __failed;
-
-    if(audio_status->available)
-      break;
-    
-    i++;
-  }
-  
-  if (i > 7)
-    goto __failed;
-
-  if ((logical+i) > 7)
-    goto __failed;
-  
-  audio_status = (audio_status_t*) &(state->pgc->audio_control[logical+i]);
-
-  if(!audio_status)
-    goto __failed;
-  
-  if(audio_status->available) {
-    /* Stream is available */
-    pthread_mutex_unlock(&self->vm_lock); 
-    return audio_status->stream_number; 
-  }
-  
- __failed:
+  retval = NCLK_dvdnav_get_audio_logical_stream(self, audio_num);
   pthread_mutex_unlock(&self->vm_lock); 
-  return -1;
-}
 
-int8_t dvdnav_audio_physical_to_logical(dvdnav_t *self, uint8_t physical) {
-  int8_t logical = -1;
-  int    i       = 0; 
-  
-  if((!self) || (physical > 7))
-    return -1;
-  
-  do {
-    if(dvdnav_audio_logical_to_physical(self, i) == physical) 
-      logical = i;
-    
-    i++;
-  } while((i<8) && (logical == -1));
-
-  return logical;
+  return retval;
 }
 
 uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *self, uint8_t stream) {
-  ifo_handle_t *vtsi;
-  dvd_state_t  *state;
+  subp_attr_t  *attr = NULL;
+  
+  if(!self)
+    return -1;
+  
+  pthread_mutex_lock(&self->vm_lock); 
+  attr = NLCK_dvdnav_get_subp_attr(self, stream);
+  pthread_mutex_unlock(&self->vm_lock); 
+  
+  if(attr == NULL)
+    return 0xffff;
+  
+  return attr->lang_code;
+}
+
+int8_t dvdnav_get_spu_logical_stream(dvdnav_t *self, uint8_t subp_num) {
+  int8_t       retval;
+
+  if(!self)
+    return -1;
+
+  pthread_mutex_lock(&self->vm_lock); 
+  retval = NCLK_dvdnav_get_spu_logical_stream(self, subp_num);
+  pthread_mutex_unlock(&self->vm_lock); 
+
+  return retval;
+}
+
+int8_t dvdnav_get_active_spu_stream(dvdnav_t *self) {
+  int8_t        retval;
 
   if(!self)
     return -1;
   
   pthread_mutex_lock(&self->vm_lock); 
-  
-  vtsi = self->vm->vtsi;
-  state = &(self->vm->state);
-
-  if((vtsi == NULL) || (state == NULL) || (state->domain != VTS_DOMAIN)) {
-    goto __failed;
-  }
-
-  if(stream >= vtsi->vtsi_mat->nr_of_vts_subp_streams) {
-    goto __failed;
-  }
-
-  if(vtsi->vtsi_mat->vts_subp_attr[stream].type != 1) {
-    goto __failed;
-  }
-  
+  retval = NLCK_dvdnav_get_active_spu_stream(self);
   pthread_mutex_unlock(&self->vm_lock); 
-  return vtsi->vtsi_mat->vts_subp_attr[stream].lang_code;
   
- __failed:
-  pthread_mutex_unlock(&self->vm_lock); 
-  return 0xffff;
-}
-
-int8_t dvdnav_spu_logical_to_physical(dvdnav_t *self, uint8_t logical) {
-  spu_status_t *spu_status;
-  dvd_state_t  *state;
-  ifo_handle_t *vtsi;
- 
-  if(!self)
-    return -1;
-  
-  pthread_mutex_lock(&self->vm_lock); 
-  
-  vtsi = self->vm->vtsi;
-  state = &(self->vm->state);
-  
-  if((!state) || (!vtsi))
-    goto __failed;
-
-  if(logical > 31) {
-    fprintf(stderr, "Invalid logical spu channel: %i\n", logical);
-    goto __failed;
-  }
-  
-  spu_status = (spu_status_t*) &(state->pgc->subp_control[logical]);
-  
-  if(!spu_status)
-    goto __failed;
-  
-  if(spu_status->available) {
-    int8_t        logical = -1;
-    video_attr_t *attr;
-    
-    attr = &(vtsi->vtsi_mat->vtsm_video_attr);
-  
-    if(!attr)
-      goto __failed;
-
-    /* Stream is available */
-    switch(attr->display_aspect_ratio) {
-    case 0: /* 4:3 */
-      logical = spu_status->stream_number_4_3;
-      break;
-    case 3: /* 16:9 */
-      logical = spu_status->stream_number_letterbox;
-      break;
-    }
-    pthread_mutex_unlock(&self->vm_lock); 
-    return logical; 
-  }
-  
- __failed:
-  pthread_mutex_unlock(&self->vm_lock); 
-  return -1;
-}
-
-int8_t dvdnav_spu_physical_to_logical(dvdnav_t *self, uint8_t physical) {
-  int8_t logical = -1;
-  int    i       = 0;
-  
-  if(physical > 31)
-    return -1;
-
-  do {
-    if(dvdnav_spu_logical_to_physical(self, i) == physical) 
-      logical = i;
-    
-    i++;
-  } while((i<32) && (logical == -1));
-
-  return logical;
-}
-
-/* Current domain (backend to dvdnav_is_domain_() funcs) */
-static int8_t _dvdnav_is_domain(dvdnav_t *self, domain_t domain) {
-  dvd_state_t  *state;
-  
-  if((!self) || (!self->started) || (!self->vm))
-    return -1;
-  
-  pthread_mutex_lock(&self->vm_lock); 
-  state = &(self->vm->state);
-  pthread_mutex_unlock(&self->vm_lock);
-
-  if(!state)
-    return -1;
-
-  return (state->domain == domain) ? 1 : 0;
+  return retval;
 }
 
 /* First Play domain. (Menu) */
@@ -988,6 +1025,10 @@ dvdnav_status_t dvdnav_get_angle_info(dvdnav_t *self, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.8  2002/04/22 20:57:14  f1rmb
+ * Change/fix SPU active stream id. Same for audio. Few new functions, largely
+ * inspired from libogle ;-).
+ *
  * Revision 1.7  2002/04/10 16:45:57  jcdutton
  * Actually fix the const this time!
  *

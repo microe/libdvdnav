@@ -463,19 +463,20 @@ uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *self, uint8_t stream);
 uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *self, uint8_t stream);
 
 /**
- * Converts a _logical_ audio/spu stream number (as in the SPRMs) to the physical
- * stream number encoded on the DVD. Returns -1 if this audio/spu stream is not
- * present.
+ * Get substream id for logical stream *_num.
  */
-int8_t dvdnav_audio_logical_to_physical(dvdnav_t *self, uint8_t logical);
-int8_t dvdnav_spu_logical_to_physical(dvdnav_t *self, uint8_t logical);
+int8_t dvdnav_get_audio_logical_stream(dvdnav_t *self, uint8_t audio_num);
+int8_t dvdnav_get_spu_logical_stream(dvdnav_t *self, uint8_t subp_num);
 
 /**
- * The exact opposite of the above two calls
+ * Get active spu stream.
  */
-int8_t dvdnav_audio_physical_to_logical(dvdnav_t *self, uint8_t physical);
-int8_t dvdnav_spu_physical_to_logical(dvdnav_t *self, uint8_t physical);
+int8_t dvdnav_get_active_spu_stream(dvdnav_t *self);
 
+/**
+ * Get video aspect
+ */
+uint8_t dvdnav_get_video_aspect(dvdnav_t *self);
 
 /* Following functions returns:
  *  -1 on failure,
@@ -497,4 +498,3 @@ int8_t dvdnav_is_domain_vts(dvdnav_t *self);
 #endif
 
 #endif /* DVDNAV_H_INCLUDED */
-
