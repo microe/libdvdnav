@@ -1,3 +1,11 @@
+libdvdnav (0.1.0-1) unstable; urgency=low
+
+  * Prepared for first 'real' release.
+  * Bug fixes
+  * Changes to allow apps to 'roll-their-own' dvdnav_get_next_block functions.
+
+ -- Rich Wareham <richwareham@users.sourceforge.net>  Mon, 29 Apr 2002 08:39:42 +0000
+ 
 libdvdnav (0.0.1-1) unstable; urgency=low
 
   * Repackaged using dh-make.
@@ -8,5 +16,5 @@ libdvdnav (0.0.1) unstable; urgency=low
 
   * Initial release.
 
- -- root <root@hermes.cam.ac.uk>  Tue, 12 Mar 2002 19:41:13 +0000
+ -- rjw57 <rjw57@hermes.cam.ac.uk>  Tue, 12 Mar 2002 19:41:13 +0000
 
