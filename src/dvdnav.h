@@ -491,19 +491,19 @@ dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *self, pci_t *pci, int32_t x, int
  */
 
 /*
- * Set which menu language we should use.
+ * Set which menu language we should use per default.
  */
 dvdnav_status_t dvdnav_menu_language_select(dvdnav_t *self,
 					   char *code);
 
 /*
- * Set which audio language we should use.
+ * Set which audio language we should use per default.
  */
 dvdnav_status_t dvdnav_audio_language_select(dvdnav_t *self,
 					    char *code);
 
 /*
- * Set which spu language we should use.
+ * Set which spu language we should use per default.
  */
 dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *self,
 					  char *code);
