@@ -7,3 +7,7 @@ doc:	doxy.conf
 
 clean:
 	rm -rf html latex man
+
+debug:  all
+
+install-debug: debug
