@@ -1,7 +1,9 @@
 SUBDIRS = src examples doc misc m4
 
-EXTRA_DIST = debian/README.Debian debian/changelog debian/control debian/copyright debian/dirs \
-	debian/libdvdnav1.files debian/rules libdvdnav.spec @DEPCOMP@
+EXTRA_DIST = debian/README.Debian debian/bug-presubj debian/changelog \
+        debian/control debian/copyright debian/dvdnav-config.1 \
+        debian/libdvdnav-dev.examples debian/libdvdnav-dev.files \
+        debian/rules debian/shlibs libdvdnav.spec @DEPCOMP@
 
 debug:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \

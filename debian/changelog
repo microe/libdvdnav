@@ -1,3 +1,10 @@
+libdvdnav (0.1.2-1) unstable; urgency=low
+  * Read Cache changes. Recommended setting for read_cache is OFF.
+    Unless one's DVD drive has too small a buffer.
+  * Should work with xine 0.9.10 or above.
+
+ -- James Courtier-Dutton <jcdutton@users.sourceforge.net> Sun, 3 Jul 2002 15:30:00 +0000
+
 libdvdnav (0.1.1-1) unstable; urgency=low
 
   * New upstream version. (closes: #148495)
