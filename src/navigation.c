@@ -114,8 +114,8 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int *title, int *part)
       || (this->vm->state.domain == VMGM_DOMAIN) ) {
     /* Get current Menu ID: into *part. */
     vm_get_current_menu(this->vm, part);
-    if (part > -1) {
-      title = 0;
+    if (*part > -1) {
+      *title = 0;
       pthread_mutex_unlock(&this->vm_lock);
       return S_OK;
     }
