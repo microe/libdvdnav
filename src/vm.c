@@ -456,8 +456,7 @@ int vm_eval_cmd(vm_t *vm, vm_cmd_t *cmd)
 #ifdef TRACE
     fprintf(MSG_OUT, "libdvdnav: vm_eval_cmd: blockN set to 0x%x\n", (vm->state).blockN);
 #endif
-    assert( (vm->state).blockN == 0 );
-    return 1; /*  Something changed, Jump */
+    return link_values.data2; /* return if there acutally was a jump */
   } else {
     return 0; /*  It updated some state thats all... */
   }
@@ -1374,12 +1373,14 @@ static link_t process_command(vm_t *vm, link_t link_values)
     
     switch(link_values.command) {
     case LinkNoLink:
-      /* No Link */
+      /* No Link => PlayThis */
       /* BUTTON number:data1 */
       if(link_values.data1 != 0)
 	(vm->state).HL_BTNN_REG = link_values.data1 << 10;
-      fprintf(MSG_OUT, "libdvdnav: FIXME: in trouble...LinkNoLink - CRASHING!!!\n");
-      assert(0);
+      link_values.command = PlayThis;
+      link_values.data1   = (vm->state).blockN;
+      link_values.data2   = 0;  /* no actual jump */
+      return link_values;
       
     case LinkTopC:
       /* Restart playing from the beginning of the current Cell. */
@@ -1707,6 +1708,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
 #endif
     
   }
+  link_values.data2 = 1; /* there was actually a jump */
   vm->badness_counter--;
   return link_values;
 }
@@ -2029,6 +2031,11 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.41  2003/01/06 19:59:28  mroi
+ * implement LinkNoLink
+ * (in this whole lot of DVDs I watched with libdvdnav, Disney's
+ * "Beauty an the Beast" deluxe is the first one to use LinkNoLink...)
+ *
  * Revision 1.40  2002/11/24 15:09:18  mroi
  * loosening this test a bit makes "Spy Game" German RC2 work
  *
