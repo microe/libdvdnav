@@ -27,6 +27,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>  /* For memset */
 #include <dvdread/ifo_types.h> /* vm_cmd_t */
@@ -34,40 +35,37 @@
 #include "vmcmd.h"
 #include "decoder.h"
 
-#ifndef bool
-typedef int bool;
-#endif
+/*  Fix theses two.. pass as parameters instead. */
+static registers_t *state;
 
 typedef struct
 {
-  uint8_t bits[8];
-  uint8_t examined[8];
-} cmd_t;
+  uint64_t instruction;
+  uint64_t examined;
+} command_t;
 
-/*  Fix theses two.. pass as parameters instead. */
-static cmd_t cmd;
-static registers_t *state;
+static uint32_t new_bits(command_t* command, int32_t start, int32_t count);
 
-/* Get count bits of command from byte and bit position. */
-static uint32_t bits(int byte, int bit, int count) {
-  uint32_t val = 0;
-  uint8_t bit_mask;
-  
-  while(count--) {
-    if(bit > 7) {
-      bit = 0;
-      byte++;
-    }
-    bit_mask = 0x01 << (7 - bit);
-    val <<= 1;
-    if(cmd.bits[byte] & bit_mask)
-      val |= 1;
-    cmd.examined[byte] |= bit_mask;
-    bit++;
+static uint32_t new_bits(command_t *command, int32_t start, int32_t count) {
+  uint64_t result = 0;
+  uint64_t bit_mask=0xffffffffffffffff;  /* I could put -1 instead */
+  uint64_t examining = 0;
+  if (count == 0) return 0;
+
+  if ( ((count+start) > 64) ||
+       (count > 32) ||
+       (start > 63) ||
+       (count < 0) ||
+       (start < 0) ){
+    fprintf(stderr, "Bad call to new_bits. Parameter out of range\n");
+    assert(0);
   }
-  return val;
+  bit_mask >>= start;
+  examining = ((bit_mask >> (64-count-start)) << (64-count-start) );
+  command->examined |= examining;
+  result = (command->instruction & bit_mask) >> (64-count-start);
+  return (uint32_t) result;
 }
-
 
 /* Eval register code, can either be system or general register.
    SXXX_XXXX, where S is 1 if it is system register. */
@@ -82,11 +80,11 @@ static uint16_t eval_reg(uint8_t reg) {
 /* Eval register or immediate data.
    AAAA_AAAA BBBB_BBBB, if immediate use all 16 bits for data else use
    lower eight bits for the system or general purpose register. */
-static uint16_t eval_reg_or_data(int imm, int byte) {
+static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t byte) {
   if(imm) { /*  immediate */
-    return bits(byte, 0, 16);
+    return new_bits(command, (byte*8), 16);
   } else {
-    return eval_reg(bits(byte + 1, 0, 8));
+    return eval_reg(new_bits(command, ((byte + 1)*8), 8));
   }
 }
 
@@ -94,17 +92,17 @@ static uint16_t eval_reg_or_data(int imm, int byte) {
    xBBB_BBBB, if immediate use all 7 bits for data else use
    lower four bits for the general purpose register number. */
 /* Evaluates gprm or data depending on bit, data is in byte n */
-uint16_t eval_reg_or_data_2(int imm, int byte) {
+uint16_t eval_reg_or_data_2(command_t* command, int32_t imm, int32_t byte) {
   if(imm) /* immediate */
-    return bits(byte, 1, 7);
+    return new_bits(command, ((byte*8)+1), 7);
   else
-    return state->GPRM[bits(byte, 4, 4)];
+    return state->GPRM[new_bits(command, ((byte*8)+4), 4)];
 }
 
 
 /* Compare data using operation, return result from comparison. 
    Helper function for the different if functions. */
-static bool eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
+static int32_t eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
   switch(operation) {
     case 1:
       return data1 & data2;
@@ -128,68 +126,68 @@ static bool eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
 
 /* Evaluate if version 1.
    Has comparison data in byte 3 and 4-5 (immediate or register) */
-static bool eval_if_version_1(void) {
-  uint8_t op = bits(1, 1, 3);
+static int32_t eval_if_version_1(command_t* command) {
+  uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(bits(3, 0, 8)), 
-                            eval_reg_or_data(bits(1, 0, 1), 4));
+    return eval_compare(op, eval_reg(new_bits(command, 24, 8)), 
+                            eval_reg_or_data(command, new_bits(command, 8, 1), 4));
   }
   return 1;
 }
 
 /* Evaluate if version 2.
    This version only compares register which are in byte 6 and 7 */
-static bool eval_if_version_2(void) {
-  uint8_t op = bits(1, 1, 3);
+static int32_t eval_if_version_2(command_t* command) {
+  uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(bits(6, 0, 8)), 
-                            eval_reg(bits(7, 0, 8)));
+    return eval_compare(op, eval_reg(new_bits(command, 48, 8)), 
+                            eval_reg(new_bits(command, 56, 8)));
   }
   return 1;
 }
 
 /* Evaluate if version 3.
    Has comparison data in byte 2 and 6-7 (immediate or register) */
-static bool eval_if_version_3(void) {
-  uint8_t op = bits(1, 1, 3);
+static int32_t eval_if_version_3(command_t* command) {
+  uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(bits(2, 0, 8)), 
-                            eval_reg_or_data(bits(1, 0, 1), 6));
+    return eval_compare(op, eval_reg(new_bits(command, 16, 8)), 
+                            eval_reg_or_data(command, new_bits(command, 8, 1), 6));
   }
   return 1;
 }
 
 /* Evaluate if version 4.
    Has comparison data in byte 1 and 4-5 (immediate or register) 
-   The register in byte 1 is only the lowe nibble (4bits) */
-static bool eval_if_version_4(void) {
-  uint8_t op = bits(1, 1, 3);
+   The register in byte 1 is only the lowe nibble (4 bits) */
+static int32_t eval_if_version_4(command_t* command) {
+  uint8_t op = new_bits(command, 9, 3);
   if(op) {
-    return eval_compare(op, eval_reg(bits(1, 4, 4)), 
-                            eval_reg_or_data(bits(1, 0, 1), 4));
+    return eval_compare(op, eval_reg(new_bits(command, 12, 4)), 
+                            eval_reg_or_data(command, new_bits(command, 8, 1), 4));
   }
   return 1;
 }
 
 /* Evaluate special instruction.... returns the new row/line number,
    0 if no new row and 256 if Break. */
-static int eval_special_instruction(bool cond) {
-  int line, level;
+static int32_t eval_special_instruction(command_t* command, int32_t cond) {
+  int32_t line, level;
   
-  switch(bits(1, 4, 4)) {
+  switch(new_bits(command, 12, 4)) {
     case 0: /*  NOP */
       line = 0;
       return cond ? line : 0;
     case 1: /*  Goto line */
-      line = bits(7, 0, 8);
+      line = new_bits(command, 56, 8);
       return cond ? line : 0;
     case 2: /*  Break */
       /*  max number of rows < 256, so we will end this set */
       line = 256;
       return cond ? 256 : 0;
     case 3: /*  Set temporary parental level and goto */
-      line = bits(7, 0, 8); 
-      level = bits(6, 4, 4);
+      line = new_bits(command, 56, 8); 
+      level = new_bits(command, 52, 4);
       if(cond) {
 	/*  This always succeeds now, if we want real parental protection */
 	/*  we need to ask the user and have passwords and stuff. */
@@ -203,9 +201,9 @@ static int eval_special_instruction(bool cond) {
 /* Evaluate link by subinstruction.
    Return 1 if link, or 0 if no link
    Actual link instruction is in return_values parameter */
-static bool eval_link_subins(bool cond, link_t *return_values) {
-  uint16_t button = bits(6, 0, 6);
-  uint8_t  linkop = bits(7, 3, 5);
+static int32_t eval_link_subins(command_t* command, int32_t cond, link_t *return_values) {
+  uint16_t button = new_bits(command, 48, 6);
+  uint8_t  linkop = new_bits(command, 59, 5);
   
   if(linkop > 0x10)
     return 0;    /*  Unknown Link by Sub-Instruction command */
@@ -220,30 +218,30 @@ static bool eval_link_subins(bool cond, link_t *return_values) {
 /* Evaluate link instruction.
    Return 1 if link, or 0 if no link
    Actual link instruction is in return_values parameter */
-static bool eval_link_instruction(bool cond, link_t *return_values) {
-  uint8_t op = bits(1, 4, 4);
+static int32_t eval_link_instruction(command_t* command, int32_t cond, link_t *return_values) {
+  uint8_t op = new_bits(command, 12, 4);
   
   switch(op) {
     case 1:
-	return eval_link_subins(cond, return_values);
+	return eval_link_subins(command, cond, return_values);
     case 4:
 	return_values->command = LinkPGCN;
-	return_values->data1   = bits(6, 1, 15);
+	return_values->data1   = new_bits(command, 49, 15);
 	return cond;
     case 5:
 	return_values->command = LinkPTTN;
-	return_values->data1 = bits(6, 6, 10);
-	return_values->data2 = bits(6, 0, 6);
+	return_values->data1 = new_bits(command, 54, 10);
+	return_values->data2 = new_bits(command, 48, 6);
 	return cond;
     case 6:
 	return_values->command = LinkPGN;
-	return_values->data1 = bits(7, 1, 7);
-	return_values->data2 = bits(6, 0, 6);
+	return_values->data1 = new_bits(command, 57, 7);
+	return_values->data2 = new_bits(command, 48, 6);
 	return cond;
     case 7:
 	return_values->command = LinkCN;
-	return_values->data1 = bits(7, 0, 8);
-	return_values->data2 = bits(6, 0, 6);
+	return_values->data1 = new_bits(command, 56, 8);
+	return_values->data2 = new_bits(command, 48, 6);
 	return cond;
   }
   return 0;
@@ -253,66 +251,66 @@ static bool eval_link_instruction(bool cond, link_t *return_values) {
 /* Evaluate a jump instruction.
    returns 1 if jump or 0 if no jump
    actual jump instruction is in return_values parameter */
-static bool eval_jump_instruction(bool cond, link_t *return_values) {
+static int32_t eval_jump_instruction(command_t* command, int32_t cond, link_t *return_values) {
   
-  switch(bits(1, 4, 4)) {
+  switch(new_bits(command, 12, 4)) {
     case 1:
       return_values->command = Exit;
       return cond;
     case 2:
       return_values->command = JumpTT;
-      return_values->data1 = bits(5, 1, 7);
+      return_values->data1 = new_bits(command, 41, 7);
       return cond;
     case 3:
       return_values->command = JumpVTS_TT;
-      return_values->data1 = bits(5, 1, 7);
+      return_values->data1 = new_bits(command, 41, 7);
       return cond;
     case 5:
       return_values->command = JumpVTS_PTT;
-      return_values->data1 = bits(5, 1, 7);
-      return_values->data2 = bits(2, 6, 10);
+      return_values->data1 = new_bits(command, 41, 7);
+      return_values->data2 = new_bits(command, 22, 10);
       return cond;
     case 6:
-      switch(bits(5,0,2)) {
+      switch(new_bits(command, 40, 2)) {
         case 0:
           return_values->command = JumpSS_FP;
           return cond;
         case 1:
           return_values->command = JumpSS_VMGM_MENU;
-          return_values->data1 =  bits(5, 4, 4);
+          return_values->data1 =  new_bits(command, 44, 4);
           return cond;
         case 2:
           return_values->command = JumpSS_VTSM;
-          return_values->data1 =  bits(4, 0, 8);
-          return_values->data2 =  bits(3, 0, 8);
-          return_values->data3 =  bits(5, 4, 4);
+          return_values->data1 =  new_bits(command, 32, 8);
+          return_values->data2 =  new_bits(command, 24, 8);
+          return_values->data3 =  new_bits(command, 44, 4);
           return cond;
         case 3:
           return_values->command = JumpSS_VMGM_PGC;
-          return_values->data1 =  bits(2, 1, 15);
+          return_values->data1 =  new_bits(command, 17, 15);
           return cond;
         }
       break;
     case 8:
-      switch(bits(5,0,2)) {
+      switch(new_bits(command, 40, 2)) {
         case 0:
           return_values->command = CallSS_FP;
-          return_values->data1 = bits(4, 0, 8);
+          return_values->data1 = new_bits(command, 32, 8);
           return cond;
         case 1:
           return_values->command = CallSS_VMGM_MENU;
-          return_values->data1 = bits(5, 4, 4);
-          return_values->data2 = bits(4, 0 ,8);
+          return_values->data1 = new_bits(command, 44, 4);
+          return_values->data2 = new_bits(command, 32, 8);
           return cond;
         case 2:
           return_values->command = CallSS_VTSM;
-          return_values->data1 = bits(5, 4, 4);
-          return_values->data2 = bits(4, 0, 8);
+          return_values->data1 = new_bits(command, 44, 4);
+          return_values->data2 = new_bits(command, 32, 8);
           return cond;
         case 3:
           return_values->command = CallSS_VMGM_PGC;
-          return_values->data1 = bits(2, 1, 15);
-          return_values->data2 = bits(4, 0, 8);
+          return_values->data1 = new_bits(command, 17, 15);
+          return_values->data2 = new_bits(command, 32, 8);
           return cond;
       }
       break;
@@ -322,15 +320,15 @@ static bool eval_jump_instruction(bool cond, link_t *return_values) {
 
 /* Evaluate a set sytem register instruction 
    May contain a link so return the same as eval_link */
-static bool eval_system_set(int cond, link_t *return_values) {
-  int i;
+static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_values) {
+  int32_t i;
   uint16_t data, data2;
   
-  switch(bits(0, 4, 4)) {
+  switch(new_bits(command, 4, 4)) {
     case 1: /*  Set system reg 1 &| 2 &| 3 (Audio, Subp. Angle) */
       for(i = 1; i <= 3; i++) {
-        if(bits(2 + i, 0, 1)) {
-          data = eval_reg_or_data_2(bits(0, 3, 1), 2 + i);
+        if(new_bits(command, ((2 + i)*8), 1)) {
+          data = eval_reg_or_data_2(command, new_bits(command, 3, 1), 2 + i);
           if(cond) {
             state->SPRM[i] = data;
           }
@@ -338,17 +336,17 @@ static bool eval_system_set(int cond, link_t *return_values) {
       }
       break;
     case 2: /*  Set system reg 9 & 10 (Navigation timer, Title PGC number) */
-      data = eval_reg_or_data(bits(0, 3, 1), 2);
-      data2 = bits(5, 0, 8); /*  ?? size */
+      data = eval_reg_or_data(command, new_bits(command, 3, 1), 2);
+      data2 = new_bits(command, 40, 8); /*  ?? size */
       if(cond) {
 	state->SPRM[9] = data; /*  time */
 	state->SPRM[10] = data2; /*  pgcN */
       }
       break;
     case 3: /*  Mode: Counter / Register + Set */
-      data = eval_reg_or_data(bits(0, 3, 1), 2);
-      data2 = bits(5, 4, 4);
-      if(bits(5, 0, 1)) {
+      data = eval_reg_or_data(command, new_bits(command, 3, 1), 2);
+      data2 = new_bits(command, 44, 4);
+      if(new_bits(command, 40, 1)) {
 	fprintf(stderr, "Detected SetGPRMMD Counter!! This is unsupported.\n");
 	state->GPRM_mode[data2] = 1;
       } else {
@@ -360,14 +358,14 @@ static bool eval_system_set(int cond, link_t *return_values) {
       }
       break;
     case 6: /*  Set system reg 8 (Highlighted button) */
-      data = eval_reg_or_data(bits(0, 3, 1), 4); /*  Not system reg!! */
+      data = eval_reg_or_data(command, new_bits(command, 3, 1), 4); /*  Not system reg!! */
       if(cond) {
 	state->SPRM[8] = data;
       }
       break;
   }
-  if(bits(1, 4, 4)) {
-    return eval_link_instruction(cond, return_values);
+  if(new_bits(command, 12, 4)) {
+    return eval_link_instruction(command, cond, return_values);
   }
   return 0;
 }
@@ -377,7 +375,9 @@ static bool eval_system_set(int cond, link_t *return_values) {
    Sets the register given to the value indicated by op and data.
    For the swap case the contents of reg is stored in reg2.
 */
-static void eval_set_op(int op, int reg, int reg2, int data) {
+static void eval_set_op(int32_t op, int32_t reg, int32_t reg2, int32_t data) {
+  const int32_t shortmax = 0xffff;
+  int32_t     tmp; 
   switch(op) {
     case 1:
       state->GPRM[reg] = data;
@@ -387,22 +387,32 @@ static void eval_set_op(int op, int reg, int reg2, int data) {
       state->GPRM[reg] = data;
       break;
     case 3:
-      state->GPRM[reg] += data;
+      tmp = state->GPRM[reg] + data;
+      if(tmp > shortmax) tmp = shortmax;
+      state->GPRM[reg] = (uint16_t)tmp;
       break;
     case 4:
-      state->GPRM[reg] -= data;
+      tmp = state->GPRM[reg] - data;
+      if(tmp < 0) tmp = 0;
+      state->GPRM[reg] = (uint16_t)tmp;
       break;
     case 5:
-      state->GPRM[reg] *= data;
+      tmp = state->GPRM[reg] * data;
+      if(tmp >= shortmax) tmp = shortmax;
+      state->GPRM[reg] = (uint16_t)tmp;
       break;
     case 6:
-      state->GPRM[reg] /= data;
+      if (data != 0) {
+       state->GPRM[reg] /= data;
+      } else {
+       state->GPRM[reg] =  0; /* Avoid that divide by zero! */
+      }
       break;
     case 7:
       state->GPRM[reg] %= data;
       break;
     case 8: /* SPECIAL CASE - RND! */
-      state->GPRM[reg] += data; /*  TODO FIXME */
+      state->GPRM[reg] = (uint16_t) ((float) data * rand()/(RAND_MAX+1.0));
       break;
     case 9:
       state->GPRM[reg] &= data;
@@ -417,11 +427,11 @@ static void eval_set_op(int op, int reg, int reg2, int data) {
 }
 
 /* Evaluate set instruction, combined with either Link or Compare. */
-static void eval_set_version_1(int cond) {
-  uint8_t  op   = bits(0, 4, 4);
-  uint8_t  reg  = bits(3, 4, 4); /*  Erhumm.. */
-  uint8_t  reg2 = bits(5, 4, 4);
-  uint16_t data = eval_reg_or_data(bits(0, 3, 1), 4);
+static void eval_set_version_1(command_t* command, int32_t cond) {
+  uint8_t  op   = new_bits(command, 4, 4);
+  uint8_t  reg  = new_bits(command, 28, 4); /* FIXME: This is different from vmcmd.c!!! */
+  uint8_t  reg2 = new_bits(command, 44, 4);
+  uint16_t data = eval_reg_or_data(command, new_bits(command, 3, 1), 4);
 
   if(cond) {
     eval_set_op(op, reg, reg2, data);
@@ -430,11 +440,11 @@ static void eval_set_version_1(int cond) {
 
 
 /* Evaluate set instruction, combined with both Link and Compare. */
-static void eval_set_version_2(int cond) {
-  uint8_t  op   = bits(0, 4, 4);
-  uint8_t  reg  = bits(1, 4, 4);
-  uint8_t  reg2 = bits(3, 4, 4); /*  Erhumm.. */
-  uint16_t data = eval_reg_or_data(bits(0, 3, 1), 2);
+static void eval_set_version_2(command_t* command, int32_t cond) {
+  uint8_t  op   = new_bits(command, 4, 4);
+  uint8_t  reg  = new_bits(command, 12, 4);
+  uint8_t  reg2 = new_bits(command, 28, 4); /* FIXME: This is different from vmcmd.c!!! */
+  uint16_t data = eval_reg_or_data(command, new_bits(command, 3, 1), 2);
 
   if(cond) {
     eval_set_op(op, reg, reg2, data);
@@ -445,86 +455,85 @@ static void eval_set_version_2(int cond) {
 /* Evaluate a command
    returns row number of goto, 0 if no goto, -1 if link.
    Link command in return_values */
-static int eval_command(uint8_t *bytes, link_t *return_values) {
-  int i, extra_bits;
-  int cond, res = 0;
-
-  for(i = 0; i < 8; i++) {
-    cmd.bits[i] = bytes[i];
-    cmd.examined[i] = 0;
-  }
+static int32_t eval_command(uint8_t *bytes, link_t *return_values) {
+  int32_t cond, res = 0;
+  command_t command;
+  command.instruction =( (uint64_t) bytes[0] << 56 ) |
+        ( (uint64_t) bytes[1] << 48 ) |
+        ( (uint64_t) bytes[2] << 40 ) |
+        ( (uint64_t) bytes[3] << 32 ) |
+        ( (uint64_t) bytes[4] << 24 ) |
+        ( (uint64_t) bytes[5] << 16 ) |
+        ( (uint64_t) bytes[6] <<  8 ) |
+          (uint64_t) bytes[7] ;
+  command.examined = 0;
   memset(return_values, 0, sizeof(link_t));
 
-  switch(bits(0, 0, 3)) { /* three first bits */
+  switch(new_bits(&command, 0, 3)) { /* three first old_bits */
     case 0: /*  Special instructions */
-      cond = eval_if_version_1();
-      res = eval_special_instruction(cond);
+      cond = eval_if_version_1(&command);
+      res = eval_special_instruction(&command, cond);
       if(res == -1) {
 	fprintf(stderr, "Unknown Instruction!\n");
 	assert(0);
       }
       break;
     case 1: /*  Link/jump instructions */
-      if(bits(0, 3, 1)) {
-        cond = eval_if_version_2();
-        res = eval_jump_instruction(cond, return_values);
+      if(new_bits(&command, 3, 1)) {
+        cond = eval_if_version_2(&command);
+        res = eval_jump_instruction(&command, cond, return_values);
       } else {
-        cond = eval_if_version_1();
-        res = eval_link_instruction(cond, return_values);
+        cond = eval_if_version_1(&command);
+        res = eval_link_instruction(&command, cond, return_values);
       }
       if(res)
 	res = -1;
       break;
     case 2: /*  System set instructions */
-      cond = eval_if_version_2();
-      res = eval_system_set(cond, return_values);
+      cond = eval_if_version_2(&command);
+      res = eval_system_set(&command, cond, return_values);
       if(res)
 	res = -1;
       break;
     case 3: /*  Set instructions, either Compare or Link may be used */
-      cond = eval_if_version_3();
-      eval_set_version_1(cond);
-      if(bits(1, 4, 4)) {
-	res = eval_link_instruction(cond, return_values);
+      cond = eval_if_version_3(&command);
+      eval_set_version_1(&command, cond);
+      if(new_bits(&command, 12, 4)) {
+	res = eval_link_instruction(&command, cond, return_values);
       }
       if(res)
 	res = -1;
       break;
     case 4: /*  Set, Compare -> Link Sub-Instruction */
-      eval_set_version_2(/*True*/ 1);
-      cond = eval_if_version_4();
-      res = eval_link_subins(cond, return_values);
+      eval_set_version_2(&command, /*True*/ 1);
+      cond = eval_if_version_4(&command);
+      res = eval_link_subins(&command, cond, return_values);
       if(res)
 	res = -1;
       break;
     case 5: /*  Compare -> (Set and Link Sub-Instruction) */
-      cond = eval_if_version_4();
-      eval_set_version_2(cond);
-      res = eval_link_subins(cond, return_values);
+      cond = eval_if_version_4(&command);
+      eval_set_version_2(&command, cond);
+      res = eval_link_subins(&command, cond, return_values);
       if(res)
 	res = -1;
       break;
     case 6: /*  Compare -> Set, allways Link Sub-Instruction */
-      cond = eval_if_version_4();
-      eval_set_version_2(cond);
-      res = eval_link_subins(/*True*/ 1, return_values);
+      cond = eval_if_version_4(&command);
+      eval_set_version_2(&command, cond);
+      res = eval_link_subins(&command, /*True*/ 1, return_values);
       if(res)
 	res = -1;
       break;
+    default: /* Unknown command */
+      fprintf(stderr, "WARNING: Unknown Command=%x\n", new_bits(&command, 0, 3));
   }
   /*  Check if there are bits not yet examined */
 
-  extra_bits = 0;
-  for(i = 0; i < 8; i++)
-    if(cmd.bits [i] & ~cmd.examined [i]) {
-      extra_bits = 1;
-      break;
-    }
-  if(extra_bits) {
-    fprintf(stderr, "[WARNING, unknown bits:");
-    for(i = 0; i < 8; i++)
-      fprintf(stderr, " %02x", cmd.bits [i] & ~cmd.examined [i]);
-    fprintf(stderr, "]\n");
+  if(command.instruction & ~ command.examined) {
+    fprintf(stderr, " libdvdnav: decoder.c: [WARNING, unknown bits:");
+    fprintf(stderr, " %08llx", (command.instruction & ~ command.examined) );
+    fprintf(stderr, "]");
   }
 
   return res;
@@ -532,10 +541,10 @@ static int eval_command(uint8_t *bytes, link_t *return_values) {
 
 /* Evaluate a set of commands in the given register set (which is
  * modified */
-int vmEval_CMD(vm_cmd_t commands[], int num_commands, 
+int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands, 
 	       registers_t *registers, link_t *return_values) {
-  int i = 0;
-  int total = 0;
+  int32_t i = 0;
+  int32_t total = 0;
   
   state = registers; /*  TODO FIXME */
 
@@ -544,7 +553,7 @@ int vmEval_CMD(vm_cmd_t commands[], int num_commands,
   fprintf(stderr, "libdvdnav: Registers before transaction\n");
   vmPrint_registers( registers );
   if(1) {
-    int i;
+    int32_t i;
     fprintf(stderr, "libdvdnav: Full list of commands to execute\n");
     for(i = 0; i < num_commands; i++)
       vmPrint_CMD(i, &commands[i]);
@@ -556,7 +565,7 @@ int vmEval_CMD(vm_cmd_t commands[], int num_commands,
 #endif
   
   while(i < num_commands && total < 100000) {
-    int line;
+    int32_t line;
     
 #ifdef TRACE
     if(1) vmPrint_CMD(i, &commands[i]);
@@ -711,7 +720,7 @@ void vmPrint_LINK(link_t value) {
  }
 
 void vmPrint_registers( registers_t *registers ) {
-  int i;
+  int32_t i;
   fprintf(stderr, "   #   ");
   for(i = 0; i < 24; i++)
     fprintf(stderr, " %2d |", i);

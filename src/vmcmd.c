@@ -413,7 +413,7 @@ static void print_set_version_1(command_t* command) {
   uint8_t set_op = new_bits(command, 4, 4);
   
   if(set_op) {
-    print_reg(new_bits(command, 24, 8));
+    print_reg(new_bits(command, 24, 8));  /* FIXME: This is different from decoder.c!!!  */
     print_set_op(set_op);
     print_reg_or_data(command, new_bits(command, 3, 1), 4);
   } else {
@@ -434,7 +434,6 @@ static void print_set_version_2(command_t* command) {
 }
 
 void vmPrint_mnemonic(vm_cmd_t *vm_command)  {
-  int i;
   command_t command;
   command.instruction =( (uint64_t) vm_command->bytes[0] << 56 ) |
         ( (uint64_t) vm_command->bytes[1] << 48 ) |
@@ -497,7 +496,7 @@ void vmPrint_mnemonic(vm_cmd_t *vm_command)  {
   /*  Check if there still are bits set that were not examined */
   
   if(command.instruction & ~ command.examined) {
-    fprintf(stderr, " [WARNING, unknown bits:");
+    fprintf(stderr, " libdvdnav: vmcmd.c: [WARNING, unknown bits:");
     fprintf(stderr, " %08llx", (command.instruction & ~ command.examined) );
     fprintf(stderr, "]");
   }
