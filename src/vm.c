@@ -47,6 +47,7 @@
 static void saveRSMinfo(vm_t *vm,int cellN, int blockN);
 static int set_PGN(vm_t *vm);
 static link_t play_PGC(vm_t *vm);
+static link_t play_PGC_PG(vm_t *vm, int pgN);
 static link_t play_PGC_post(vm_t *vm);
 static link_t play_PG(vm_t *vm);
 static link_t play_Cell(vm_t *vm);
@@ -850,6 +851,8 @@ static link_t play_PGC(vm_t *vm)
 
   /*  This must be set before the pre-commands are executed because they */
   /*  might contain a CallSS that will save resume state */
+
+  /* FIXME: This may be only a temporary fix for something... */
   (vm->state).pgN = 1;
   (vm->state).cellN = 0;
 
@@ -873,6 +876,45 @@ static link_t play_PGC(vm_t *vm)
   return play_PG(vm);
 }  
 
+static link_t play_PGC_PG(vm_t *vm, int pgN) 
+{    
+  link_t link_values;
+  
+#ifdef TRACE
+  fprintf(stderr, "vm: play_PGC:");
+  if((vm->state).domain != FP_DOMAIN) {
+    fprintf(stderr, " (vm->state).pgcN (%i)\n", get_PGCN(vm));
+  } else {
+    fprintf(stderr, " first_play_pgc\n");
+  }
+#endif
+
+  /*  This must be set before the pre-commands are executed because they */
+  /*  might contain a CallSS that will save resume state */
+
+  /* FIXME: This may be only a temporary fix for something... */
+  (vm->state).pgN = pgN;
+  (vm->state).cellN = 0;
+
+  /* eval -> updates the state and returns either 
+     - some kind of jump (Jump(TT/SS/VTS_TTN/CallSS/link C/PG/PGC/PTTN)
+     - just play video i.e first PG
+       (This is what happens if you fall of the end of the pre_cmds)
+     - or a error (are there more cases?) */
+  if((vm->state).pgc->command_tbl && (vm->state).pgc->command_tbl->nr_of_pre) {
+    if(vmEval_CMD((vm->state).pgc->command_tbl->pre_cmds, 
+		  (vm->state).pgc->command_tbl->nr_of_pre, 
+		  &(vm->state).registers, &link_values)) {
+      /*  link_values contains the 'jump' return value */
+      return link_values;
+    } else {
+#ifdef TRACE
+      fprintf(stderr, "PGC pre commands didn't do a Jump, Link or Call\n");
+#endif
+    }
+  }
+  return play_PG(vm);
+}  
 
 static link_t play_PG(vm_t *vm)
 {
@@ -1300,7 +1342,7 @@ static link_t process_command(vm_t *vm, link_t link_values)
       assert((vm->state).domain == VTSM_DOMAIN || (vm->state).domain == VTS_DOMAIN); /* ?? */
       if(get_VTS_PTT(vm,(vm->state).vtsN, link_values.data1, link_values.data2) == -1)
 	assert(0);
-      link_values = play_PGC(vm);
+      link_values = play_PGC_PG(vm, link_values.data2);
       break;
       
     case JumpSS_FP:
@@ -1677,6 +1719,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.18  2002/05/30 19:25:08  richwareham
+ * Another small fix
+ *
  * Revision 1.17  2002/05/30 15:56:41  richwareham
  * Fixed (what appears to be) an error in JumpVTS_PTT implementation, it didn't call play_PGC after jumping.
  *
