@@ -76,7 +76,8 @@ typedef struct read_cache_chunk_s {
   uint8_t     *cache_buffer;
   uint8_t     *cache_buffer_base;  /* used in malloc and free for alignment */
   int32_t      cache_start_sector; /* -1 means cache invalid */
-  size_t       cache_block_count;
+  int32_t      cache_read_count;   /* this many sectors are already read */
+  size_t       cache_block_count;  /* this many sectors will go in this chunk */
   size_t       cache_malloc_size;
   int          cache_valid;
   int          usage_count;  /* counts how many buffers where issued from this chunk */
@@ -86,6 +87,7 @@ struct read_cache_s {
   read_cache_chunk_t  chunk[READ_CACHE_CHUNKS];
   int                 current;
   int                 freeing;  /* is set to one when we are about to dispose the cache */
+  int                 read_ahead_size;
   pthread_mutex_t     lock;
 
   /* Bit of strange cross-linking going on here :) -- Gotta love C :) */
@@ -394,24 +396,9 @@ void dvdnav_read_cache_clear(read_cache_t *self) {
   pthread_mutex_unlock(&self->lock);
 }
 
-#ifdef DVDNAV_PROFILE
-//#ifdef ARCH_X86
-__inline__ unsigned long long int dvdnav_rdtsc()
-{
-  unsigned long long int x;
-  __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-  return x;
-}
-//#endif
-#endif
-
 /* This function is called just after reading the NAV packet. */
 void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count) {
-  int i, use, result;
-#ifdef DVDNAV_PROFILE
-  struct timeval tv1, tv2, tv3;
-  unsigned long long p1, p2, p3;
-#endif
+  int i, use;
  
   if(!self)
     return;
@@ -420,7 +407,7 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
     return;
 
   pthread_mutex_lock(&self->lock);
-
+  
   /* find a free cache chunk that best fits the required size */
   use = -1;
   for (i = 0; i < READ_CACHE_CHUNKS; i++)
@@ -468,20 +455,10 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
   if (use >= 0) {
     self->chunk[use].cache_start_sector = sector;
     self->chunk[use].cache_block_count = block_count;
-    self->current = use;
-#ifdef DVDNAV_PROFILE
-    gettimeofday(&tv1, NULL);
-    p1 = dvdnav_rdtsc();
-#endif
-    result = DVDReadBlocks (self->dvd_self->file, sector, block_count, self->chunk[use].cache_buffer);
-#ifdef DVDNAV_PROFILE
-    p2 = dvdnav_rdtsc();
-    gettimeofday(&tv2, NULL);
-    timersub(&tv2, &tv1, &tv3);
-    dprintf("pre_cache DVD read %ld us, profile = %lld, block_count = %d\n",
-      tv3.tv_usec, p2-p1, block_count); 
-#endif
+    self->chunk[use].cache_read_count = 0;
     self->chunk[use].cache_valid = 1;
+    self->read_ahead_size = 2;
+    self->current = use;
   } else
     dprintf("pre_caching was impossible, no cache chunk available\n");
   
@@ -511,16 +488,35 @@ int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, 
   }
   
   if (use >= 0) {
-    self->chunk[use].usage_count++;
-    *buf = &self->chunk[use].cache_buffer[(sector - self->chunk[use].cache_start_sector) *
-      DVD_VIDEO_LB_LEN * block_count];
+    read_cache_chunk_t *chunk = &self->chunk[use];
+    int32_t min_sectors = sector + block_count - chunk->cache_start_sector - chunk->cache_read_count;
+    
+    if (chunk->cache_read_count < chunk->cache_block_count) {
+      /* read ahead some buffers but ensure, requested sector is available */
+      if (chunk->cache_read_count + self->read_ahead_size > chunk->cache_block_count)
+	chunk->cache_read_count += DVDReadBlocks(self->dvd_self->file,
+	  chunk->cache_start_sector + chunk->cache_read_count,
+	  chunk->cache_block_count - chunk->cache_read_count,
+	  chunk->cache_buffer + chunk->cache_read_count * DVD_VIDEO_LB_LEN);
+      else
+	chunk->cache_read_count += DVDReadBlocks(self->dvd_self->file,
+	  chunk->cache_start_sector + chunk->cache_read_count,
+	  (min_sectors > self->read_ahead_size) ? min_sectors : self->read_ahead_size,
+	  chunk->cache_buffer + chunk->cache_read_count * DVD_VIDEO_LB_LEN);
+    }
+    
+    chunk->usage_count++;
+    *buf = chunk->cache_buffer + (sector - chunk->cache_start_sector) * DVD_VIDEO_LB_LEN;
+    /* the amount of blocks to read ahead is determined based on the lead of the 
+     * blocks in cache over those requested */
+    self->read_ahead_size = chunk->cache_read_count + chunk->cache_start_sector - sector - block_count + 1;
     pthread_mutex_unlock(&self->lock);
     return DVD_VIDEO_LB_LEN * block_count;
   } else {
     if (self->dvd_self->use_read_ahead)
       dprintf("cache miss on sector %d\n", sector);
     pthread_mutex_unlock(&self->lock);
-    return DVDReadBlocks(self->dvd_self->file, sector, block_count, *buf);
+    return DVDReadBlocks(self->dvd_self->file, sector, block_count, *buf) * DVD_VIDEO_LB_LEN;
   }
 }
 
