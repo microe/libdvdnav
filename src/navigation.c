@@ -138,7 +138,7 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int title, int part) {
   }
   
   pthread_mutex_lock(&this->vm_lock);
-  if (!this->vm->vtsi || !this->vm->vmgi) {
+  if (!this->vm->vmgi) {
     printerr("Bad VM state.");
     pthread_mutex_unlock(&this->vm_lock);
     return S_ERR;
