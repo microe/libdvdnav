@@ -127,7 +127,7 @@ ifo_handle_t *vm_get_vtsi(vm_t *vm);
 dvd_reader_t *vm_get_dvd_reader(vm_t *vm);
 
 /* Basic Handling */
-void vm_start(vm_t *vm);
+int  vm_start(vm_t *vm);
 void vm_stop(vm_t *vm);
 int  vm_reset(vm_t *vm, const char *dvdroot);
 
