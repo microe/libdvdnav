@@ -165,12 +165,19 @@ struct dvdnav_s {
 #ifdef __GNUC__
 #define printerrf(format, args...) snprintf(this->err_str, MAX_ERR_LEN, format, ## args);
 #else
+#ifdef _MSC_VER
+#define printerrf(str) snprintf(this->err_str, MAX_ERR_LEN, str);
+#else
 #define printerrf(...) snprintf(this->err_str, MAX_ERR_LEN, __VA_ARGS__);
+#endif /* WIN32 */
 #endif
 #define printerr(str) strncpy(this->err_str, str, MAX_ERR_LEN);
 
 /* Save my typing */
 #define S_ERR DVDNAV_STATUS_ERR
+
+#ifndef _MSC_VER
 #define S_OK  DVDNAV_STATUS_OK
+#endif /* MSC_VER */
 
 #endif /* DVDNAV_INTERNAL_H_INCLUDED */
