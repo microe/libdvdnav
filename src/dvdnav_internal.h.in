@@ -38,7 +38,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#undef WORDS_BIGENDIAN
+@BIGENDIAN@
 
 #include <dvdread/dvd_reader.h>
 #include <dvdread/ifo_read.h>
