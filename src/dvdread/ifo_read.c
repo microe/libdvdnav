@@ -1624,8 +1624,8 @@ static int ifoRead_PGCIT_internal(ifo_handle_t *ifofile, pgcit_t *pgcit,
   }
   ptr = data;
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
-    memcpy(&pgcit->pgci_srp[i], ptr, PGCI_LU_SIZE);
-    ptr += PGCI_LU_SIZE;
+    memcpy(&pgcit->pgci_srp[i], ptr, PGCI_SRP_SIZE);
+    ptr += PGCI_SRP_SIZE;
     B2N_16(pgcit->pgci_srp[i].ptl_id_mask);
     B2N_32(pgcit->pgci_srp[i].pgc_start_byte);
     CHECK_VALUE(pgcit->pgci_srp[i].unknown1 == 0);
