@@ -378,7 +378,7 @@ int vm_position_get(vm_t *vm, vm_position_t *position) {
   if (((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector ==
        (vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_vobu_start_sector) &&
       ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].last_sector -
-       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 200)) {
+       (vm->state).pgc->cell_playback[(vm->state).cellN - 1].first_sector < 250)) {
     int time;
     time  = ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0xf0) * 36000;
     time += ((vm->state).pgc->cell_playback[(vm->state).cellN - 1].playback_time.hour   & 0x0f) * 3600;
@@ -2029,6 +2029,9 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.40  2002/11/24 15:09:18  mroi
+ * loosening this test a bit makes "Spy Game" German RC2 work
+ *
  * Revision 1.39  2002/11/23 11:05:45  mroi
  * patch from Marco Zühlke for reporting correct title number
  *
