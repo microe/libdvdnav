@@ -64,12 +64,22 @@ typedef struct {
 } dvdnav_still_event_t;
 
 /**
- * Structure providing information on DVDNAV_*_STREAM_CHANGE events.
+ * Structure providing information on DVDNAV_SPU_STREAM_CHANGE events.
+ */
+typedef struct {
+  int physical_wide; /*!< The physical (MPEG) stream number for widescreen display. */
+  int physical_letterbox; /*!< The physical (MPEG) stream number for letterboxed display. */
+  int physical_pan_scan; /*!< The physical (MPEG) stream number for pan&scan display. */
+  int logical;  /*!< The logical (DVD) stream number.   */
+} dvdnav_spu_stream_change_event_t;
+
+/**
+ * Structure providing information on DVDNAV_AUDIO_STREAM_CHANGE events.
  */
 typedef struct {
   int physical; /*!< The physical (MPEG) stream number. */
   int logical;  /*!< The logical (DVD) stream number.   */
-} dvdnav_stream_change_event_t;
+} dvdnav_audio_stream_change_event_t;
 
 /**
  * Structure providing information on DVDNAV_VTS_CHANGE events.

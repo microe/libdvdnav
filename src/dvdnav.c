@@ -102,7 +102,7 @@ static int8_t NCLK_dvdnav_get_spu_logical_stream(dvdnav_t *this, uint8_t subp_nu
   if(subp_num >= vtsi->vtsi_mat->nr_of_vts_subp_streams)
     return -1;
   
-  return vm_get_subp_stream(this->vm, subp_num);
+  return vm_get_subp_stream(this->vm, subp_num, 0);
 }
 
 static int8_t NLCK_dvdnav_get_active_spu_stream(dvdnav_t *this) {
@@ -129,6 +129,16 @@ uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
   
   pthread_mutex_lock(&this->vm_lock); 
   retval = (uint8_t) vm_get_video_aspect(this->vm);
+  pthread_mutex_unlock(&this->vm_lock); 
+  
+  return retval;
+}
+
+uint8_t dvdnav_get_video_scale_permission(dvdnav_t *this) {
+  uint8_t         retval;
+  
+  pthread_mutex_lock(&this->vm_lock); 
+  retval = (uint8_t) vm_get_video_scale_permission(this->vm);
   pthread_mutex_unlock(&this->vm_lock); 
   
   return retval;
@@ -553,14 +563,16 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   }
   
   if(this->position_current.spu_channel != this->position_next.spu_channel) {
-    dvdnav_stream_change_event_t stream_change;
+    dvdnav_spu_stream_change_event_t stream_change;
     (*event) = DVDNAV_SPU_STREAM_CHANGE;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE\n");
 #endif
-    (*len) = sizeof(dvdnav_stream_change_event_t);
-    stream_change.physical = vm_get_subp_active_stream( this->vm );
-    memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
+    (*len) = sizeof(dvdnav_spu_stream_change_event_t);
+    stream_change.physical_wide = vm_get_subp_active_stream(this->vm, 0);
+    stream_change.physical_letterbox = vm_get_subp_active_stream(this->vm, 1);
+    stream_change.physical_pan_scan = vm_get_subp_active_stream(this->vm, 2);
+    memcpy(buf, &(stream_change), sizeof( dvdnav_spu_stream_change_event_t));
     this->position_current.spu_channel = this->position_next.spu_channel;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
@@ -570,14 +582,14 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
   }
   
   if(this->position_current.audio_channel != this->position_next.audio_channel) {
-    dvdnav_stream_change_event_t stream_change;
+    dvdnav_audio_stream_change_event_t stream_change;
     (*event) = DVDNAV_AUDIO_STREAM_CHANGE;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE\n");
 #endif
-    (*len) = sizeof(dvdnav_stream_change_event_t);
+    (*len) = sizeof(dvdnav_audio_stream_change_event_t);
     stream_change.physical= vm_get_audio_active_stream( this->vm );
-    memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
+    memcpy(buf, &(stream_change), sizeof( dvdnav_audio_stream_change_event_t));
     this->position_current.audio_channel = this->position_next.audio_channel;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
@@ -942,6 +954,10 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.25  2002/07/05 14:18:54  mroi
+ * report all spu types (widescreen, letterbox and pan&scan), not widescreen
+ * only and report the stream's scale permissions to detect pan&scan material
+ *
  * Revision 1.24  2002/07/05 01:42:30  jcdutton
  * Add more debug info for Menu language selection.
  * Only do vm_start when we have to.

@@ -217,6 +217,15 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
 uint8_t dvdnav_get_video_aspect(dvdnav_t *self);
 
 /**
+ * Get video scaling permissions.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * 
+ * \returns Video scaling permissions, bit0 - deny letterboxing, bit1 - deny pan&scan
+ */
+uint8_t dvdnav_get_video_scale_permission(dvdnav_t *self);
+
+/**
  * @}
  */
 

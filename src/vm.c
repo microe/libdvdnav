@@ -582,10 +582,13 @@ int vm_get_audio_stream(vm_t *vm, int audioN)
 }
 
 /**
- * Return the substream id for 'logical' subpicture stream subpN.
+ * Return the substream id for 'logical' subpicture stream subpN and given mode.
  * 0 <= subpN < 32
+ * mode == 0 - widescreen
+ * mode == 1 - letterbox
+ * mode == 2 - pan&scan
  */
-int vm_get_subp_stream(vm_t *vm, int subpN)
+int vm_get_subp_stream(vm_t *vm, int subpN, int mode)
 {
   int streamN = -1;
   int source_aspect = vm_get_video_aspect(vm);
@@ -602,7 +605,16 @@ int vm_get_subp_stream(vm_t *vm, int subpN)
       if(source_aspect == 0) /* 4:3 */	     
 	streamN = ((vm->state).pgc->subp_control[subpN] >> 24) & 0x1f;  
       if(source_aspect == 3) /* 16:9 */
-	streamN = ((vm->state).pgc->subp_control[subpN] >> 16) & 0x1f;
+        switch (mode) {
+	case 0:
+	  streamN = ((vm->state).pgc->subp_control[subpN] >> 16) & 0x1f;
+	  break;
+	case 1:
+	  streamN = ((vm->state).pgc->subp_control[subpN] >> 8) & 0x1f;
+	  break;
+	case 2:
+	  streamN = (vm->state).pgc->subp_control[subpN] & 0x1f;
+	}
     }
   }
   
@@ -619,19 +631,19 @@ int vm_get_subp_stream(vm_t *vm, int subpN)
   return streamN;
 }
 
-int vm_get_subp_active_stream(vm_t *vm)
+int vm_get_subp_active_stream(vm_t *vm, int mode)
 {
   int subpN;
   int streamN;
   subpN = (vm->state).SPST_REG & ~0x40;
-  streamN = vm_get_subp_stream(vm, subpN);
+  streamN = vm_get_subp_stream(vm, subpN, mode);
   
   /* If no such stream, then select the first one that exists. */
   if(streamN == -1) {
     for(subpN = 0; subpN < 32; subpN++) {
       if((vm->state).pgc->subp_control[subpN] & (1<<31)) {
       
-        streamN = vm_get_subp_stream(vm, subpN);
+        streamN = vm_get_subp_stream(vm, subpN, mode);
         break;
       }
     }
@@ -1672,6 +1684,24 @@ int vm_get_video_aspect(vm_t *vm)
   return aspect;
 }
 
+int vm_get_video_scale_permission(vm_t *vm)
+{
+  int permission = 0;
+  
+  if((vm->state).domain == VTS_DOMAIN) {
+    permission = vm->vtsi->vtsi_mat->vts_video_attr.permitted_df;
+  } else if((vm->state).domain == VTSM_DOMAIN) {
+    permission = vm->vtsi->vtsi_mat->vtsm_video_attr.permitted_df;
+  } else if((vm->state).domain == VMGM_DOMAIN) {
+    permission = vm->vmgi->vmgi_mat->vmgm_video_attr.permitted_df;
+  }
+#ifdef TRACE
+  fprintf(stderr, "dvdnav:get_video_scale_permission:permission=%d\n",permission);
+#endif
+  
+  return permission;
+}
+
 static void ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN) 
 {
   if((vm->state).vtsN == vtsN) {
@@ -1768,6 +1798,10 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
 
 /*
  * $Log$
+ * Revision 1.24  2002/07/05 14:18:55  mroi
+ * report all spu types (widescreen, letterbox and pan&scan), not widescreen
+ * only and report the stream's scale permissions to detect pan&scan material
+ *
  * Revision 1.23  2002/07/05 01:42:30  jcdutton
  * Add more debug info for Menu language selection.
  * Only do vm_start when we have to.
