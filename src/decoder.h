@@ -88,10 +88,18 @@ typedef struct {
   uint8_t  GPRM_mode[16];  /* Need to have some thing to indicate normal/counter mode for every GPRM */
 } registers_t;
 
+typedef struct
+{
+  uint64_t instruction;
+  uint64_t examined;
+  registers_t *registers;
+} command_t;
+
 int vmEval_CMD(vm_cmd_t commands[], int num_commands, 
 	       registers_t *registers, link_t *return_values);
 
 void vmPrint_LINK(link_t value);
 void vmPrint_registers( registers_t *registers );
+uint32_t vm_getbits(command_t* command, int start, int count);
 
 #endif /* DECODER_H_INCLUDED */
