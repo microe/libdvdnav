@@ -1,9 +1,38 @@
+##
+## Process this file with automake to produce Makefile.in
+##
+
+AUTOMAKE_OPTIONS = 1.3
+
 SUBDIRS = src examples doc misc m4
 
-EXTRA_DIST = debian/README.Debian debian/bug-presubj debian/changelog \
-        debian/control debian/copyright debian/dvdnav-config.1 \
-        debian/libdvdnav-dev.examples debian/libdvdnav-dev.files \
-        debian/rules debian/shlibs libdvdnav.spec @DEPCOMP@
+DEBFILES = debian/README.Debian debian/bug-presubj debian/changelog \
+	debian/control debian/copyright debian/dvdnav-config.1 \
+	debian/libdvdnav-dev.examples debian/libdvdnav-dev.files \
+	debian/rules debian/shlibs
+
+EXTRA_DIST = autogen.sh \
+	     automake.diff \
+	     libdvdnav.spec \
+	     $(DEBFILES) \
+	     AUTHORS \
+	     ChangeLog \
+	     configure \
+	     config.guess \
+	     config.sub \
+	     COPYING \
+	     INSTALL \
+	     install-sh \
+	     libtool \
+	     ltmain.sh \
+	     missing \
+	     mkinstalldirs \
+	     NEWS \
+	     README \
+	     TODO \
+	     depcomp \
+	     CREDITS \
+	     @DEPCOMP@
 
 debug:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
@@ -14,6 +43,9 @@ install-debug: debug
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	  (cd $$subdir && $(MAKE) $@) || exit; \
 	done;
+
+prune-cache:
+	-rm -f config.cache
 
 mostlyclean-generic:
 	-rm -f *~ \#* .*~ .\#* 

@@ -4,4 +4,5 @@ developers mailinglist at mailto:dvd-devel@lists.sourceforge.net
 
 The library is currently used by the following projects:
   menu - A simple example program to demonstrate some features
-  xine-dvdnav - A full-featuted DVD plugin for xine
+  xine-dvdnav (discontinued) - A full-featuted DVD plugin for xine
+  xine-lib - recent versions of xine-lib include an internal copy of libdvdnav

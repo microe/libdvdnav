@@ -1,3 +1,15 @@
+libdvdnav (0.1.5) unstable; urgency=low
+  * some bugfixes
+  * code cleanup
+  * build process polishing
+  * more sensible event order in get_next_block to ensure useful event delivery
+  * VOBU level resume
+  * fixed: seeking in a multiangle feature briefly showed the wrong angle
+
+libdvdnav (0.1.4) unstable; urgency=low
+  * more read cache improvements
+  * minor fixes for some problematic DVDs
+
 libdvdnav (0.1.3-1) unstable; urgency=low
   * Zero-copy read cache.
   * More support for alternative Menu languages.
