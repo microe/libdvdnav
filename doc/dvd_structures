@@ -10,6 +10,8 @@ not know), but they are practically proven in libdvdnav.
 1. physical structure - MPEG stream level
    - blocks, sectors
        * smallest addressable unit on disc
+       * a file system driver (usually UDF) is needed to map the VOBS-local
+	 sector numbers to global disc sectors
    - GOP (group of pictures)
        * contains multiple sectors
        * smallest self-contained MPEG unit
@@ -29,6 +31,7 @@ not know), but they are practically proven in libdvdnav.
        * contains multiple VOBs (addressed by VOB_ID)
        * a VOBS is the physical analogy to the playback domains below,
 	 therefore, a VMGM_VOBS, a VTSM_VOBS and a VTS_VOBS exist
+       * all sector addressing is done within the scope of the VOBS
 2. navigational structure - logical playback control
    - Cell
        * smallest unit which is layed out in sequence physically
@@ -79,19 +82,19 @@ not know), but they are practically proven in libdvdnav.
        * contains parental management information
        * contains attribute lists for the VTS'es
        * contains text data (?)
-       * contains a Cell and a VOBU lists with physical sector info (for seeking)
+       * contains a Cell and a VOBU lists with local sector info (for seeking)
    - VTSM (video title set menu) - files vts_<vtsN>_0.{vob,ifo,bup}
        * the menu which allows you to select between the TTs of a VTS
        * physically corresponds to the VTSM_VOBS (vts_<vtsN>_0.vob) and
 	 the VTSI (vts_<vtsN>_0.ifo)
        * contains sets of PGCs, differentiated by language
-       * contains a Cell and a VOBU lists with physical sector info (for seeking)
+       * contains a Cell and a VOBU lists with local sector info (for seeking)
    - VTS (video title set) - files vts_<vtsN>_[1-x].vob, vts_<vtsN>_0.{ifo,bup}
        * regular playback domain
        * physically corresponds to the VTS_VOBS (vts_<vtsN>_[1-x].vob) and
 	 the VTSI (vts_<vtsN>_0.ifo)
        * contains one VTS with its VTS_TTs and PGCs
        * contains a time map (for time-based seeking)
-       * contains a Cell and a VOBU lists with physical sector info (for seeking)
+       * contains a Cell and a VOBU lists with local sector info (for seeking)
    - STOP
        * 'nuff said
