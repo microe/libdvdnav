@@ -581,7 +581,6 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   /*  DEBUG */
   fprintf(MSG_OUT, "libdvdnav: Registers before transaction\n");
   vmPrint_registers( registers );
-  int32_t i;
   fprintf(MSG_OUT, "libdvdnav: Full list of commands to execute\n");
   for(i = 0; i < num_commands; i++)
     vmPrint_CMD(i, &commands[i]);
