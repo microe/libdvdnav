@@ -1,3 +1,14 @@
+libdvdnav (0.1.9-1) unstable; urgency=low
+
+  * New upstream release. (0.1.7 was not released)
+    - Drop dependencies on external libdvdread.
+  * Bump so version number because of incompatible changes.
+  * Get rid of debian/libdvdnav1.* files.
+  * Standard-Version: 3.5.10
+    - No changes.
+
+ -- Philipp Matthias Hahn <pmhahn@debian.org>  Wed, 21 May 2003 10:04:01 +0200
+
 libdvdnav (0.1.7-1) unstable; urgency=low
 
   * New upstream version (closes: #188071).
