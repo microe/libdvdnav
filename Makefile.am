@@ -7,7 +7,7 @@ SUBDIRS = src examples doc misc m4
 DEBFILES = debian/README.Debian debian/bug-presubj debian/changelog \
 	debian/control debian/copyright debian/dvdnav-config.1 \
 	debian/libdvdnav-dev.docs debian/libdvdnav-dev.install \
-	debian/rules debian/shlibs
+	debian/rules debian/shlibs debian/compat
 
 EXTRA_DIST = autogen.sh \
 	     $(DEBFILES) \
