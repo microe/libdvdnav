@@ -168,7 +168,7 @@ dvdnav_status_t dvdnav_get_highlight_area(pci_t* nav_pci , int32_t button, int32
 
   /* Set the highlight SPRM if the passed button was valid*/
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns)) {
-    fprintf(stderr,"Unable to select button number %i as it doesn't exist",
+    fprintf(stderr,"Unable to select button number %i as it doesn't exist\n",
               button);
     return S_ERR;
   }

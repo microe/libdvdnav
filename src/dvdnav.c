@@ -154,8 +154,6 @@ dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   this->started=0;
   // this->use_read_ahead
 
-  this->hli_state=0;
-
   this->cache_start_sector = -1;
   this->cache_block_count = 0;
   this->cache_valid = 0;
@@ -513,14 +511,12 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     (*len) = sizeof(dvdnav_stream_change_event_t);
     stream_change.physical = vm_get_subp_active_stream( this->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
-    //this->spu_stream_changed = 0;
     this->position_current.spu_channel = this->position_next.spu_channel;
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
   
-  //if(this->audio_stream_changed) {
   if(this->position_current.audio_channel != this->position_next.audio_channel) {
     dvdnav_stream_change_event_t stream_change;
     (*event) = DVDNAV_AUDIO_STREAM_CHANGE;
@@ -528,7 +524,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     (*len) = sizeof(dvdnav_stream_change_event_t);
     stream_change.physical= vm_get_audio_active_stream( this->vm );
     memcpy(buf, &(stream_change), sizeof( dvdnav_stream_change_event_t));
-    //this->audio_stream_changed = 0;
     this->position_current.audio_channel = this->position_next.audio_channel;
     fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
     pthread_mutex_unlock(&this->vm_lock); 
@@ -537,46 +532,19 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
      
   /* Check the HIGHLIGHT flag */
   /* FIXME: Use BUTTON instead of HIGHLIGHT. */
-  //if(this->highlight_changed) {
   if(this->position_current.button != this->position_next.button) {
-  //  if (0) {
     dvdnav_highlight_event_t hevent;
-    dvdnav_highlight_area_t highlight;
-    dvdnav_status_t status;
 
-   
-    /* Fill in highlight struct with appropriate values */
-    if(this->hli_state != 0) {
-    //  if (1) {
-      hevent.display = 1;
-      status = dvdnav_get_highlight_area(&this->pci , this->position_next.button, 0,
-                                           &highlight);
-      
-      fprintf(stderr,"libdvdnav:read_block_loop: button area status = %d\n", status);
-      /* Copy current button bounding box. */
-      hevent.sx = highlight.sx;
-      hevent.sy = highlight.sy;
-      hevent.ex = highlight.ex;
-      hevent.ey = highlight.ey;
+    hevent.display = 1;
+    hevent.buttonN = this->position_next.button;
 
-      hevent.palette = highlight.palette;
-      hevent.pts = highlight.pts;
-      hevent.buttonN = this->position_next.button;
-
-    } else {
-      hevent.display = 0;
-      status = S_OK;
-    }
     this->position_current.button = this->position_next.button;
     
-    if (status) {
-   // FIXME: Change this to DVDNAV_BUTTON 
-      (*event) = DVDNAV_HIGHLIGHT;
-      (*len) = sizeof(hevent);
-      memcpy(buf, &(hevent), sizeof(hevent));
-      pthread_mutex_unlock(&this->vm_lock); 
-      return S_OK;
-    }
+    (*event) = DVDNAV_HIGHLIGHT;
+    (*len) = sizeof(hevent);
+    memcpy(buf, &(hevent), sizeof(hevent));
+    pthread_mutex_unlock(&this->vm_lock); 
+    return S_OK;
   }
 
   /* Check to see if we need to change the currently opened VOB */
@@ -637,13 +605,10 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 
     /* On a VTS change, we want to disable any highlights which
      * may have been shown (FIXME: is this valid?) */
-    //FIXME: We should be able to remove this 
-    //this->highlight_changed = 1;
     this->spu_clut_changed = 1;
     this->position_current.cell = -1; /* Force an update */
     this->position_current.spu_channel = -1; /* Force an update */
     this->position_current.audio_channel = -1; /* Force an update */;
-    //this->hli_state = 0; /* Hide */
      
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
@@ -660,7 +625,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     this->vobu.vobu_start = this->position_next.vobu_start; 
     /* vobu_next is use for mid cell resumes */
     this->vobu.vobu_next = this->position_next.vobu_next; 
-    //this->vobu.vobu_next = 0; 
     this->vobu.vobu_length = 0; 
     this->vobu.blockN = this->vobu.vobu_length + 1; 
     /* Make blockN > vobu_lenght to do expected_nav */
@@ -691,7 +655,6 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
         this->vobu.vobu_start = this->position_next.vobu_start; 
         /* vobu_next is use for mid cell resumes */
         this->vobu.vobu_next = this->position_next.vobu_next; 
-        //this->vobu.vobu_next = 0; 
         this->vobu.vobu_length = 0; 
         this->vobu.blockN = this->vobu.vobu_length + 1; 
         /* Make blockN > vobu_next to do expected_nav */
@@ -908,6 +871,10 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.15  2002/04/24 00:47:46  jcdutton
+ * Some more cleanups.
+ * Improve button passing.
+ *
  * Revision 1.14  2002/04/23 13:26:08  jcdutton
  * Add some comments, FIXMEs.
  * The main point being that dvdnav_get_next_block is almost in a state where it can be optional whether the application programmer uses it, or implements their own version of the function. That is been the main reason for the re-write of this function recently.
