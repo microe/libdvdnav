@@ -35,12 +35,6 @@
 #include "dvd_input.h"
 
 
-#ifndef WIN32
-#define LIBDVDCSS_NAME = "libdvdcss.so.2"
-#else
-#define LIBDVDCSS_NAME = "libdvdcss.dll"
-#endif
-
 /* The function pointers that is the exported interface of this file. */
 dvd_input_t (*dvdinput_open)  (const char *);
 int         (*dvdinput_close) (dvd_input_t);
