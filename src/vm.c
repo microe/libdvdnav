@@ -1474,6 +1474,10 @@ static int process_command(vm_t *vm, link_t link_values) {
       /*  Alien or Aliens has this != 1, I think. */
       /* assert(link_values.data2 == 1); */
       (vm->state).VTS_TTN_REG = link_values.data2;
+      /* TTN_REG (SPRM4), VTS_TTN_REG (SPRM5), TT_PGCN_REG (SPRM6) are linked, */
+      /* so if one changes, the others must change to match it. */
+      (vm->state).TTN_REG     = get_TT(vm, (vm->state).vtsN, (vm->state).VTS_TTN_REG);
+
       if(!set_MENU(vm, link_values.data3))
 	assert(0);
       link_values = play_PGC(vm);
