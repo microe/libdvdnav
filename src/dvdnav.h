@@ -551,7 +551,7 @@ dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *self, int x, int y);
  */
 
 /** 
- * \defgroup languages Menu Languages
+ * \defgroup languages Languages
  *
  * @{
  */
@@ -562,7 +562,25 @@ dvdnav_status_t dvdnav_mouse_activate(dvdnav_t *self, int x, int y);
  * \param self Pointer to dvdnav_t associated with this operation.
  * \param code 2 char ISO639 Language code in a C-style string.
  */
-dvdnav_status_t dvdnav_menu_languge_select(dvdnav_t *self,
+dvdnav_status_t dvdnav_menu_language_select(dvdnav_t *self,
+					   char *code);
+
+/**
+ * Set which audio language we should use.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param code 2 char ISO639 Language code in a C-style string.
+ */
+dvdnav_status_t dvdnav_audio_language_select(dvdnav_t *self,
+					    char *code);
+
+/**
+ * Set which spu language we should use.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param code 2 char ISO639 Language code in a C-style string.
+ */
+dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *self,
 					  char *code);
 
 /**

@@ -87,3 +87,34 @@ dvdnav_status_t dvdnav_get_readahead_flag(dvdnav_t *this, int* flag) {
   return S_OK;
 }
 
+static dvdnav_status_t set_language_register(dvdnav_t *this, char *code, int reg) {
+  if(!this)
+    return S_ERR;
+    
+  if(!code[0] || !code[1]) {
+    printerr("Passed illegal language code");
+    return S_ERR;
+  }
+  
+  if(!this->vm) {
+    printerr("VM not yet initialised");
+    return S_ERR;
+  }
+  
+  pthread_mutex_lock(&this->vm_lock);
+  this->vm->state.registers.SPRM[reg] = (code[0] << 8) | code[1];
+  pthread_mutex_unlock(&this->vm_lock);
+  return S_OK;
+}
+
+dvdnav_status_t dvdnav_menu_language_select(dvdnav_t *this, char *code) {
+  return set_language_register(this, code, 0);
+}
+
+dvdnav_status_t dvdnav_audio_language_select(dvdnav_t *this, char *code) {
+  return set_language_register(this, code, 16);
+}
+
+dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *this, char *code) {
+  return set_language_register(this, code, 18);
+}
