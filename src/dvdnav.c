@@ -393,6 +393,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
  
   /* Check the STOP flag */
   if(this->vm->stopped) {
+    vm_stop(this->vm);
     (*event) = DVDNAV_STOP;
     this->started = 0;
     pthread_mutex_unlock(&this->vm_lock); 
@@ -979,6 +980,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.43  2003/03/12 11:38:51  mroi
+ * stop the VM here
+ *
  * Revision 1.42  2003/02/25 14:08:14  mroi
  * new event DVDNAV_WAIT
  *
