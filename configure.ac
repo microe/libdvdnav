@@ -15,8 +15,8 @@ dnl Making releases: DVDNAV_SUB += 1; change LT_* accordingly
 dnl --------------------------------------------------------------
 DVDNAV_MAJOR=0
 DVDNAV_MINOR=1
-DVDNAV_SUB=9
-DVDNAV_PRE=""
+DVDNAV_SUB=10
+DVDNAV_PRE="cvs"
 
 AC_SUBST(DVDNAV_MAJOR)
 AC_SUBST(DVDNAV_MINOR)
