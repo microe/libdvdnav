@@ -181,9 +181,6 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   /* Create a new structure */
   fprintf(MSG_OUT, "libdvdnav: Using dvdnav version (devel-ref:jcd1) from http://dvd.sf.net\n");
 
-  /* FIXME: We malloc() here, but if an error occurs inside dvdnav_open(),
-   * we return but never free() it.
-   */
   (*dest) = NULL;
   this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
   if(!this)
@@ -199,10 +196,15 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, char *path) {
   this->vm = vm_new_vm();
   if(!this->vm) {
     printerr("Error initialising the DVD VM");
+    pthread_mutex_destroy(&this->vm_lock);
+    free(this);
     return S_ERR;
   }
   if(vm_reset(this->vm, path) == -1) {
     printerr("Error starting the VM / opening the DVD device");
+    pthread_mutex_destroy(&this->vm_lock);
+    vm_free_vm(this->vm);
+    free(this);
     return S_ERR;
   }
 
@@ -998,6 +1000,9 @@ uint32_t dvdnav_get_next_still_flag(dvdnav_t *this) {
 
 /*
  * $Log$
+ * Revision 1.35  2002/09/05 12:55:05  mroi
+ * fix memleaks in dvdnav_open
+ *
  * Revision 1.34  2002/09/03 00:41:48  jcdutton
  * Add a comment so I can tell which version of the CVS a user is using.
  * Also add a FIXME to remind me to fix the Chapter number display.
