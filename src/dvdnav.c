@@ -230,13 +230,6 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
   fprintf(stderr,"dvdnav:close:called\n");
 #endif
 
-  /* Stop caching */
-
-  if(this->cache) {
-    dvdnav_read_cache_free(this->cache);
-    this->cache = NULL;
-  }
-  
   if (this->file) {
     DVDCloseFile(this->file);
 #ifdef LOG_DEBUG
@@ -257,8 +250,13 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
     this->file = NULL;
   }
   pthread_mutex_destroy(&this->vm_lock);
-  /* Finally free the entire structure */
-  free(this);
+
+  /* We leave the final freeing of the entire structure to the cache,
+   * because we don't know, if there are still buffers out in the wild,
+   * that must return first. */
+  if(this->cache) {
+    dvdnav_read_cache_free(this->cache);
+  } else free(this);
   
   return S_OK;
 }
@@ -482,16 +480,33 @@ int dvdnav_get_vobu(dvdnav_t *self, dsi_t* nav_dsi, pci_t* nav_pci, dvdnav_vobu_
 
   return 1;
 }
+
 /* This is the main get_next_block function which actually gets the media stream video and audio etc.
  * The use of this function is optional, with the application programmer
  * free to implement their own version of this function
  * FIXME: Make the function calls from here public API calls.
  */
+
 dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
  				      int *event, int *len) {
+  unsigned char *block;
+  dvdnav_status_t status;
+  
+  block = buf;
+  status = dvdnav_get_next_cache_block(this, &block, event, len);
+  if (block != buf) {
+    /* we received a block from the cache, copy it, so we can give it back */
+    memcpy(buf, block, DVD_VIDEO_LB_LEN);
+    dvdnav_free_cache_block(this, block);
+  }
+  return status;
+}
+ 
+dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, unsigned char **buf,
+ 					    int *event, int *len) {
   dvd_state_t *state;
   int result;
-  if(!this || !event || !len || !buf) {
+  if(!this || !event || !len || !buf || !*buf) {
     printerr("Passed a NULL pointer");
     return S_ERR;
   }
@@ -523,7 +538,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 
     (*event) = DVDNAV_STILL_FRAME;
     (*len) = sizeof(dvdnav_still_event_t);
-    memcpy(buf, &(still_event), sizeof(dvdnav_still_event_t));
+    memcpy(*buf, &(still_event), sizeof(dvdnav_still_event_t));
  
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
@@ -553,7 +568,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE\n");
 #endif
     (*len) = sizeof(dvdnav_still_event_t);
-    memcpy(buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
+    memcpy(*buf, &(state->pgc->palette), 16 * sizeof(uint32_t));
     this->spu_clut_changed = 0;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_CLUT_CHANGE returning S_OK\n");
@@ -572,7 +587,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     stream_change.physical_wide = vm_get_subp_active_stream(this->vm, 0);
     stream_change.physical_letterbox = vm_get_subp_active_stream(this->vm, 1);
     stream_change.physical_pan_scan = vm_get_subp_active_stream(this->vm, 2);
-    memcpy(buf, &(stream_change), sizeof( dvdnav_spu_stream_change_event_t));
+    memcpy(*buf, &(stream_change), sizeof( dvdnav_spu_stream_change_event_t));
     this->position_current.spu_channel = this->position_next.spu_channel;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:SPU_STREAM_CHANGE stream_id_wide=%d\n",stream_change.physical_wide);
@@ -598,7 +613,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 #endif
     (*len) = sizeof(dvdnav_audio_stream_change_event_t);
     stream_change.physical= vm_get_audio_active_stream( this->vm );
-    memcpy(buf, &(stream_change), sizeof( dvdnav_audio_stream_change_event_t));
+    memcpy(*buf, &(stream_change), sizeof( dvdnav_audio_stream_change_event_t));
     this->position_current.audio_channel = this->position_next.audio_channel;
 #ifdef LOG_DEBUG
     fprintf(stderr,"libdvdnav:AUDIO_STREAM_CHANGE stream_id=%d returning S_OK\n",stream_change.physical);
@@ -619,7 +634,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     
     (*event) = DVDNAV_HIGHLIGHT;
     (*len) = sizeof(hevent);
-    memcpy(buf, &(hevent), sizeof(hevent));
+    memcpy(*buf, &(hevent), sizeof(hevent));
     pthread_mutex_unlock(&this->vm_lock); 
     return S_OK;
   }
@@ -677,7 +692,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
 
     /* File opened successfully so return a VTS change event */
     (*event) = DVDNAV_VTS_CHANGE;
-    memcpy(buf, &(vts_event), sizeof(vts_event));
+    memcpy(*buf, &(vts_event), sizeof(vts_event));
     (*len) = sizeof(vts_event);
 
     /* On a VTS change, we want to disable any highlights which
@@ -748,7 +763,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
         still_event.length = this->position_current.still;
         (*event) = DVDNAV_STILL_FRAME;
         (*len) = sizeof(dvdnav_still_event_t);
-        memcpy(buf, &(still_event), sizeof(dvdnav_still_event_t));
+        memcpy(*buf, &(still_event), sizeof(dvdnav_still_event_t));
         pthread_mutex_unlock(&this->vm_lock); 
         return S_OK;
       }
@@ -774,7 +789,7 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, unsigned char *buf,
     }
     /* Decode nav into pci and dsi. */
     /* Then get next VOBU info. */
-    if(dvdnav_decode_packet(this, buf, &this->dsi, &this->pci) == 0) {
+    if(dvdnav_decode_packet(this, *buf, &this->dsi, &this->pci) == 0) {
       printerr("Expected NAV packet but none found.");
       pthread_mutex_unlock(&this->vm_lock); 
       return S_ERR;
@@ -963,6 +978,9 @@ dvdnav_status_t dvdnav_get_cell_info(dvdnav_t *this, int* current_angle,
 
 /*
  * $Log$
+ * Revision 1.27  2002/07/12 15:46:44  mroi
+ * use new memcopy'less read ahead cache
+ *
  * Revision 1.26  2002/07/06 16:24:54  mroi
  * * fix debug messages
  * * send spu stream change event only, when there are new streams

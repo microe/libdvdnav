@@ -32,7 +32,7 @@
 /* EXPERIMENTAL: Setting the following to 1 will use an experimental multi-threaded
  *               read-ahead cache. 
  */
-#define _MULTITHREAD_ 1
+#define _MULTITHREAD_ 0
 
 /* Constructor/destructors */
 read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self);
@@ -42,7 +42,10 @@ void dvdnav_read_cache_free(read_cache_t* self);
 void dvdnav_read_cache_clear(read_cache_t *self);
 /* This function is called just after reading the NAV packet. */
 void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count);
-/* This function will do the cache read */
-int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, uint8_t *buf);
+/* This function will do the cache read.
+ * The buffer handed in must be malloced to take one dvd block.
+ * On a cache hit, a different buffer will be returned though.
+ * Those buffers must _never_ be freed. */
+int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, uint8_t **buf);
 
 #endif /* __DVDNAV_READ_CACHE_H */

@@ -208,6 +208,33 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *self, unsigned char *buf,
 				      int *event, int *len);
 
 /**
+ * This basically does the same as dvdnav_get_next_block. The only difference is
+ * that it avoids a memcopy, when the requested block was found in the cache.
+ * I such a case (cache hit) this function will return a different pointer than
+ * the one handed in, pointing directly into the relevant block in the cache.
+ * Those pointer must _never_ be freed but instead returned to the library via
+ + dvdnav_free_cache_block.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param buf Buffer (at least 2048 octets) to fill with next block/event structure.
+ *            A different buffer might be returned, if the block was found in the internal cache.
+ * \param event Pointer to int to get event type.
+ * \param len Pointer to int to get the number of octets written into buf.
+ */
+dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *self, unsigned char **buf,
+					    int *event, int *len);
+
+/**
+ * All buffers which came from the internal cache (when dvdnav_get_next_cache_block
+ * returned a buffer different from the one handed in) have to be freed with this
+ * function. Although handing in other buffers not from the cache doesn't cause any harm.
+ *
+ * \param self Pointer to dvdnav_t associated with this operation.
+ * \param buf Buffer received from internal cache.
+ */
+dvdnav_status_t dvdnav_free_cache_block(dvdnav_t *self, unsigned char *buf);
+
+/**
  * Get video aspect code.
  *
  * \param self Pointer to dvdnav_t associated with this operation.
