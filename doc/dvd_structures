@@ -24,7 +24,7 @@ not know), but they are practically proven in libdvdnav.
          multiangle features
    - VOB (video object)
        * contains multiple ILVUs (usually quite a lot)
-       * one of the files on the disc
+       * one of the *.vob files on the disc
 2. navigational structure - logical playback control
    - Cell
        * smallest unit which is layed out in sequence physically
@@ -39,7 +39,7 @@ not know), but they are practically proven in libdvdnav.
 	 SPU channels or to provide a branching target for special
 	 features that need access to parts of the movie)
        * unit for user skip operations
-       * default unit for seeking
+       * libdvdnav's default unit for seeking
    - PGC (program chain)
        * contains multiple programs and cells
        * logical playback chain
@@ -50,12 +50,16 @@ not know), but they are practically proven in libdvdnav.
        * points to a PG in a PGC
        * usually what you select in a "chapter menu" are parts
        * usually the mapping between PTT and PG is 1:1, but not always
+	 (this is similar to the distinction between track and index marks
+	 on audio CDs: PTT = track mark, PG = index mark)
    - TT (title track)
        * contains multiple PTTs
        * logical partitioning of the content
          (multiple episodes of a TV series on one DVD: one TT per episode)
+       * the display of DVD players show title and part number
    - VTS (video title set)
-       * contains multiple TTs
+       * contains multiple TTs with a local numbering (to emphasize the
+	 local scope of the number, these are also called VTS_TT)
        * high level partitioning of the content (movie / bonus material)
        * video, audio and spu attributes are common inside a whole VTS
 4. domain structure - bringing it all together
@@ -63,10 +67,18 @@ not know), but they are practically proven in libdvdnav.
        * one special PGC in the VMGM domain run on start of the disc
    - VMGM (video manager menu) - files video_ts.{vob,ifo,bup}
        * the menu which allows you to select between title sets
-       * contains a set of PGCs
+       * contains sets of PGCs, differentiated by language
+       * contains a global table of TTs each pointing to a VTS and a local VTS_TT
+       * contains parental management information
+       * contains attribute lists for the VTS'es
+       * contains text data (?)
+       * contains a Cell and a VOBU lists with physical sector info (for seeking)
    - VTSM (video title set menu) - files vts_<vtsN>_0.{vob,ifo,bup}
        * the menu which allows you to select between the TTs of a VTS
-       * contains a set of PGCs
+       * contains sets of PGCs, differentiated by language
+       * contains a Cell and a VOBU lists with physical sector info (for seeking)
    - VTS (video title set) - files vts_<vtsN>_[1-9].vob, vts_<vtsN>_0.{ifo,bup}
-       * regular playback
-       * contains one VTS and a set of PGCs
+       * regular playback domain
+       * contains one VTS with its VTS_TTs and PGCs
+       * contains a time map (?)
+       * contains a Cell and a VOBU lists with physical sector info (for seeking)
