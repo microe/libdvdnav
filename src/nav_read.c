@@ -21,69 +21,181 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "bswap.h"
 #include "nav_types.h"
 #include "nav_read.h"
 #include "dvdread_internal.h"
 
+typedef struct {
+  uint8_t *start;
+  uint32_t byte_position;
+  uint32_t bit_position;
+  uint8_t byte;
+} getbits_state_t;
+
+static int32_t getbits_init(getbits_state_t *state, uint8_t *start) {
+  if ((state == NULL) || (start == NULL)) return -1;
+  state->start = start;
+  state->bit_position = 0;
+  state->byte_position = 0;
+  state->byte = start[0];
+  return 0;
+}
+
+/* Non-optimized getbits. */
+/* This can easily be optimized for particular platforms. */
+static uint32_t getbits(getbits_state_t *state, uint32_t number_of_bits) {
+  uint32_t result=0;
+  uint8_t byte=0;
+  if (number_of_bits > 32) {
+    printf("Number of bits > 32 in getbits\n");
+    assert(0);
+  }
+
+  if ((state->bit_position) > 0) {  /* Last getbits left us in the middle of a byte. */
+    if (number_of_bits > (8-state->bit_position)) { /* this getbits will span 2 or more bytes. */
+      byte = state->byte;
+      byte = byte >> (state->bit_position);
+      result = byte;
+      number_of_bits -= (8-state->bit_position);
+      state->bit_position = 0;
+      state->byte_position++;
+      state->byte = state->start[state->byte_position];
+    } else {
+      byte=state->byte;
+      state->byte = state->byte << number_of_bits;
+      byte = byte >> (8 - number_of_bits);
+      result = byte;
+      state->bit_position += number_of_bits; /* Here it is impossible for bit_position > 8 */
+      number_of_bits = 0;
+    }
+  }
+  if ((state->bit_position) == 0)
+    while (number_of_bits > 7) {
+      result = (result << 8) + state->byte;
+      state->byte_position++;
+      state->byte = state->start[state->byte_position];
+      number_of_bits -= 8;
+    }
+    if (number_of_bits > 0) { /* number_of_bits < 8 */
+      byte = state->byte;
+      state->byte = state->byte << number_of_bits;
+      state->bit_position += number_of_bits; /* Here it is impossible for bit_position > 7 */
+      byte = byte >> (8 - number_of_bits);
+      result = (result << number_of_bits) + byte;
+      number_of_bits = 0;
+    }
+
+  return result;
+}
+
 void navRead_PCI(pci_t *pci, unsigned char *buffer) {
-  int i, j;
-
-  CHECK_VALUE(sizeof(pci_t) == PCI_BYTES - 1); // -1 for substream id
-  
-  memcpy(pci, buffer, sizeof(pci_t));
-
-  /* Endian conversions  */
+  int32_t result, i, j;
+  getbits_state_t state;
+  if (getbits_init(&state, buffer)) assert(0); /* Passed NULL pointers */
 
   /* pci pci_gi */
-  B2N_32(pci->pci_gi.nv_pck_lbn);
-  B2N_16(pci->pci_gi.vobu_cat);
-  B2N_32(pci->pci_gi.vobu_s_ptm);
-  B2N_32(pci->pci_gi.vobu_e_ptm);
-  B2N_32(pci->pci_gi.vobu_se_e_ptm);
+  pci->pci_gi.nv_pck_lbn = getbits(&state, 32 );
+  pci->pci_gi.vobu_cat = getbits(&state, 16 );
+  pci->pci_gi.zero1 = getbits(&state, 16 );
+  pci->pci_gi.vobu_uop_ctl.zero = getbits(&state, 7 );
+  pci->pci_gi.vobu_uop_ctl.video_pres_mode_change         = getbits(&state, 1 );
+
+  pci->pci_gi.vobu_uop_ctl.karaoke_audio_pres_mode_change = getbits(&state, 1 ); 
+  pci->pci_gi.vobu_uop_ctl.angle_change                   = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.subpic_stream_change           = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.audio_stream_change            = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.pause_on                       = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.still_off                      = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.button_select_or_activate      = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.resume                         = getbits(&state, 1 );
+
+  pci->pci_gi.vobu_uop_ctl.chapter_menu_call              = getbits(&state, 1 ); 
+  pci->pci_gi.vobu_uop_ctl.angle_menu_call                = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.audio_menu_call                = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.subpic_menu_call               = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.root_menu_call                 = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.title_menu_call                = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.backward_scan                  = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.forward_scan                   = getbits(&state, 1 );
+
+  pci->pci_gi.vobu_uop_ctl.next_pg_search                 = getbits(&state, 1 ); 
+  pci->pci_gi.vobu_uop_ctl.prev_or_top_pg_search          = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.time_or_chapter_search         = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.go_up                          = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.stop                           = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.title_play                     = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.chapter_search_or_play         = getbits(&state, 1 );
+  pci->pci_gi.vobu_uop_ctl.title_or_time_play             = getbits(&state, 1 );
+  pci->pci_gi.vobu_s_ptm = getbits(&state, 32 ); 
+  pci->pci_gi.vobu_e_ptm = getbits(&state, 32 ); 
+  pci->pci_gi.vobu_se_e_ptm = getbits(&state, 32 ); 
+  pci->pci_gi.e_eltm.hour   = getbits(&state, 8 );
+  pci->pci_gi.e_eltm.minute = getbits(&state, 8 );
+  pci->pci_gi.e_eltm.second = getbits(&state, 8 );
+  pci->pci_gi.e_eltm.frame_u = getbits(&state, 8 );
+  for(i = 0; i < 32; i++)
+    pci->pci_gi.vobu_isrc[i] = getbits(&state, 8 );
 
   /* pci nsml_agli */
   for(i = 0; i < 9; i++)
-    B2N_32(pci->nsml_agli.nsml_agl_dsta[i]);
+    pci->nsml_agli.nsml_agl_dsta[i] = getbits(&state, 32 );
 
   /* pci hli hli_gi */
-  B2N_16(pci->hli.hl_gi.hli_ss);
-  B2N_32(pci->hli.hl_gi.hli_s_ptm);
-  B2N_32(pci->hli.hl_gi.hli_e_ptm);
-  B2N_32(pci->hli.hl_gi.btn_se_e_ptm);
+  pci->hli.hl_gi.hli_ss = getbits(&state, 16 );
+  pci->hli.hl_gi.hli_s_ptm = getbits(&state, 32 ); 
+  pci->hli.hl_gi.hli_e_ptm = getbits(&state, 32 );
+  pci->hli.hl_gi.btn_se_e_ptm = getbits(&state, 32 );
+  pci->hli.hl_gi.zero1 = getbits(&state, 2 );
+  pci->hli.hl_gi.btngr_ns = getbits(&state, 2 );
+  pci->hli.hl_gi.zero2 = getbits(&state, 1 );
+  pci->hli.hl_gi.btngr1_dsp_ty = getbits(&state, 3 );
+  pci->hli.hl_gi.zero3 = getbits(&state, 1 );
+  pci->hli.hl_gi.btngr2_dsp_ty = getbits(&state, 3 );
+  pci->hli.hl_gi.zero4 = getbits(&state, 1 );
+  pci->hli.hl_gi.btngr3_dsp_ty = getbits(&state, 3 );
+  pci->hli.hl_gi.btn_ofn = getbits(&state, 8 );
+  pci->hli.hl_gi.btn_ns = getbits(&state, 8 );
+  pci->hli.hl_gi.nsl_btn_ns = getbits(&state, 8 ); 
+  pci->hli.hl_gi.zero5 = getbits(&state, 8 );
+  pci->hli.hl_gi.fosl_btnn = getbits(&state, 8 );
+  pci->hli.hl_gi.foac_btnn = getbits(&state, 8 );
 
   /* pci hli btn_colit */
   for(i = 0; i < 3; i++)
     for(j = 0; j < 2; j++)
-      B2N_32(pci->hli.btn_colit.btn_coli[i][j]);
+      pci->hli.btn_colit.btn_coli[i][j] = getbits(&state, 32 ); 
 
   /* NOTE: I've had to change the structure from the disk layout to get
    * the packing to work with Sun's Forte C compiler. */
   
   /* pci hli btni */
   for(i = 0; i < 36; i++) {
-    char tmp[sizeof(pci->hli.btnit[i])], swap;
-    memcpy(tmp, &(pci->hli.btnit[i]), sizeof(pci->hli.btnit[i]));
-    /* Byte 4 to 7 are 'rotated' was: ABCD EFGH IJ is: ABCG DEFH IJ */
-    swap   = tmp[6]; 
-    tmp[6] = tmp[5];
-    tmp[5] = tmp[4];
-    tmp[4] = tmp[3];
-    tmp[3] = swap;
-    
-    /* Then there are the two B2N_24(..) calls */
-#ifndef WORDS_BIGENDIAN
-    swap = tmp[0];
-    tmp[0] = tmp[2];
-    tmp[2] = swap;
-    
-    swap = tmp[4];
-    tmp[4] = tmp[6];
-    tmp[6] = swap;
-#endif
-    memcpy(&(pci->hli.btnit[i]), tmp, sizeof(pci->hli.btnit[i]));
+    pci->hli.btnit[i].btn_coln = getbits(&state, 2 );
+    pci->hli.btnit[i].x_start = getbits(&state, 10 );
+    pci->hli.btnit[i].zero1 = getbits(&state, 2 );
+    pci->hli.btnit[i].x_end = getbits(&state, 10 );
+
+    pci->hli.btnit[i].auto_action_mode = getbits(&state, 2 );
+    pci->hli.btnit[i].y_start = getbits(&state, 10 );
+    pci->hli.btnit[i].zero2 = getbits(&state, 2 );
+    pci->hli.btnit[i].y_end = getbits(&state, 10 );
+
+    pci->hli.btnit[i].zero3 = getbits(&state, 2 );
+    pci->hli.btnit[i].up = getbits(&state, 6 );
+    pci->hli.btnit[i].zero4 = getbits(&state, 2 );
+    pci->hli.btnit[i].down = getbits(&state, 6 );
+    pci->hli.btnit[i].zero5 = getbits(&state, 2 );
+    pci->hli.btnit[i].left = getbits(&state, 6 );
+    pci->hli.btnit[i].zero6 = getbits(&state, 2 );
+    pci->hli.btnit[i].right = getbits(&state, 6 );
+    /* pci vm_cmd */
+    for(j = 0; j < 8; j++)
+      pci->hli.btnit[i].cmd.bytes[j] = getbits(&state, 8 );
   }
+
 
 
 #ifndef NDEBUG
