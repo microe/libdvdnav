@@ -580,6 +580,7 @@ int8_t dvdnav_get_active_spu_stream(dvdnav_t *self);
  */
 user_ops_t dvdnav_get_restrictions(dvdnav_t *self);
 
+
 /*********************************************************************
  * multiple angles                                                   *
  *********************************************************************/
