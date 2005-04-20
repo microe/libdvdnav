@@ -1094,10 +1094,21 @@ user_ops_t dvdnav_get_restrictions(dvdnav_t* this) {
    */
   uint32_t ops=0;
   
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return *(user_ops_t*)&ops;
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return *(user_ops_t*)&ops;
+  }
+  
+  pthread_mutex_lock(&this->vm_lock); 
   ops|=*(uint32_t*)&this->pci.pci_gi.vobu_uop_ctl;
   
   if(this->vm && this->vm->state.pgc)
     ops|=*(uint32_t*)&this->vm->state.pgc->prohibited_ops;
+  pthread_mutex_unlock(&this->vm_lock); 
     
   return *(user_ops_t*)&ops;
 }
