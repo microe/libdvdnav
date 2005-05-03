@@ -280,6 +280,6 @@ case "$1" in
     run_autoheader
     run_automake
     run_autoconf
-    run_configure $@
+    run_configure "$@"
     ;;
 esac
