@@ -203,7 +203,7 @@ const char* dvdnav_err_to_string(dvdnav_t *this) {
 }
 
 /* converts a dvd_time_t to PTS ticks */
-static int64_t dvdnav_convert_time(dvd_time_t *time) {
+int64_t dvdnav_convert_time(dvd_time_t *time) {
   int64_t result;
   int64_t frames;
   

@@ -183,6 +183,11 @@ struct dvdnav_s {
   char err_str[MAX_ERR_LEN];
 };
 
+/** HELPER FUNCTIONS **/
+
+/* converts a dvd_time_t to PTS ticks */
+int64_t dvdnav_convert_time(dvd_time_t *time);
+
 /** USEFUL MACROS **/
 
 #ifdef __GNUC__
