@@ -879,6 +879,48 @@ uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   return attr.lang_code;
 }
 
+uint16_t dvdnav_audio_stream_format(dvdnav_t *this, uint8_t stream) {
+  audio_attr_t  attr;
+  uint16_t format;
+  
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return -1; /* 0xffff */
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1; /* 0xffff */
+  }
+  
+  pthread_mutex_lock(&this->vm_lock); 
+  attr = vm_get_audio_attr(this->vm, stream);
+  pthread_mutex_unlock(&this->vm_lock); 
+  
+  switch(attr.audio_format) {
+  case 0:
+    format = DVDNAV_FORMAT_AC3;
+    break;
+  case 2: /* MPEG-1 or MPEG-2 without extension bitstream. */
+  case 3: /* MPEG-2 with extension bitstream. */
+    format = DVDNAV_FORMAT_MPEGAUDIO;
+    break;
+  case 4:
+    format = DVDNAV_FORMAT_LPCM;
+    break;
+  case 6:
+    format = DVDNAV_FORMAT_DTS;
+    break;
+  case 7:
+    format = DVDNAV_FORMAT_SDDS;
+    break;
+  default: 
+    format = 0xffff;
+    break;
+  }
+  
+  return format;
+}
+
 uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   subp_attr_t  attr;
   

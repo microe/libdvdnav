@@ -70,6 +70,11 @@ typedef int32_t dvdnav_status_t;
 #define DVDNAV_STATUS_ERR 0
 #define DVDNAV_STATUS_OK  1
 
+#define DVDNAV_FORMAT_AC3 0
+#define DVDNAV_FORMAT_MPEGAUDIO 3
+#define DVDNAV_FORMAT_LPCM 4
+#define DVDNAV_FORMAT_DTS 5
+#define DVDNAV_FORMAT_SDDS 6
 
 /*********************************************************************
  * initialisation & housekeeping functions                           *
@@ -546,6 +551,12 @@ uint8_t dvdnav_get_video_scale_permission(dvdnav_t *self);
  * (returns 0xffff if no such stream).
  */
 uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *self, uint8_t stream);
+
+/*
+ * Returns the format of *logical* audio stream 'stream'
+ * (returns 0xffff if no such stream).
+ */
+uint16_t dvdnav_audio_stream_to_format(dvdnav_t *self, uint8_t stream);
 
 /*
  * Converts a *logical* subpicture stream id into country code 
