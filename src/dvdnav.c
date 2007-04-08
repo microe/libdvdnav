@@ -56,6 +56,7 @@ static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   this->sync_wait_skip = 0;
   this->spu_clut_changed = 0;
   this->started = 0;
+  this->cur_cell_time = 0;
 
   dvdnav_read_cache_clear(this->cache);
   
@@ -388,6 +389,23 @@ dvdnav_status_t dvdnav_get_next_block(dvdnav_t *this, uint8_t *buf,
   }
   return status;
 }
+
+int64_t dvdnav_get_current_time(dvdnav_t *this) {
+  int i;
+  int64_t tm=0;
+  dvd_state_t *state = &this->vm->state;
+
+  for(i=0; i<state->cellN-1; i++) {
+    if(!
+        (state->pgc->cell_playback[i].block_type == BLOCK_TYPE_ANGLE_BLOCK &&
+         state->pgc->cell_playback[i].block_mode != BLOCK_MODE_FIRST_CELL)
+    )
+      tm += dvdnav_convert_time(&state->pgc->cell_playback[i].playback_time);
+  }
+  tm += this->cur_cell_time;
+
+  return tm;
+}
  
 dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
 					    int32_t *event, int32_t *len) {
@@ -583,6 +601,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
     int32_t first_cell_nr, last_cell_nr, i;
     dvd_state_t *state = &this->vm->state;
     
+    this->cur_cell_time = 0;
     (*event) = DVDNAV_CELL_CHANGE;
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: CELL_CHANGE\n");
@@ -783,6 +802,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
     fprintf(MSG_OUT, "libdvdnav: NAV_PACKET\n");
 #endif
     (*len) = 2048; 
+    this->cur_cell_time = dvdnav_convert_time(&this->dsi.dsi_gi.c_eltm);
     pthread_mutex_unlock(&this->vm_lock); 
     return DVDNAV_STATUS_OK;
   }

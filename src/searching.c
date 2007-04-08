@@ -122,6 +122,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
   }
 
   
+  this->cur_cell_time = 0;  
   if (this->pgc_based) {
     first_cell_nr = 1;
     last_cell_nr = state->pgc->nr_of_cells;
@@ -242,6 +243,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     return DVDNAV_STATUS_ERR;
   }
   
+  this->cur_cell_time = 0;
   if (this->pgc_based) {
     first_cell_nr = 1;
     last_cell_nr = state->pgc->nr_of_cells;
@@ -328,6 +330,7 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
+  this->cur_cell_time = 0;
   this->position_current.still = 0;
   this->vm->hop_channel++;
 #ifdef LOG_DEBUG
@@ -361,6 +364,7 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
+  this->cur_cell_time = 0;
   this->position_current.still = 0;
   this->vm->hop_channel++;
 #ifdef LOG_DEBUG
@@ -404,6 +408,7 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
       return DVDNAV_STATUS_ERR;
     }
   }
+  this->cur_cell_time = 0;
   /* merge changes on success */
   vm_merge(this->vm, try_vm);
   vm_free_copy(try_vm);
@@ -432,6 +437,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
     return DVDNAV_STATUS_ERR;
   }
   
+  this->cur_cell_time = 0;
   /* make a copy of current VM and try to navigate the copy to the menu */
   try_vm = vm_new_copy(this->vm);
   if ( (menu == DVD_MENU_Escape) && (this->vm->state.domain != VTS_DOMAIN)) {
