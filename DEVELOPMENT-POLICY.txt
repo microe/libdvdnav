@@ -17,6 +17,9 @@ When committing code to the repository always follow these rules:
 - if you break something by accident fix it immediately using the appropriate
   svn tools to revert your commit(s). If in doubt ask explanations to the
   mailing list
+- trivial patches such as spell fixes, prototype mismatch, missing includes,
+  more proper variable typization and similar should be committed without asking
+  prior authorization
 
 
 If in violation of this changes your account will be deleted.
