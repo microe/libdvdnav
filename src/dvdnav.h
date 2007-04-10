@@ -564,7 +564,7 @@ uint16_t dvdnav_audio_stream_to_lang(dvdnav_t *self, uint8_t stream);
  * Returns the format of *logical* audio stream 'stream'
  * (returns 0xffff if no such stream).
  */
-uint16_t dvdnav_audio_stream_to_format(dvdnav_t *self, uint8_t stream);
+uint16_t dvdnav_audio_stream_format(dvdnav_t *self, uint8_t stream);
 
 /*
  * Converts a *logical* subpicture stream id into country code 
