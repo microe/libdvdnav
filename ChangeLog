@@ -1,3 +1,4 @@
+  * added dvdnav_audio_stream_channels() to return number of channels
   * fixed dvdnav_time_search() in multi-angle dvds (but it still needs
     improvements)
   * added dvdnav_audio_stream_format() to identify the codec used
