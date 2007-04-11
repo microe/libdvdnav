@@ -22,4 +22,4 @@ When committing code to the repository always follow these rules:
   prior authorization
 
 
-If in reiterated violation of this changes your account will be deleted.
+If in reiterated violation of this rules your account will be deleted.
