@@ -900,7 +900,6 @@ uint16_t dvdnav_audio_stream_format(dvdnav_t *this, uint8_t stream) {
 
 uint16_t dvdnav_audio_stream_channels(dvdnav_t *this, uint8_t stream) {
   audio_attr_t  attr;
-  uint16_t format;
 
   if(!this->started) {
     printerr("Virtual DVD machine not started.");
