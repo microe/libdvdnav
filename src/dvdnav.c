@@ -941,6 +941,26 @@ uint16_t dvdnav_audio_stream_format(dvdnav_t *this, uint8_t stream) {
   return format;
 }
 
+uint16_t dvdnav_audio_stream_channels(dvdnav_t *this, uint8_t stream) {
+  audio_attr_t  attr;
+  uint16_t format;
+
+  if(!this) {
+    printerr("Passed a NULL pointer.");
+    return -1; /* 0xffff */
+  }
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1; /* 0xffff */
+  }
+
+  pthread_mutex_lock(&this->vm_lock);
+  attr = vm_get_audio_attr(this->vm, stream);
+  pthread_mutex_unlock(&this->vm_lock);
+
+  return attr.channels + 1;
+}
+
 uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *this, uint8_t stream) {
   subp_attr_t  attr;
   
