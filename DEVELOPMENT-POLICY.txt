@@ -1,6 +1,6 @@
 This fork of dvdnav was created to overcome the lack of responsiveness
 of the official development channel, not to bastardize this library in
-something for specific usagee by mplayer, so these are the rules to follow
+something for specific usage by mplayer, so these are the rules to follow
 when developing code:
 - don't remove pre-existing code that mplayer doesn't need
 - don't add code to expose the internals of dvdnav
@@ -14,7 +14,7 @@ When committing code to the repository always follow these rules:
 - don't commit unrelated changes as a single transaction
 - don't split strictly related changes over multiple commits
 - never alter the indentation / bracing / prototyping style of existing files
-- if you break something by accident fix it immediately using the appropriate
+- if you break something by accident fix it as soon as possible using the appropriate
   svn tools to revert your commit(s). If in doubt ask explanations to the
   mailing list
 - trivial patches such as spell fixes, prototype mismatch, missing includes,
@@ -22,4 +22,4 @@ When committing code to the repository always follow these rules:
   prior authorization
 
 
-If in violation of this changes your account will be deleted.
+If in reiterated violation of this changes your account will be deleted.
