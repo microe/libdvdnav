@@ -310,12 +310,6 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int32_t part) {
 }
 
 dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
-
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-  
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
@@ -344,12 +338,6 @@ dvdnav_status_t dvdnav_prev_pg_search(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
-
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-    
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
@@ -379,11 +367,6 @@ dvdnav_status_t dvdnav_top_pg_search(dvdnav_t *this) {
 
 dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
   vm_t *try_vm;
-
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
 
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
@@ -427,11 +410,6 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   vm_t *try_vm;
   
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
@@ -479,10 +457,6 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
   cell_playback_t *cell;
   dvd_state_t *state;
 
-  if(!this || !pos || !len) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   if(!this->started) {
     printerr("Virtual DVD machine not started.");
     return DVDNAV_STATUS_ERR;
@@ -548,11 +522,6 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
   cell_playback_t *first_cell;
   cell_playback_t *last_cell;
   dvd_state_t *state;
-
-  if(!this || !pos || !len) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
 
   state = &(this->vm->state);
   if(!state->pgc) {

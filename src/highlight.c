@@ -206,12 +206,6 @@ void nav_print_PCI(pci_t *pci) {
 /* Highlighting API calls */
 
 dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int32_t *button) {
-  
-  if(!this || !button) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-
   /* Simply return the appropriate value based on the SPRM */
   if(((*button) = this->position_current.button) == -1)
     (*button) = this->vm->state.HL_BTNN_REG >> 10;
@@ -222,10 +216,6 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int32_t *button) {
 static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
   int32_t button = 0;
 
-  if(!this || !pci) {
-    printerr("Passed a NULL pointer.");
-    return NULL;
-  }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
     return NULL;
@@ -331,10 +321,6 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
   int32_t button;
   btni_t *button_ptr = NULL;
 
-  if(!this || !pci) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
     return DVDNAV_STATUS_ERR;
@@ -391,11 +377,6 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
 
 dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cmd_t *cmd)
 {
-  if(!this || !cmd) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-  
   pthread_mutex_lock(&this->vm_lock);
   /* make the VM execute the appropriate code and probably
    * schedule a jump */
@@ -417,11 +398,6 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cm
 }  
 
 dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int32_t button) {
-  
-  if(!this || !pci) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
     return DVDNAV_STATUS_ERR;
@@ -459,10 +435,6 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int32_t x, int32
   int32_t best,dist,d;
   int32_t mx,my,dx,dy;
 
-  if(!this || !pci) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   if(!pci->hli.hl_gi.hli_ss) {
     printerr("Not in a menu.");
     return DVDNAV_STATUS_ERR;

@@ -30,11 +30,6 @@
 /* Navigation API calls */
 
 dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-
   this->position_current.still = 0;
   this->skip_still = 1;
   this->sync_wait = 0;
@@ -44,11 +39,6 @@ dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_wait_skip(dvdnav_t *this) {
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-
   this->sync_wait = 0;
   this->sync_wait_skip = 1;
 
@@ -56,10 +46,6 @@ dvdnav_status_t dvdnav_wait_skip(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int32_t *titles) {
-  if(!this || !titles) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   if (!this->vm->vmgi) {
     printerr("Bad VM state.");
     return DVDNAV_STATUS_ERR;
@@ -71,10 +57,6 @@ dvdnav_status_t dvdnav_get_number_of_titles(dvdnav_t *this, int32_t *titles) {
 }
 
 dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *this, int32_t title, int32_t *parts) {
-  if(!this || !parts) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   if (!this->vm->vmgi) {
     printerr("Bad VM state.");
     return DVDNAV_STATUS_ERR;
@@ -91,11 +73,6 @@ dvdnav_status_t dvdnav_get_number_of_parts(dvdnav_t *this, int32_t title, int32_
 
 dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int32_t *title, int32_t *part) {
   int32_t retval;
-  
-  if(!this || !title || !part) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   
   pthread_mutex_lock(&this->vm_lock);
   if (!this->vm->vtsi || !this->vm->vmgi) {
@@ -134,21 +111,12 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int32_t *title, int32_
 }
 
 dvdnav_status_t dvdnav_title_play(dvdnav_t *this, int32_t title) {
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
   return dvdnav_part_play(this, title, 1);
 }
 
 dvdnav_status_t dvdnav_part_play(dvdnav_t *this, int32_t title, int32_t part) {
   int32_t retval;
 
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-  
   pthread_mutex_lock(&this->vm_lock);
   if (!this->vm->vmgi) {
     printerr("Bad VM state.");
@@ -194,22 +162,12 @@ dvdnav_status_t dvdnav_part_play_auto_stop(dvdnav_t *this, int32_t title,
 
 dvdnav_status_t dvdnav_time_play(dvdnav_t *this, int32_t title,
 				 uint64_t time) {
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-  
   /* FIXME: Implement */
   printerr("Not implemented yet.");
   return DVDNAV_STATUS_ERR;
 }
 
 dvdnav_status_t dvdnav_stop(dvdnav_t *this) {
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-  
   pthread_mutex_lock(&this->vm_lock);
   this->vm->stopped = 1;
   pthread_mutex_unlock(&this->vm_lock);
@@ -217,11 +175,6 @@ dvdnav_status_t dvdnav_stop(dvdnav_t *this) {
 }
 
 dvdnav_status_t dvdnav_go_up(dvdnav_t *this) {
-  if(!this) {
-    printerr("Passed a NULL pointer.");
-    return DVDNAV_STATUS_ERR;
-  }
-
   /* A nice easy function... delegate to the VM */
   pthread_mutex_lock(&this->vm_lock);
   vm_jump_up(this->vm);
