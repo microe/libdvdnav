@@ -155,13 +155,13 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
   }
 
   if(found) {
-    int32_t vobu;
+    uint32_t vobu;
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: Seeking to cell %i from choice of %i to %i\n",
 	    cell_nr, first_cell_nr, last_cell_nr);
 #endif
     if (dvdnav_scan_admap(this, state->domain, target, &vobu) == DVDNAV_STATUS_OK) {
-      int32_t start = state->pgc->cell_playback[cell_nr-1].first_sector;
+      uint32_t start = state->pgc->cell_playback[cell_nr-1].first_sector;
       
       if (vm_jump_cell_block(this->vm, cell_nr, vobu - start)) {
 #ifdef LOG_DEBUG
