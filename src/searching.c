@@ -106,7 +106,6 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
   int32_t found;
   cell_playback_t *cell;
   dvd_state_t *state;
-  dvdnav_status_t result;
 
   if(this->position_current.still != 0) {
     printerr("Cannot seek in a still frame.");
