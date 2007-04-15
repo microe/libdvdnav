@@ -21,7 +21,6 @@ show_help(){
   exit 1
 }
 
-
 SHARED=yes
 STATIC=yes
 PREFIX=/usr/local/
@@ -34,11 +33,11 @@ for opt do
   ;;
   --enable-shared) SHARED=yes
   ;;
-  --enable-shared) SHARED=no
+  --disable-shared) SHARED=no
   ;;
   --enable-static) STATIC=yes
   ;;
-  --enable-static) STATIC=no
+  --disable-static) STATIC=no
   ;;
   --prefix=*) PREFIX="$optval"
   ;;
