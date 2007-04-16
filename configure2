@@ -3,6 +3,9 @@
 dvdnav_sh_version=4.1.1
 dvdnav_sh_major=`echo $dvdnav_sh_version | awk -F. '{print $1}'`
 
+cc=gcc
+make=make
+
 show_help(){
   echo "Usage: configure [options]"
   echo "Options: [defaults in brackets after descriptions]"
@@ -17,7 +20,14 @@ show_help(){
   echo "  --disable-static         do not build static libraries [default=no]"
   echo "  --enable-shared          build shared libraries [default=no]"
   echo "  --disable-shared         do not build shared libraries [default=yes]"
-  echo "  --enable-debug           install with debugging symbols [default=no]"
+  echo "Advanced options (experts only):"
+  echo "  --cc=CC                  use C compiler CC [$cc]"
+  echo "  --make=MAKE              use specified make [$make]"
+  echo "  --extra-cflags=ECFLAGS   add ECFLAGS to CFLAGS"
+  echo "  --extra-ldflags=ELDFLAGS add ELDFLAGS to LDFLAGS"
+  echo "Developer options:"
+  echo "  --disable-strip          disable stripping of executables and shared libraries"
+  echo "  --disable-opts           disable compiler optimizations"
   exit 1
 }
 
@@ -25,12 +35,11 @@ SHARED=yes
 STATIC=yes
 PREFIX=/usr/local/
 INSTALLSTRIP=-s
+optimizations="-O3"
 
 for opt do
   optval="${opt#*=}"
   case "$opt" in
-  --enable-debug) INSTALLSTRIP=
-  ;;
   --enable-shared) SHARED=yes
   ;;
   --disable-shared) SHARED=no
@@ -46,6 +55,18 @@ for opt do
   --shlibdir=*) shlibdir="$optval"
   ;;
   --incdir=*) incdir="$optval"
+  ;;
+  --cc=*) cc="$optval"
+  ;;
+  --make=*) make="$optval"
+  ;;
+  --extra-cflags=*) cflags="$cflags $optval"
+  ;;
+  --extra-ldflags=*) ldflags="$ldflags $optval"
+  ;;
+  --disable-strip) INSTALLSTRIP=
+  ;;
+  --disable-opts) optimizations=""
   ;;
   --help) show_help
   ;;
@@ -68,6 +89,10 @@ BUILD_SHARED=$SHARED
 BUILD_STATIC=$STATIC
 SHLIB_VERSION=$dvdnav_sh_version
 SHLIB_MAJOR=$dvdnav_sh_major
+CC=$cc
+MAKE=$make
+CFLAGS=$optimizations $cflags
+LDFLAGS=$ldflags
 INSTALLSTRIP=$INSTALLSTRIP
 EOF
 

@@ -4,8 +4,6 @@ include config.mak
 
 .SUFFIXES: .so
 
-MAKE=make
-CC=gcc
 AR=ar
 LD=ld
 RANLIB=ranlib
@@ -38,7 +36,7 @@ LIB = $(L).a
 SHLIB = $(L).so
 
 
-CFLAGS += -g -Wall -funsigned-char -O3
+CFLAGS += -g -Wall -funsigned-char
 CFLAGS += -I$(CURDIR) -I$(CURDIR)/src -I$(CURDIR)/src/vm \
 	 -I$(CURDIR)/src/dvdread
 
