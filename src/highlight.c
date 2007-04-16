@@ -26,6 +26,7 @@
 #endif
 
 #include <assert.h>
+#include <inttypes.h>
 #include "nav_types.h"
 #include "dvdnav_internal.h"
 

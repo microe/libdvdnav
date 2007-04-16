@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include <inttypes.h>
 #include "dvdnav_internal.h"
 
 /* Navigation API calls */

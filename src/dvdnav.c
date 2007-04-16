@@ -29,6 +29,7 @@
 #define LOG_DEBUG
 */
 
+#include <inttypes.h>
 #include "dvdnav_internal.h"
 #include "read_cache.h"
 #include "nav_read.h"

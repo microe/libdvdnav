@@ -31,6 +31,7 @@
 #include "config.h"
 #endif
 
+#include <inttypes.h>
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 #include "read_cache.h"
