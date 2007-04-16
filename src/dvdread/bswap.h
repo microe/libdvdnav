@@ -35,11 +35,17 @@
 #include <sys/param.h>
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__GLIBC__)
 #include <byteswap.h>
 #define B2N_16(x) x = bswap_16(x)
 #define B2N_32(x) x = bswap_32(x)
 #define B2N_64(x) x = bswap_64(x)
+
+#elif defined(__APPLE__)
+#include <libkern/OSByteOrder.h>
+#define B2N_16(x) x = OSSwapBigToHostInt16(x)
+#define B2N_32(x) x = OSSwapBigToHostInt32(x)
+#define B2N_64(x) x = OSSwapBigToHostInt64(x)
 
 #elif defined(__NetBSD__)
 #include <sys/endian.h>
