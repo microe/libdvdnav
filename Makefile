@@ -8,14 +8,14 @@ AR=ar
 LD=ld
 RANLIB=ranlib
 
-VPATH+= src
+VPATH+= $(SRC_PATH_BARE)/src
 SRCS = dvdnav.c highlight.c navigation.c read_cache.c remap.c \
 	searching.c settings.c
 
-VPATH+= src/vm
+VPATH+= $(SRC_PATH_BARE)/src/vm
 SRCS+= decoder.c vm.c vmcmd.c
 
-VPATH+= src/dvdread
+VPATH+= $(SRC_PATH_BARE)/src/dvdread
 SRCS+= dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
 	md5.c nav_print.c nav_read.c
 
@@ -37,8 +37,8 @@ SHLIB = $(L).so
 
 
 CFLAGS += -g -Wall -funsigned-char
-CFLAGS += -I$(CURDIR) -I$(CURDIR)/src -I$(CURDIR)/src/vm \
-	 -I$(CURDIR)/src/dvdread
+CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm \
+	 -I$(SRC_PATH)/src/dvdread
 
 CFLAGS += -DDVDNAV_COMPILE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
@@ -77,7 +77,7 @@ version.h: $(SVN_ENTRIES)
 endif
 
 version.h:
-	sh ./version.sh
+	sh $(SRC_PATH)/version.sh $(SRC_PATH)
 
 
 # General targets
@@ -93,10 +93,10 @@ ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -o $@ $(SHOBJS)
 
 .c.so:	$(BUILDDEPS)
-	cd $(.OBJDIR) && $(CC) -fPIC -DPIC -MD $(CFLAGS) -c -o $@ $(CURDIR)/$<
+	cd $(.OBJDIR) && $(CC) -fPIC -DPIC -MD $(CFLAGS) -c -o $@ $<
 
 .c.o:	$(BUILDDEPS)
-	cd $(.OBJDIR) && $(CC) -MD $(CFLAGS) -c -o $@ $(CURDIR)/$<
+	cd $(.OBJDIR) && $(CC) -MD $(CFLAGS) -c -o $@ $<
 
 
 # Install targets
