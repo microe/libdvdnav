@@ -520,7 +520,7 @@ void vm_print_mnemonic(vm_cmd_t *vm_command)  {
   
   if(command.instruction & ~ command.examined) {
     fprintf(MSG_OUT, " libdvdnav: vmcmd.c: [WARNING, unknown bits:");
-    fprintf(MSG_OUT, " %08llx", (command.instruction & ~ command.examined) );
+    fprintf(MSG_OUT, " %08"PRIx64, (command.instruction & ~ command.examined) );
     fprintf(MSG_OUT, "]");
   }
 }

@@ -572,7 +572,7 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
 
   if(command.instruction & ~ command.examined) {
     fprintf(MSG_OUT, "libdvdnav: decoder.c: [WARNING, unknown bits:");
-    fprintf(MSG_OUT, " %08llx", (command.instruction & ~ command.examined) );
+    fprintf(MSG_OUT, " %08"PRIx64, (command.instruction & ~ command.examined) );
     fprintf(MSG_OUT, "]\n");
   }
 
