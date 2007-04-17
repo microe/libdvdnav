@@ -36,7 +36,7 @@ LIB = $(L).a
 SHLIB = $(L).so
 
 
-CFLAGS += -g -Wall -funsigned-char
+CFLAGS += $(USEDEBUG) -Wall -funsigned-char
 CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm \
 	 -I$(SRC_PATH)/src/dvdread
 
