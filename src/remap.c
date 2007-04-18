@@ -190,10 +190,7 @@ remap_t* remap_loadmap( char *title) {
 
     /* Build the map filename */
     home = getenv("HOME"); assert(home);
-    strncpy(fname, home, sizeof(fname));
-    strncat(fname, "/.dvdnav/", sizeof(fname));
-    strncat(fname, title, sizeof(fname));
-    strncat(fname, ".map", sizeof(fname));
+    snprintf(fname, sizeof(fname), "%s/.dvdnav/%s.map", home, title);
 
     /* Open the map file */
     fp = fopen( fname, "r");
