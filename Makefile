@@ -15,21 +15,11 @@ SRCS = dvdnav.c highlight.c navigation.c read_cache.c remap.c \
 VPATH+= $(SRC_PATH_BARE)/src/vm
 SRCS+= decoder.c vm.c vmcmd.c
 
-VPATH+= $(SRC_PATH_BARE)/src/dvdread
-SRCS+= dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
-	md5.c nav_print.c nav_read.c
 
 
 HEADERS += src/dvd_types.h \
 	src/dvdnav.h \
-	src/dvdnav_events.h \
-	src/dvdread/dvd_reader.h \
-	src/dvdread/ifo_print.h \
-	src/dvdread/ifo_read.h \
-	src/dvdread/ifo_types.h \
-	src/dvdread/nav_print.h \
-	src/dvdread/nav_read.h \
-	src/dvdread/nav_types.h
+	src/dvdnav_events.h
 
 L=libdvdnav
 LIB = $(L).a
@@ -37,11 +27,26 @@ SHLIB = $(L).so
 
 
 CFLAGS += $(USEDEBUG) -Wall -funsigned-char
-CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm \
-	 -I$(SRC_PATH)/src/dvdread
+CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm
 
 CFLAGS += -DDVDNAV_COMPILE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
+
+ifeq ($(DVDREAD),internal)
+VPATH+= $(SRC_PATH_BARE)/src/dvdread
+HEADERS = src/dvdread/dvd_reader.h \
+	src/dvdread/ifo_print.h \
+	src/dvdread/ifo_read.h \
+	src/dvdread/ifo_types.h \
+	src/dvdread/nav_print.h \
+	src/dvdread/nav_read.h \
+	src/dvdread/nav_types.h
+SRCS+= dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
+	md5.c nav_print.c nav_read.c
+CFLAGS += -I$(SRC_PATH)/src/dvdread
+else
+CFLAGS += -I$(DVDREAD_DIR)
+endif
 
 SHLDFLAGS += -shared
 
