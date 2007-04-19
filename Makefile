@@ -9,26 +9,19 @@ LD=ld
 RANLIB=ranlib
 
 VPATH+= $(SRC_PATH_BARE)/src
-SRCS = dvdnav.c highlight.c navigation.c read_cache.c remap.c \
-	searching.c settings.c
+SRCS = dvdnav.c highlight.c navigation.c read_cache.c remap.c searching.c settings.c
 
 VPATH+= $(SRC_PATH_BARE)/src/vm
 SRCS+= decoder.c vm.c vmcmd.c
 
-
-
-HEADERS += src/dvd_types.h \
-	src/dvdnav.h \
-	src/dvdnav_events.h
+HEADERS += src/dvd_types.h src/dvdnav.h src/dvdnav_events.h
 
 L=libdvdnav
 LIB = $(L).a
 SHLIB = $(L).so
 
-
 CFLAGS += $(USEDEBUG) -Wall -funsigned-char
 CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm
-
 CFLAGS += -DDVDNAV_COMPILE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
 
