@@ -289,14 +289,12 @@ int dvdinput_setup(void)
 
 #ifdef __APPLE__
   #define CSS_LIB "libdvdcss.2.dylib"
-  dvdcss_library = dlopen(CSS_LIB, RTLD_LAZY);
 #elif defined(WIN32)
   #define CSS_LIB "libdvdcss.dll"
-  dvdcss_library = dlopen(CSS_LIB, RTLD_LAZY);
 #else
   #define CSS_LIB "libdvdcss.so.2"
-  dvdcss_library = dlopen(CSS_LIB, RTLD_LAZY);
 #endif
+  dvdcss_library = dlopen(CSS_LIB, RTLD_LAZY);
 
   if(dvdcss_library != NULL) {
 #if defined(__OpenBSD__) && !defined(__ELF__)
