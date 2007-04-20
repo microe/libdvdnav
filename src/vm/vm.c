@@ -38,9 +38,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "nav_types.h"
 #include "ifo_types.h"
 #include "ifo_read.h"
+#include "dvd_types.h"
 
+#include "decoder.h"
+#include "remap.h"
+#include "vm.h"
+#include "vmcmd.h"
+#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 #ifdef _MSC_VER

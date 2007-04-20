@@ -31,6 +31,14 @@
 #include <ctype.h>
 #include <inttypes.h>
 
+#include "dvd_types.h"
+#include "nav_types.h"
+#include "ifo_types.h"
+#include "decoder.h"
+#include "remap.h"
+#include "vm.h"
+#include "vmcmd.h"
+#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 /*  freebsd compatibility */

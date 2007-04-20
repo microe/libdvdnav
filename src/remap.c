@@ -32,7 +32,14 @@
 #endif /* _MSC_VER */
 
 #include <assert.h>
+#include "dvd_types.h"
+#include "nav_types.h"
+#include "ifo_types.h"
 #include "remap.h"
+#include "vm/decoder.h"
+#include "vm/vm.h"
+#include "vm/vmcmd.h"
+#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 struct block_s {

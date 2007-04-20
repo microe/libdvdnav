@@ -32,6 +32,13 @@
 #endif
 
 #include <inttypes.h>
+#include "dvd_types.h"
+#include "nav_types.h"
+#include "ifo_types.h"
+#include "remap.h"
+#include "vm/decoder.h"
+#include "vm/vm.h"
+#include "vm/vmcmd.h"
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 #include "read_cache.h"

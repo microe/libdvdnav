@@ -65,14 +65,6 @@ static inline int _private_gettimeofday( struct timeval *tv, void *tz )
 
 #endif /* WIN32 */
 
-/* Uncomment for VM command tracing */
-/* #define TRACE */
-
-#include "decoder.h"
-#include "dvdnav.h"
-#include "vm.h"
-#include "vmcmd.h"
-
 /* where should libdvdnav write its messages (stdout/stderr) */
 #define MSG_OUT stdout
 

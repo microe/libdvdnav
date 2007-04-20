@@ -24,8 +24,6 @@
 #ifndef __DVDNAV_READ_CACHE_H
 #define __DVDNAV_READ_CACHE_H
 
-#include "dvdnav_internal.h"
-
 /* Opaque cache type -- defined in dvdnav_internal.h */
 /* typedef struct read_cache_s read_cache_t; */
 

@@ -30,6 +30,15 @@
 */
 
 #include <inttypes.h>
+#include "dvd_types.h"
+#include "dvd_reader.h"
+#include "nav_types.h"
+#include "ifo_types.h" /* For vm_cmd_t */
+#include "remap.h"
+#include "vm/decoder.h"
+#include "vm/vm.h"
+#include "dvdnav.h"
+#include "dvdnav_events.h"
 #include "dvdnav_internal.h"
 #include "read_cache.h"
 #include "nav_read.h"

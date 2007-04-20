@@ -26,9 +26,6 @@
 #ifndef VM_H_INCLUDED
 #define VM_H_INCLUDED
 
-#include "remap.h"
-#include "dvdnav_internal.h"
-
 /* DOMAIN enum */
 
 typedef enum {
@@ -172,6 +169,8 @@ video_attr_t vm_get_video_attr(vm_t *vm);
 audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN);
 subp_attr_t  vm_get_subp_attr(vm_t *vm, int streamN);
 
+/* Uncomment for VM command tracing */
+/* #define TRACE */
 #ifdef TRACE
 /* Debug */
 void vm_position_print(vm_t *vm, vm_position_t *position);

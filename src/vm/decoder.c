@@ -31,8 +31,15 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>  /* For memset */
+#include "nav_types.h"
 #include "ifo_types.h" /* vm_cmd_t */
 
+#include "dvd_types.h"
+#include "remap.h"
+#include "decoder.h"
+#include "vm.h"
+#include "vmcmd.h"
+#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 uint32_t vm_getbits(command_t *command, int32_t start, int32_t count) {

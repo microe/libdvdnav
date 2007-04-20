@@ -28,7 +28,13 @@
 #include <assert.h>
 #include <inttypes.h>
 #include "nav_types.h"
+#include "dvd_types.h"
+#include "remap.h"
+#include "vm/decoder.h"
+#include "vm/vm.h"
+#include "vm/vmcmd.h"
 #include "dvdnav_internal.h"
+#include "dvdnav.h"
 
 /*
 #define BUTTON_TESTING

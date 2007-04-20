@@ -35,16 +35,11 @@
 extern "C" {
 #endif
 
-#ifdef DVDNAV_COMPILE
-#  include "dvdnav_events.h"
-#  include "dvd_types.h"
-#  include "dvd_reader.h"
-#  include "ifo_types.h" /* For vm_cmd_t */
-#else
-#  include <dvdnav/dvdnav_events.h>
+#ifndef DVDNAV_COMPILE
 #  include <dvdnav/dvd_types.h>
 #  include <dvdnav/dvd_reader.h>
 #  include <dvdnav/ifo_types.h> /* For vm_cmd_t */
+#  include <dvdnav/dvdnav_events.h>
 #endif
 
 
