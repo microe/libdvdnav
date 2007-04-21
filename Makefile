@@ -41,8 +41,6 @@ else
 CFLAGS += -I$(DVDREAD_DIR)
 endif
 
-SHLDFLAGS += -shared
-
 LIBS_INSTALL = $(CURDIR)/../lib
 INCLUDES_INSTALL = $(CURDIR)/../include/libhts
 
