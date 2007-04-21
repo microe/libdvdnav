@@ -21,13 +21,18 @@
  *
  */
 
-#include "dvdnav.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "dvd_types.h"
+#include "dvd_reader.h"
+#include "nav_types.h"
+#include "ifo_types.h" /* For vm_cmd_t */
+#include "dvdnav.h"
+#include "dvdnav_events.h"
 
 /* shall we use libdvdnav's read ahead cache? */
 #define DVD_READ_CACHE 1
