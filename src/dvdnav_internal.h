@@ -28,12 +28,6 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <limits.h>
-#include <string.h>
-
 #ifdef WIN32
 
 /* pthread_mutex_* wrapper for win32 */

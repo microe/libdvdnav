@@ -30,6 +30,11 @@
 */
 
 #include <inttypes.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <limits.h>
+#include <string.h>
 #include "dvd_types.h"
 #include "dvd_reader.h"
 #include "nav_types.h"
@@ -42,11 +47,6 @@
 #include "dvdnav_internal.h"
 #include "read_cache.h"
 #include "nav_read.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/time.h>
-
 #include "remap.h"
 
 static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {

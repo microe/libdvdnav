@@ -32,6 +32,7 @@
 #endif
 
 #include <inttypes.h>
+#include <stdlib.h>
 #include "dvd_types.h"
 #include "nav_types.h"
 #include "ifo_types.h"
