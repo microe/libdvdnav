@@ -25,9 +25,6 @@
 #ifndef DECODER_H_INCLUDED
 #define DECODER_H_INCLUDED
 
-#include <inttypes.h>
-#include <sys/time.h>
-
 /* link command types */
 typedef enum {
   LinkNoLink  = 0,
