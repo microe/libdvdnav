@@ -29,6 +29,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 #include "dvd_types.h"
 #include "nav_types.h"
 #include "ifo_types.h"

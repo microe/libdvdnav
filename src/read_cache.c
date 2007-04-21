@@ -33,6 +33,8 @@
 
 #include <inttypes.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
 #include "dvd_types.h"
 #include "nav_types.h"
 #include "ifo_types.h"
@@ -43,8 +45,6 @@
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 #include "read_cache.h"
-#include <sys/time.h>
-#include <time.h>
 
 #define READ_CACHE_CHUNKS 10
 

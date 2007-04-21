@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 #include "nav_types.h"
 #include "dvd_types.h"
 #include "remap.h"
