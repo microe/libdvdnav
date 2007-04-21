@@ -29,9 +29,6 @@
 #ifndef DVD_H_INCLUDED
 #define DVD_H_INCLUDED
 
-#include <inttypes.h>
-
-
 /*
  * DVD Menu ID
  * (see dvdnav_menu_call())

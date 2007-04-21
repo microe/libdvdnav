@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include <inttypes.h>
 #include "dvd_types.h"
 #include "nav_types.h"
 #include "ifo_types.h"
