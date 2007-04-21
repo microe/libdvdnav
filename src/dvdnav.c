@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
+#include <sys/time.h>
 #include "dvd_types.h"
 #include "dvd_reader.h"
 #include "nav_types.h"
