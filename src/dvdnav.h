@@ -38,6 +38,7 @@ extern "C" {
 #ifndef DVDNAV_COMPILE
 #  include <dvdnav/dvd_types.h>
 #  include <dvdnav/dvd_reader.h>
+#  include <dvdnav/nav_types.h>
 #  include <dvdnav/ifo_types.h> /* For vm_cmd_t */
 #  include <dvdnav/dvdnav_events.h>
 #endif
