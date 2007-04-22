@@ -9,3 +9,4 @@
 * cleanup public API and fix libtool versioning
 * Update decoder.c with some of the more rare commands. Update already done to vmcmd.c
 * RELEASE! (maybe it's time for libdvdnav 0.5?)
+* Replace the auto* build system with a custom and clean one based on ffmpeg's (partly done)
