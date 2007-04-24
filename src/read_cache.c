@@ -33,6 +33,7 @@
 
 #include <inttypes.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <sys/time.h>
 #include <time.h>
 #include "dvd_types.h"
