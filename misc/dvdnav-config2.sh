@@ -63,9 +63,9 @@ if test "$echo_cflags" = "yes"; then
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L$prefix -ldvdnav $dvdreadlib $threadlib
+      echo -L$prefix/lib -ldvdnav $dvdreadlib $threadlib
 fi      
 
 if test "$echo_minilibs" = "yes"; then
-      echo -L$prefix -ldvdnav $threadlib
+      echo -L$prefix/lib -ldvdnav $threadlib
 fi
