@@ -54,13 +54,13 @@ DEPS= ${OBJS:%.o=%.d}
 BUILDDEPS = Makefile config.mak
 
 ifeq ($(BUILD_SHARED),yes)
-all:	$(SHLIB)
-install: $(SHLIB) install-shared
+all:	$(SHLIB) dvdnav-config
+install: $(SHLIB) install-shared install-dvdnav-config
 endif
 
 ifeq ($(BUILD_STATIC),yes)
-all:	$(LIB)
-install: $(LIB) install-static
+all:	$(LIB) dvdnav-config
+install: $(LIB) install-static install-dvdnav-config
 endif
 
 install: install-headers
@@ -127,6 +127,16 @@ clean:
 distclean: clean
 	find . -name "*~" | xargs rm -rf
 	rm -rf config.mak
+
+dvdnav-config:
+	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+	echo -e 'threadlib='$(THREADLIB)'\n\n' >> $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+
+install-dvdnav-config:
+	install -m 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config $(PREFIX)/bin/dvdnav-config
 
 
 vpath %.so ${.OBJDIR}
