@@ -129,14 +129,14 @@ distclean: clean
 	rm -rf config.mak
 
 dvdnav-config:
-	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
-	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
-	echo -e 'threadlib='$(THREADLIB)'\n\n' >> $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
-	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(.OBJDIR)/dvdnav-config
+	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(.OBJDIR)/dvdnav-config
+	echo -e 'threadlib='$(THREADLIB)'\n\n' >> $(.OBJDIR)/dvdnav-config
+	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(.OBJDIR)/dvdnav-config
 	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
 
 install-dvdnav-config:
-	install -m 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config $(PREFIX)/bin/dvdnav-config
+	install -m 0755 $(.OBJDIR)/dvdnav-config $(PREFIX)/bin/dvdnav-config
 
 
 vpath %.so ${.OBJDIR}
