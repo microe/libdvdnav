@@ -59,7 +59,7 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I$prefix -I$prefix/dvdnav $threadcflags
+      echo -I$prefix/include -I$prefix/include/dvdnav $threadcflags
 fi
 
 if test "$echo_libs" = "yes"; then
