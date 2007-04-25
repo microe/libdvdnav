@@ -137,6 +137,7 @@ dvdnav-config:
 	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
 
 install-dvdnav-config:
+	install -d $(PREFIX)/bin
 	install -m 0755 $(.OBJDIR)/dvdnav-config $(PREFIX)/bin/dvdnav-config
 
 
