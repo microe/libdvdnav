@@ -54,6 +54,7 @@ PREFIX=/usr/local/
 INSTALLSTRIP=-s
 USEDEBUG=-g
 optimizations="-O3"
+threadlib="-lpthread"
 
 for opt do
   optval="${opt#*=}"
@@ -129,6 +130,7 @@ PREFIX=$PREFIX
 libdir=$libdir
 shlibdir=$shlibdir
 incdir=$incdir
+THREADLIB=$threadlib
 BUILD_SHARED=$SHARED
 BUILD_STATIC=$STATIC
 SHLIB_VERSION=$dvdnav_sh_version

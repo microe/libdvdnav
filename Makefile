@@ -86,7 +86,7 @@ ${LIB}: version.h $(.OBJDIR) $(OBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(RANLIB) $@
 
 ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
-	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -o $@ $(SHOBJS)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) $(THREADLIB) -o $@ $(SHOBJS)
 
 .c.so:	$(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) -fPIC -DPIC -MD $(CFLAGS) -c -o $@ $<
