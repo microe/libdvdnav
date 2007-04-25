@@ -1,3 +1,7 @@
+if test "$dvdread" = "external"; then
+    dvdreadlib="-ldvdread"
+    dvdreadmsg="[--minilibs]"
+fi
 
 usage()
 {
@@ -8,6 +12,7 @@ Options:
 	[--version]
         [--libs]
 	[--cflags]
+        $dvdreadmsg
 EOF
 	exit $1
 }
@@ -35,6 +40,13 @@ while test $# -gt 0; do
     --libs)
       echo_libs=yes
       ;;
+    --minilibs)
+      if test "$dvdread" = "external"; then
+          echo_minilibs=yes
+      else
+          usage 1 1>&2
+      fi
+      ;;
     *)
       usage 1 1>&2
       ;;
@@ -51,5 +63,9 @@ if test "$echo_cflags" = "yes"; then
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L$prefix -ldvdnav $threadlib
+      echo -L$prefix -ldvdnav $dvdreadlib $threadlib
 fi      
+
+if test "$echo_minilibs" = "yes"; then
+      echo -L$prefix -ldvdnav $threadlib
+fi
