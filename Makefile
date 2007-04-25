@@ -132,6 +132,7 @@ dvdnav-config:
 	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(.OBJDIR)/dvdnav-config
 	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(.OBJDIR)/dvdnav-config
 	echo -e 'dvdread='$(DVDREAD)'\n' >> $(.OBJDIR)/dvdnav-config
+	echo -e 'dvdreaddir='$(DVDREAD_DIR)'\n' >> $(.OBJDIR)/dvdnav-config
 	echo -e 'threadlib='$(THREADLIB)'\n\n' >> $(.OBJDIR)/dvdnav-config
 	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(.OBJDIR)/dvdnav-config
 	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config

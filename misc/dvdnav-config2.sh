@@ -1,6 +1,7 @@
 if test "$dvdread" = "external"; then
     dvdreadlib="-ldvdread"
-    dvdreadmsg="[--minilibs]"
+    dvdreadmsg="[--minilibs --minicflags]"
+    dvdreadcflags="-I$dvdreaddir"
 fi
 
 usage()
@@ -37,6 +38,13 @@ while test $# -gt 0; do
     --cflags)
       echo_cflags=yes
       ;;
+    --minicflags)
+      if test "$dvdread" = "external"; then
+          echo_minicflags=yes
+      else
+          usage 1 1>&2
+      fi
+      ;;
     --libs)
       echo_libs=yes
       ;;
@@ -59,6 +67,10 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
+      echo -I$prefix/include -I$prefix/include/dvdnav $dvdreadcflags $threadcflags
+fi
+
+if test "$echo_minicflags" = "yes"; then
       echo -I$prefix/include -I$prefix/include/dvdnav $threadcflags
 fi
 
