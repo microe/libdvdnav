@@ -2,6 +2,7 @@ if test "$dvdread" = "external"; then
     dvdreadlib="-ldvdread"
     dvdreadmsg="[--minilibs --minicflags]"
     dvdreadcflags="-I$dvdreaddir"
+    extracflags="-DDVDNAV_USES_EXTERNAL_DVDREAD"
 fi
 
 usage()
@@ -67,11 +68,11 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I$prefix/include -I$prefix/include/dvdnav $dvdreadcflags $threadcflags
+      echo -I$prefix/include -I$prefix/include/dvdnav $dvdreadcflags $extracflags $threadcflags
 fi
 
 if test "$echo_minicflags" = "yes"; then
-      echo -I$prefix/include -I$prefix/include/dvdnav $threadcflags
+      echo -I$prefix/include -I$prefix/include/dvdnav $extracflags $threadcflags
 fi
 
 if test "$echo_libs" = "yes"; then
