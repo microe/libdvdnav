@@ -128,7 +128,7 @@ distclean: clean
 	find . -name "*~" | xargs rm -rf
 	rm -rf config.mak
 
-dvdnav-config:
+dvdnav-config: $(.OBJDIR)
 	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(.OBJDIR)/dvdnav-config
 	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(.OBJDIR)/dvdnav-config
 	echo -e 'dvdread='$(DVDREAD)'\n' >> $(.OBJDIR)/dvdnav-config
@@ -137,7 +137,7 @@ dvdnav-config:
 	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(.OBJDIR)/dvdnav-config
 	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
 
-install-dvdnav-config:
+install-dvdnav-config: dvdnav-config
 	install -d $(PREFIX)/bin
 	install -m 0755 $(.OBJDIR)/dvdnav-config $(PREFIX)/bin/dvdnav-config
 
