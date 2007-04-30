@@ -16,16 +16,13 @@ SRCS+= decoder.c vm.c vmcmd.c
 
 HEADERS += src/dvd_types.h src/dvdnav.h src/dvdnav_events.h
 
-L=libdvdnav
-LIB = $(L).a
-SHLIB = $(L).so
-
 CFLAGS += $(USEDEBUG) -Wall -funsigned-char
 CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm
 CFLAGS += -DDVDNAV_COMPILE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE
 CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
 
 ifeq ($(DVDREAD),internal)
+L=libdvdnav
 VPATH+= $(SRC_PATH_BARE)/src/dvdread
 HEADERS = src/dvdread/dvd_reader.h \
 	src/dvdread/ifo_print.h \
@@ -38,8 +35,12 @@ SRCS+= dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
 	md5.c nav_print.c nav_read.c
 CFLAGS += -I$(SRC_PATH)/src/dvdread
 else
+L=libdvdnavmini
 CFLAGS += -I$(DVDREAD_DIR)
 endif
+
+LIB = $(L).a
+SHLIB = $(L).so
 
 LIBS_INSTALL = $(CURDIR)/../lib
 INCLUDES_INSTALL = $(CURDIR)/../include/libhts
