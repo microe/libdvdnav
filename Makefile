@@ -14,7 +14,7 @@ SRCS = dvdnav.c highlight.c navigation.c read_cache.c remap.c searching.c settin
 VPATH+= $(SRC_PATH_BARE)/src/vm
 SRCS+= decoder.c vm.c vmcmd.c
 
-HEADERS += src/dvd_types.h src/dvdnav.h src/dvdnav_events.h
+HEADERS = src/dvd_types.h src/dvdnav.h src/dvdnav_events.h
 
 CFLAGS += $(USEDEBUG) -Wall -funsigned-char
 CFLAGS += -I$(CURDIR) -I$(SRC_PATH)/src -I$(SRC_PATH)/src/vm
@@ -24,7 +24,7 @@ CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
 ifeq ($(DVDREAD),internal)
 L=libdvdnav
 VPATH+= $(SRC_PATH_BARE)/src/dvdread
-HEADERS = src/dvdread/dvd_reader.h \
+HEADERS += src/dvdread/dvd_reader.h \
 	src/dvdread/ifo_print.h \
 	src/dvdread/ifo_read.h \
 	src/dvdread/ifo_types.h \
