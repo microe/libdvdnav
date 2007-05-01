@@ -42,9 +42,6 @@ endif
 LIB = $(L).a
 SHLIB = $(L).so
 
-LIBS_INSTALL = $(CURDIR)/../lib
-INCLUDES_INSTALL = $(CURDIR)/../include/libhts
-
 .OBJDIR=        obj
 DEPFLAG = -M
 
