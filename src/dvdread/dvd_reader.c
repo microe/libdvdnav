@@ -332,6 +332,8 @@ dvd_reader_t *DVDOpen( const char *ppath )
       return 0;
 
 	path = strdup(ppath);
+    if( path == NULL )
+      return 0;
 	
     /* Try to open libdvdcss or fall back to standard functions */
     have_css = dvdinput_setup();
