@@ -585,10 +585,22 @@ uint16_t dvdnav_spu_stream_to_lang(dvdnav_t *self, uint8_t stream);
  */
 int8_t dvdnav_get_audio_logical_stream(dvdnav_t *self, uint8_t audio_num);
 
+#define HAVE_GET_AUDIO_ATTR
+/*
+ * Get audio attr
+ */
+dvdnav_status_t dvdnav_get_audio_attr(dvdnav_t *self, uint8_t audio_mum, audio_attr_t *audio_attr);
+
 /*
  * Converts a *physical* (MPEG) subpicture stream id into a logical stream number.
  */
 int8_t dvdnav_get_spu_logical_stream(dvdnav_t *self, uint8_t subp_num);
+
+#define HAVE_GET_SPU_ATTR
+/*
+ * Get spu attr
+ */
+dvdnav_status_t dvdnav_get_spu_attr(dvdnav_t *self, uint8_t audio_mum, subp_attr_t *subp_attr);
 
 /*
  * Get active audio stream.
