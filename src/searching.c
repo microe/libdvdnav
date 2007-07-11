@@ -227,7 +227,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
 
   switch(origin) {
    case SEEK_SET:
-    if(offset > length) {
+    if(offset >= length) {
       printerr("Request to seek behind end.");
       pthread_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
@@ -235,7 +235,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     target = offset;
     break;
    case SEEK_CUR:
-    if(target + offset > length) {
+    if(target + offset >= length) {
       printerr("Request to seek behind end.");
       pthread_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
