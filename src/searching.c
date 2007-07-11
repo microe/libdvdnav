@@ -243,7 +243,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     target += offset;
     break;
    case SEEK_END:
-    if(length - offset < 0) {
+    if(length < offset) {
       printerr("Request to seek before start.");
       pthread_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
