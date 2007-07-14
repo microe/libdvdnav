@@ -78,32 +78,26 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, uint32_
   if(admap) {
     uint32_t address = 0;
     uint32_t vobu_start, next_vobu;
-    int32_t found = 0;
     int admap_entries = (admap->last_byte + 1 - VOBU_ADMAP_SIZE)/VOBU_ADMAP_SIZE;
 
     /* Search through ADMAP for best sector */
     vobu_start = SRI_END_OF_CELL;
     /* FIXME: Implement a faster search algorithm */
-    while((!found) && (address < admap_entries)) {
+    while(address < admap_entries) {
       next_vobu = admap->vobu_start_sectors[address];
 
       /* fprintf(MSG_OUT, "libdvdnav: Found block %u\n", next_vobu); */
 
       if(vobu_start <= seekto_block &&
           next_vobu > seekto_block) {
-        found = 1;
+        break;
       } else {
         vobu_start = next_vobu;
       }
       address ++;
     }
-    if(found) {
       *vobu = vobu_start;
       return DVDNAV_STATUS_OK;
-    } else {
-      fprintf(MSG_OUT, "libdvdnav: Could not locate block\n");
-      return DVDNAV_STATUS_ERR;
-    }
   }
   fprintf(MSG_OUT, "libdvdnav: admap not located\n");
   return DVDNAV_STATUS_ERR;
