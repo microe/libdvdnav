@@ -88,16 +88,13 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, uint32_
 
       /* fprintf(MSG_OUT, "libdvdnav: Found block %u\n", next_vobu); */
 
-      if(vobu_start <= seekto_block &&
-          next_vobu > seekto_block) {
+      if(vobu_start <= seekto_block && next_vobu > seekto_block)
         break;
-      } else {
-        vobu_start = next_vobu;
-      }
-      address ++;
+      vobu_start = next_vobu;
+      address++;
     }
-      *vobu = vobu_start;
-      return DVDNAV_STATUS_OK;
+    *vobu = vobu_start;
+    return DVDNAV_STATUS_OK;
   }
   fprintf(MSG_OUT, "libdvdnav: admap not located\n");
   return DVDNAV_STATUS_ERR;
