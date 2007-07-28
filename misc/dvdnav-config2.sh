@@ -80,5 +80,5 @@ if test "$echo_libs" = "yes"; then
 fi      
 
 if test "$echo_minilibs" = "yes"; then
-      echo -L$prefix/lib -ldvdnav $threadlib
+      echo -L$prefix/lib -ldvdnavmini $threadlib
 fi
