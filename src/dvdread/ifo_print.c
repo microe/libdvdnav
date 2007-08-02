@@ -71,7 +71,10 @@ static void ifo_print_cmd(int row, vm_cmd_t *command) {
   for(i=0;i<8;i++)
     printf("%02x ", command->bytes[i]);
   printf("| ");
+#if 0
+  //disabled call of dvdnav function
   vm_print_mnemonic(command);
+#endif
   printf("\n");
 }
 
