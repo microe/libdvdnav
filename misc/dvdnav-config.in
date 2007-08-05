@@ -76,11 +76,11 @@ if test "$echo_exec_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I@includedir@ -I@includedir@/dvdnav @THREAD_CFLAGS@
+      echo -I@includedir@ -I@includedir@/dvdnav -I@includedir@/dvdread @THREAD_CFLAGS@
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L@libdir@ -ldvdnav @THREAD_LIBS@
+      echo -L@libdir@ -ldvdnav -ldvdread @THREAD_LIBS@
 fi
 
 if test "$echo_minilibs" = "yes"; then
