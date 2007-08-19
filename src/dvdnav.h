@@ -360,7 +360,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
  returns the current stream time in PTS ticks as reported by the IFO structures
  divide it by 90000 to get the current play time in seconds
  */
-int64_t dvdnav_get_current_time(dvdnav_t *this);
+int64_t dvdnav_get_current_time(dvdnav_t *self);
 
 /*
  * Stop playing the current position and start playback of the title
