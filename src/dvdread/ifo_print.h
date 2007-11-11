@@ -24,7 +24,7 @@
 #ifdef DVDNAV_COMPILE
 #  include "ifo_types.h"
 #else
-#  include <dvdnav/ifo_types.h> /*  Only for vm_cmd_t  */
+#  include <dvdread/ifo_types.h> /*  Only for vm_cmd_t  */
 #endif
 
 void ifo_print(dvd_reader_t *dvd, int title);
