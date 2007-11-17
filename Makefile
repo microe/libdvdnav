@@ -23,6 +23,7 @@ CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
 
 ifeq ($(DVDREAD),internal)
 L=libdvdnav
+MINI_L=libdvdnavmini
 DVDREAD_L=libdvdread
 VPATH+= $(SRC_PATH_BARE)/src/dvdread
 DVDREAD_HEADERS = src/dvdread/dvd_reader.h \
@@ -44,6 +45,7 @@ endif
 LIB = $(L).a
 DVDREAD_LIB = $(DVDREAD_L).a
 SHLIB = $(L).so
+MINI_SHLIB = $(MINI_L).so
 DVDREAD_SHLIB = $(DVDREAD_L).so
 
 .OBJDIR=        obj
@@ -59,7 +61,7 @@ DVDREAD_DEPS= ${DVDREAD_OBJS:%.o=%.d}
 BUILDDEPS = Makefile config.mak
 
 ifeq ($(BUILD_SHARED),yes)
-all:	$(SHLIB) $(DVDREAD_SHLIB) dvdnav-config
+all:	$(SHLIB) $(MINI_SHLIB) $(DVDREAD_SHLIB) dvdnav-config
 install: $(SHLIB) $(DVDREAD_SHLIB) install-shared install-dvdnav-config
 endif
 
@@ -95,6 +97,8 @@ ${DVDREAD_LIB}: version.h $(.OBJDIR) $(DVDREAD_OBJS) $(BUILDDEPS)
 
 ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldvdread $(THREADLIB) -o $@ $(SHOBJS)
+${MINI_SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) $(THREADLIB) -o $@ $(SHOBJS)
 ${DVDREAD_SHLIB}: version.h $(.OBJDIR) $(DVDREAD_SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldl -o $@ $(DVDREAD_SHOBJS)
 
@@ -118,15 +122,21 @@ install-shared: $(SHLIB)
 
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(SHLIB) \
 		$(shlibdir)/$(SHLIB).$(SHLIB_VERSION)
+	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(MINI_SHLIB) \
+		$(shlibdir)/$(MINI_SHLIB).$(SHLIB_VERSION)
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(DVDREAD_SHLIB) \
 		$(shlibdir)/$(DVDREAD_SHLIB).$(SHLIB_VERSION)
 
 	cd $(shlibdir) && \
 		ln -sf $(SHLIB).$(SHLIB_VERSION) $(SHLIB).$(SHLIB_MAJOR)
 	cd $(shlibdir) && \
+		ln -sf $(MINI_SHLIB).$(SHLIB_VERSION) $(MINI_SHLIB).$(SHLIB_MAJOR)
+	cd $(shlibdir) && \
 		ln -sf $(DVDREAD_SHLIB).$(SHLIB_VERSION) $(DVDREAD_SHLIB).$(SHLIB_MAJOR)
 	cd $(shlibdir) && \
 		ln -sf $(SHLIB).$(SHLIB_MAJOR) $(SHLIB)
+	cd $(shlibdir) && \
+		ln -sf $(MINI_SHLIB).$(SHLIB_MAJOR) $(MINI_SHLIB)
 	cd $(shlibdir) && \
 		ln -sf $(DVDREAD_SHLIB).$(SHLIB_MAJOR) $(DVDREAD_SHLIB)
 

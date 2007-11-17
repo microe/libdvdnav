@@ -1,6 +1,7 @@
 dvdreadlib="-ldvdread"
+dvdreadmsg="[--minilibs]"
 if test "$dvdread" = "external"; then
-    dvdreadmsg="[--minilibs --minicflags]"
+    dvdreadmsg="[--minicflags]"
     dvdreadcflags="-I$dvdreaddir"
     extracflags="-DDVDNAV_USES_EXTERNAL_DVDREAD"
 fi
@@ -50,11 +51,7 @@ while test $# -gt 0; do
       echo_libs=yes
       ;;
     --minilibs)
-      if test "$dvdread" = "external"; then
           echo_minilibs=yes
-      else
-          usage 1 1>&2
-      fi
       ;;
     *)
       usage 1 1>&2
