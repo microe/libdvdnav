@@ -102,7 +102,7 @@ PREFIX=`cd $PREFIX && pwd`
 
 test -z $libdir && libdir=$PREFIX/lib
 test -z $shlibdir && shlibdir=$PREFIX/lib
-test -z $incdir && incdir=$PREFIX/include/dvdnav
+test -z $incdir && incdir=$PREFIX/include/dvdnav && dvdread_incdir=$PREFIX/include/dvdread
 
 if [ "$DVDREAD" != "internal" ] ; then
   if [ -d "$DVDREAD" -a -f "$DVDREAD/dvd_reader.h" ] ; then
@@ -131,6 +131,7 @@ PREFIX=\$(DESTDIR)$PREFIX
 libdir=\$(DESTDIR)$libdir
 shlibdir=\$(DESTDIR)$shlibdir
 incdir=\$(DESTDIR)$incdir
+dvdread_incdir=\$(DESTDIR)$dvdread_incdir
 THREADLIB=$threadlib
 BUILD_SHARED=$SHARED
 BUILD_STATIC=$STATIC

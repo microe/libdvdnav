@@ -23,8 +23,9 @@ CFLAGS += -DHAVE_CONFIG_H -DHAVE_DLFCN_H
 
 ifeq ($(DVDREAD),internal)
 L=libdvdnav
+DVDREAD_L=libdvdread
 VPATH+= $(SRC_PATH_BARE)/src/dvdread
-HEADERS += src/dvdread/dvd_reader.h \
+DVDREAD_HEADERS = src/dvdread/dvd_reader.h \
 	src/dvdread/ifo_print.h \
 	src/dvdread/ifo_read.h \
 	src/dvdread/ifo_types.h \
@@ -32,8 +33,9 @@ HEADERS += src/dvdread/dvd_reader.h \
 	src/dvdread/nav_read.h \
 	src/dvdread/dvd_udf.h \
 	src/dvdread/nav_types.h
-SRCS+= dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
+DVDREAD_SRCS = dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
 	md5.c nav_print.c nav_read.c
+SRCS+= $(DVDREAD_SRCS)
 CFLAGS += -I$(SRC_PATH)/src/dvdread
 else
 L=libdvdnavmini
@@ -41,25 +43,30 @@ CFLAGS += -I$(DVDREAD_DIR)
 endif
 
 LIB = $(L).a
+DVDREAD_LIB = $(DVDREAD_L).a
 SHLIB = $(L).so
+DVDREAD_SHLIB = $(DVDREAD_L).so
 
 .OBJDIR=        obj
 DEPFLAG = -M
 
 OBJS = $(patsubst %.c,%.o, $(SRCS))
+DVDREAD_OBJS = $(patsubst %.c,%.o, $(DVDREAD_SRCS))
 SHOBJS = $(patsubst %.c,%.so, $(SRCS))
+DVDREAD_SHOBJS = $(patsubst %.c,%.so, $(DVDREAD_SRCS))
 DEPS= ${OBJS:%.o=%.d}
+DVDREAD_DEPS= ${DVDREAD_OBJS:%.o=%.d}
 
 BUILDDEPS = Makefile config.mak
 
 ifeq ($(BUILD_SHARED),yes)
-all:	$(SHLIB) dvdnav-config
-install: $(SHLIB) install-shared install-dvdnav-config
+all:	$(SHLIB) $(DVDREAD_SHLIB) dvdnav-config
+install: $(SHLIB) $(DVDREAD_SHLIB) install-shared install-dvdnav-config
 endif
 
 ifeq ($(BUILD_STATIC),yes)
-all:	$(LIB) dvdnav-config
-install: $(LIB) install-static install-dvdnav-config
+all:	$(LIB) $(DVDREAD_LIB) dvdnav-config
+install: $(LIB) $(DVDREAD_LIB) install-static install-dvdnav-config
 endif
 
 install: install-headers
@@ -83,9 +90,14 @@ $(.OBJDIR):
 ${LIB}: version.h $(.OBJDIR) $(OBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(AR) rc $@ $(OBJS)
 	cd $(.OBJDIR) && $(RANLIB) $@
+${DVDREAD_LIB}: version.h $(.OBJDIR) $(DVDREAD_OBJS) $(BUILDDEPS)
+	cd $(.OBJDIR) && $(AR) rc $@ $(DVDREAD_OBJS)
+	cd $(.OBJDIR) && $(RANLIB) $@
 
 ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) $(THREADLIB) -o $@ $(SHOBJS)
+${DVDREAD_SHLIB}: version.h $(.OBJDIR) $(DVDREAD_SHOBJS) $(BUILDDEPS)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldl -o $@ $(DVDREAD_SHOBJS)
 
 .c.so:	$(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) -fPIC -DPIC -MD $(CFLAGS) -c -o $@ $<
@@ -99,22 +111,31 @@ ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 install-headers:
 	install -d $(incdir)
 	install -m 644 $(HEADERS) $(incdir)
+	install -d $(dvdread_incdir)
+	install -m 644 $(DVDREAD_HEADERS) $(dvdread_incdir)
 
 install-shared: $(SHLIB)
 	install -d $(shlibdir)
 
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(SHLIB) \
 		$(shlibdir)/$(SHLIB).$(SHLIB_VERSION)
+	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(DVDREAD_SHLIB) \
+		$(shlibdir)/$(DVDREAD_SHLIB).$(SHLIB_VERSION)
 
 	cd $(shlibdir) && \
 		ln -sf $(SHLIB).$(SHLIB_VERSION) $(SHLIB).$(SHLIB_MAJOR)
 	cd $(shlibdir) && \
+		ln -sf $(DVDREAD_SHLIB).$(SHLIB_VERSION) $(DVDREAD_SHLIB).$(SHLIB_MAJOR)
+	cd $(shlibdir) && \
 		ln -sf $(SHLIB).$(SHLIB_MAJOR) $(SHLIB)
+	cd $(shlibdir) && \
+		ln -sf $(DVDREAD_SHLIB).$(SHLIB_MAJOR) $(DVDREAD_SHLIB)
 
 install-static: $(LIB)
 	install -d $(libdir)
 
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(LIB) $(libdir)/$(LIB)
+	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(DVDREAD_LIB) $(libdir)/$(DVDREAD_LIB)
 
 
 # Clean targets
