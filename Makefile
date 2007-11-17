@@ -35,7 +35,6 @@ DVDREAD_HEADERS = src/dvdread/dvd_reader.h \
 	src/dvdread/nav_types.h
 DVDREAD_SRCS = dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
 	md5.c nav_print.c nav_read.c
-SRCS+= $(DVDREAD_SRCS)
 CFLAGS += -I$(SRC_PATH)/src/dvdread
 else
 L=libdvdnavmini
@@ -95,7 +94,7 @@ ${DVDREAD_LIB}: version.h $(.OBJDIR) $(DVDREAD_OBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(RANLIB) $@
 
 ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
-	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) $(THREADLIB) -o $@ $(SHOBJS)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldvdread $(THREADLIB) -o $@ $(SHOBJS)
 ${DVDREAD_SHLIB}: version.h $(.OBJDIR) $(DVDREAD_SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldl -o $@ $(DVDREAD_SHOBJS)
 

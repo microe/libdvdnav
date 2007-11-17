@@ -1,5 +1,5 @@
+dvdreadlib="-ldvdread"
 if test "$dvdread" = "external"; then
-    dvdreadlib="-ldvdread"
     dvdreadmsg="[--minilibs --minicflags]"
     dvdreadcflags="-I$dvdreaddir"
     extracflags="-DDVDNAV_USES_EXTERNAL_DVDREAD"
