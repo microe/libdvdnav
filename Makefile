@@ -96,9 +96,9 @@ ${DVDREAD_LIB}: version.h $(.OBJDIR) $(DVDREAD_OBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(RANLIB) $@
 
 ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
-	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldvdread $(THREADLIB) -o $@ $(SHOBJS)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -o $@ $(SHOBJS) -ldvdread $(THREADLIB)
 ${MINI_SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
-	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) $(THREADLIB) -o $@ $(SHOBJS)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -o $@ $(SHOBJS) $(THREADLIB)
 ${DVDREAD_SHLIB}: version.h $(.OBJDIR) $(DVDREAD_SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -ldl -o $@ $(DVDREAD_SHOBJS)
 
