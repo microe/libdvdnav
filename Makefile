@@ -159,6 +159,7 @@ distclean: clean
 
 dvdnav-config: $(.OBJDIR)
 	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(.OBJDIR)/dvdnav-config
+	echo -e 'libdir='$(shlibdir)'\n' >> $(.OBJDIR)/dvdnav-config
 	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(.OBJDIR)/dvdnav-config
 	echo -e 'dvdread='$(DVDREAD)'\n' >> $(.OBJDIR)/dvdnav-config
 	echo -e 'dvdreaddir='$(DVDREAD_DIR)'\n' >> $(.OBJDIR)/dvdnav-config
