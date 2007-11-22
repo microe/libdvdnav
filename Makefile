@@ -96,8 +96,13 @@ ${DVDREAD_LIB}: version.h $(.OBJDIR) $(DVDREAD_OBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(RANLIB) $@
 endif
 
+ifeq ($(DVDREAD),internal)
+${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS) $(DVDREAD_SHLIB)
+	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -L. -Wl,-soname=$(SHLIB).$(SHLIB_MAJOR) -o $@ $(SHOBJS) -ldvdread $(THREADLIB)
+else
 ${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -Wl,-soname=$(SHLIB).$(SHLIB_MAJOR) -o $@ $(SHOBJS) -ldvdread $(THREADLIB)
+endif
 ${MINI_SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -Wl,-soname=$(MINI_SHLIB).$(SHLIB_MAJOR) -o $@ $(SHOBJS) $(THREADLIB)
 ifeq ($(DVDREAD),internal)
