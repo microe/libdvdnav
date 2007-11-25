@@ -173,12 +173,14 @@ distclean: clean
 	rm -rf config.mak
 
 dvdnav-config: $(.OBJDIR)
-	echo -e '#!/bin/sh\n\nprefix='$(PREFIX)'\n' > $(.OBJDIR)/dvdnav-config
-	echo -e 'libdir='$(shlibdir)'\n' >> $(.OBJDIR)/dvdnav-config
-	echo -e 'version='$(SHLIB_VERSION)'\n' >> $(.OBJDIR)/dvdnav-config
-	echo -e 'dvdread='$(DVDREAD)'\n' >> $(.OBJDIR)/dvdnav-config
-	echo -e 'dvdreaddir='$(DVDREAD_DIR)'\n' >> $(.OBJDIR)/dvdnav-config
-	echo -e 'threadlib='$(THREADLIB)'\n\n' >> $(.OBJDIR)/dvdnav-config
+	@echo '#!/bin/sh' > $(.OBJDIR)/dvdnav-config
+	@echo 'prefix='$(PREFIX) >> $(.OBJDIR)/dvdnav-config
+	@echo 'libdir='$(shlibdir) >> $(.OBJDIR)/dvdnav-config
+	@echo 'version='$(SHLIB_VERSION) >> $(.OBJDIR)/dvdnav-config
+	@echo 'dvdread='$(DVDREAD) >> $(.OBJDIR)/dvdnav-config
+	@echo 'dvdreaddir='$(DVDREAD_DIR) >> $(.OBJDIR)/dvdnav-config
+	@echo 'threadlib='$(THREADLIB) >> $(.OBJDIR)/dvdnav-config
+	@echo >> $(.OBJDIR)/dvdnav-config
 	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(.OBJDIR)/dvdnav-config
 	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
 
