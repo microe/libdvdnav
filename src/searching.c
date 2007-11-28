@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include "dvd_types.h"
 #include "nav_types.h"
@@ -548,4 +549,76 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
   *len = last_cell->last_sector - first_cell->first_sector;
   
   return DVDNAV_STATUS_OK;
+}
+
+uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t **times) {
+  int32_t retval=0;
+  uint16_t parts, i;
+  title_info_t *ptitle = NULL;
+  ptt_info_t *ptt = NULL;
+  ifo_handle_t *ifo;
+  pgc_t *pgc;
+  cell_playback_t *cell;
+  uint64_t length, *tmp=NULL;
+
+  pthread_mutex_lock(&this->vm_lock);
+  if(!this->vm->vmgi) {
+    printerr("Bad VM state or missing VTSI.");
+    goto fail;
+  }
+  if(!this->started) {
+    /* don't report an error but be nice */
+    vm_start(this->vm);
+    this->started = 1;
+  }
+  ifo = vm_get_title_ifo(this->vm, title);
+  if(!ifo || !ifo->vts_pgcit) {
+    printerr("Couldn't open IFO for chosen title, exit.");
+    goto fail;
+  }
+  
+  ptitle = &this->vm->vmgi->tt_srpt->title[title-1];
+  parts = ptitle->nr_of_ptts;
+  ptt = ifo->vts_ptt_srpt->title[ptitle->vts_ttn-1].ptt;
+  
+  tmp = calloc(1, sizeof(uint64_t)*parts);
+  if(!tmp)
+    goto fail;
+ 
+  length = 0;
+  for(i=0; i<parts; i++) {
+    uint32_t cellnr, endcellnr;
+    pgc = ifo->vts_pgcit->pgci_srp[ptt[i].pgcn-1].pgc;
+    if(ptt[i].pgn > pgc->nr_of_programs) {
+      printerr("WRONG part number.");
+      goto fail;
+    }
+ 
+    cellnr = pgc->program_map[ptt[i].pgn-1];
+    if(ptt[i].pgn < pgc->nr_of_programs)
+      endcellnr = pgc->program_map[ptt[i].pgn];
+    else
+      endcellnr = 0;
+ 
+    do {
+      cell = &pgc->cell_playback[cellnr-1];
+      if(!(cell->block_type == BLOCK_TYPE_ANGLE_BLOCK &&
+           cell->block_mode != BLOCK_MODE_FIRST_CELL
+      ))
+      {
+        tmp[i] = length + dvdnav_convert_time(&cell->playback_time);
+        length = tmp[i];
+      }
+      cellnr++;
+    } while(cellnr < endcellnr);
+  }
+  vm_ifo_close(ifo);
+  retval = parts;
+  *times = tmp;
+
+fail:
+  pthread_mutex_unlock(&this->vm_lock);
+  if(!retval && tmp)
+    free(tmp);
+  return retval;
 }

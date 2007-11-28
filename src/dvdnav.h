@@ -284,6 +284,14 @@ dvdnav_status_t dvdnav_title_play(dvdnav_t *self, int32_t title);
 dvdnav_status_t dvdnav_part_play(dvdnav_t *self, int32_t title, int32_t part);
 
 /*
+ * Stores in *times an array (that the application *must* free) of
+ * dvdtimes corresponding to the chapter times for the chosen title.
+ * The number of entries in *times is the result of the function.
+ * On error *times is NULL and the output is 0
+ */
+uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t **times);
+
+/*
  * Play the specified amount of parts of the specified title of
  * the DVD then STOP.
  *
