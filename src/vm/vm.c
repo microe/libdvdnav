@@ -1844,6 +1844,23 @@ static pgcit_t* get_PGCIT(vm_t *vm) {
   return pgcit;
 }
 
+//return the ifo_handle_t describing required title, used to 
+//identify chapters
+ifo_handle_t *vm_get_title_ifo(vm_t *vm, uint32_t title)
+{
+  ifo_handle_t *ifo = NULL;
+  uint8_t titleset_nr;
+  if((title < 1) || (title > vm->vmgi->tt_srpt->nr_of_srpts))
+    return NULL;
+  titleset_nr = vm->vmgi->tt_srpt->title[title-1].title_set_nr;
+  ifo = ifoOpen(vm->dvd, titleset_nr);
+  return ifo;
+}
+
+void vm_ifo_close(ifo_handle_t *ifo)
+{
+  ifoClose(ifo);
+}
 
 /* Debug functions */
 

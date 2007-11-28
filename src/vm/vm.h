@@ -168,6 +168,8 @@ int  vm_get_video_scale_permission(vm_t *vm);
 video_attr_t vm_get_video_attr(vm_t *vm);
 audio_attr_t vm_get_audio_attr(vm_t *vm, int streamN);
 subp_attr_t  vm_get_subp_attr(vm_t *vm, int streamN);
+ifo_handle_t *vm_get_title_ifo(vm_t *vm, uint32_t title);
+void vm_ifo_close(ifo_handle_t *ifo);
 
 /* Uncomment for VM command tracing */
 /* #define TRACE */
