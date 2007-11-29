@@ -561,6 +561,7 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
   cell_playback_t *cell;
   uint64_t length, *tmp=NULL;
 
+  *times = NULL;
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->vmgi) {
     printerr("Bad VM state or missing VTSI.");
