@@ -551,7 +551,7 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
   return DVDNAV_STATUS_OK;
 }
 
-uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t **times) {
+uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t **times, uint64_t *duration) {
   int32_t retval=0;
   uint16_t parts, i;
   title_info_t *ptitle = NULL;
@@ -562,6 +562,7 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
   uint64_t length, *tmp=NULL;
 
   *times = NULL;
+  *duration = 0;
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->vmgi) {
     printerr("Bad VM state or missing VTSI.");
@@ -613,6 +614,7 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
       cellnr++;
     } while(cellnr < endcellnr);
   }
+  *duration = length;
   vm_ifo_close(ifo);
   retval = parts;
   *times = tmp;
