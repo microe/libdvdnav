@@ -1079,6 +1079,7 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 {
     struct md5_ctx ctx;
     int title;
+    int nr_of_files = 0;
 
     /* Check arguments. */
     if( dvd == NULL || discid == NULL )
@@ -1113,9 +1114,12 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 	    
 	    DVDCloseFile( dvd_file );
 	    free( buffer_base );
+	    nr_of_files++;
 	}
     }
     md5_finish_ctx( &ctx, discid );
+    if(!nr_of_files)
+      return -1;
     
     return 0;
 }
