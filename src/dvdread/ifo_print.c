@@ -1091,7 +1091,10 @@ void ifo_print(dvd_reader_t *dvd, int title) {
     ifo_print_VMGI_MAT(ifohandle->vmgi_mat);
 
     printf("\nFirst Play PGC\n--------------\n");
+    if(ifohandle->first_play_pgc)
     ifo_print_PGC(ifohandle->first_play_pgc);
+    else
+      printf("No First Play PGC present\n");
 
     printf("\nTitle Track search pointer table\n");
     printf(  "------------------------------------------------\n");
