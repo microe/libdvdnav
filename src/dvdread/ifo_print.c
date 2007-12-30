@@ -210,24 +210,51 @@ static void ifo_print_audio_attributes(int level, audio_attr_t *attr) {
   switch(attr->audio_format) {
   case 0:
     printf("ac3 ");
+    if(attr->quantization != 3)
+      printf("(please send a bug report) ac3 quant/drc not 3 (%d)", attr->quantization);
     break;
   case 1:
     printf("(please send a bug report) ");
     break;
   case 2:
     printf("mpeg1 ");
-    break;
   case 3:
     printf("mpeg2ext ");
+    switch(attr->quantization) {
+      case 0:
+        printf("no drc ");
+        break;
+      case 1:
+        printf("drc ");
+        break;
+      default:
+        printf("(please send a bug report) mpeg reserved quant/drc  (%d)", attr->quantization);  
+    }
     break;
   case 4:
     printf("lpcm ");
+    switch(attr->quantization) {
+      case 0:
+        printf("16bit ");
+        break;
+      case 1:
+        printf("20bit ");
+        break;
+      case 2:
+        printf("24bit ");
+        break;
+      case 3:
+        printf("(please send a bug report) lpcm reserved quant/drc  (%d)", attr->quantization);
+      break;
+    }
     break;
   case 5:
     printf("(please send a bug report) ");
     break;
   case 6:
     printf("dts ");
+    if(attr->quantization != 3)
+      printf("(please send a bug report) dts quant/drc not 3 (%d)", attr->quantization);
     break;
   default:
     printf("(please send a bug report) ");
