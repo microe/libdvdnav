@@ -257,6 +257,7 @@ void ifoClose(ifo_handle_t *ifofile) {
   ifoFree_FP_PGC(ifofile);
   ifoFree_PGCIT(ifofile);
   ifoFree_VTS_PTT_SRPT(ifofile);
+  ifoFree_VTS_TMAPT(ifofile);
 
   if(ifofile->vmgi_mat)
     free(ifofile->vmgi_mat);
@@ -1643,7 +1644,7 @@ static int ifoRead_PGCIT_internal(ifo_handle_t *ifofile, pgcit_t *pgcit,
         ifoFree_PGC(pgcit->pgci_srp[j].pgc);
         free(pgcit->pgci_srp[j].pgc);
       }
-      return 0;
+      goto fail;
     }
     if(!ifoRead_PGC(ifofile, pgcit->pgci_srp[i].pgc, 
                     offset + pgcit->pgci_srp[i].pgc_start_byte)) {
@@ -1652,12 +1653,15 @@ static int ifoRead_PGCIT_internal(ifo_handle_t *ifofile, pgcit_t *pgcit,
         ifoFree_PGC(pgcit->pgci_srp[j].pgc);
         free(pgcit->pgci_srp[j].pgc);
       }
-      free(pgcit->pgci_srp);
-      return 0;
+      goto fail;
     }
   }
 
   return 1;
+fail:
+  free(pgcit->pgci_srp);
+  pgcit->pgci_srp = NULL;
+  return 0;
 }
 
 static void ifoFree_PGCIT_internal(pgcit_t *pgcit) {
