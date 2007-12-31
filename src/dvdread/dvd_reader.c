@@ -227,11 +227,11 @@ static dvd_reader_t *DVDOpenImageFile( const char *location, int have_css )
     dev = dvdinput_open( location );
     if( !dev ) {
 	fprintf( stderr, "libdvdread: Can't open %s for reading\n", location );
-	return 0;
+	return NULL;
     }
 
     dvd = (dvd_reader_t *) malloc( sizeof( dvd_reader_t ) );
-    if( !dvd ) return 0;
+    if( !dvd ) return NULL;
     dvd->isImageFile = 1;
     dvd->dev = dev;
     dvd->path_root = 0;
@@ -256,7 +256,7 @@ static dvd_reader_t *DVDOpenPath( const char *path_root )
     dvd_reader_t *dvd;
 
     dvd = (dvd_reader_t *) malloc( sizeof( dvd_reader_t ) );
-    if( !dvd ) return 0;
+    if( !dvd ) return NULL;
     dvd->isImageFile = 0;
     dvd->dev = 0;
     dvd->path_root = strdup( path_root );
@@ -364,7 +364,7 @@ dvd_reader_t *DVDOpen( const char *ppath )
 	fprintf( stderr, "libdvdread: Can't stat %s\n", path );
 	perror("");
 	free(path);
-	return 0;
+	return NULL;
     }
 
     /* First check if this is a block/char device or a file*/
@@ -398,7 +398,7 @@ dvd_reader_t *DVDOpen( const char *ppath )
 	/* XXX: We should scream real loud here. */
 	if( !(path_copy = strdup( path ) ) ) {
 		free(path);	
-		return 0;
+		return NULL;
 	}
 
 #ifndef WIN32 /* don't have fchdir, and getcwd( NULL, ... ) is strange */
@@ -527,7 +527,7 @@ dvd_reader_t *DVDOpen( const char *ppath )
     /* If it's none of the above, screw it. */
     fprintf( stderr, "libdvdread: Could not open %s\n", path );
 	free( path );
-    return 0;
+    return NULL;
 }
 
 void DVDClose( dvd_reader_t *dvd )
@@ -551,13 +551,13 @@ static dvd_file_t *DVDOpenFileUDF( dvd_reader_t *dvd, char *filename )
     start = UDFFindFile( dvd, filename, &len );
     if( !start ) {
       fprintf( stderr, "libdvdnav:DVDOpenFileUDF:UDFFindFile %s failed\n", filename );
-      return 0;
+      return NULL;
     }
 
     dvd_file = (dvd_file_t *) malloc( sizeof( dvd_file_t ) );
     if( !dvd_file ) {
       fprintf( stderr, "libdvdnav:DVDOpenFileUDF:malloc failed\n" );
-      return 0;
+      return NULL;
     }
     dvd_file->dvd = dvd;
     dvd_file->lb_start = start;
@@ -641,19 +641,19 @@ static dvd_file_t *DVDOpenFilePath( dvd_reader_t *dvd, char *filename )
     /* Get the full path of the file. */
     if( !findDVDFile( dvd, filename, full_path ) ) {
       fprintf( stderr, "libdvdnav:DVDOpenFilePath:findDVDFile %s failed\n", filename );
-      return 0;
+      return NULL;
     }
 
     dev = dvdinput_open( full_path );
     if( !dev ) {
       fprintf( stderr, "libdvdnav:DVDOpenFilePath:dvdinput_open %s failed\n", full_path );
-      return 0;
+      return NULL;
     }
 
     dvd_file = (dvd_file_t *) malloc( sizeof( dvd_file_t ) );
     if( !dvd_file ) {
       fprintf( stderr, "libdvdnav:DVDOpenFilePath:dvd_file malloc failed\n" );
-      return 0;
+      return NULL;
     }
     dvd_file->dvd = dvd;
     dvd_file->lb_start = 0;
@@ -665,7 +665,7 @@ static dvd_file_t *DVDOpenFilePath( dvd_reader_t *dvd, char *filename )
     if( stat( full_path, &fileinfo ) < 0 ) {
         fprintf( stderr, "libdvdread: Can't stat() %s.\n", filename );
         free( dvd_file );
-        return 0;
+        return NULL;
     }
     dvd_file->title_sizes[ 0 ] = fileinfo.st_size / DVD_VIDEO_LB_LEN;
     dvd_file->title_devs[ 0 ] = dev;
@@ -686,10 +686,10 @@ static dvd_file_t *DVDOpenVOBUDF( dvd_reader_t *dvd, int title, int menu )
         sprintf( filename, "/VIDEO_TS/VTS_%02d_%d.VOB", title, menu ? 0 : 1 );
     }
     start = UDFFindFile( dvd, filename, &len );
-    if( start == 0 ) return 0;
+    if( start == 0 ) return NULL;
 
     dvd_file = (dvd_file_t *) malloc( sizeof( dvd_file_t ) );
-    if( !dvd_file ) return 0;
+    if( !dvd_file ) return NULL;
     dvd_file->dvd = dvd;
     /*Hack*/ dvd_file->css_title = title << 1 | menu;
     dvd_file->lb_start = start;
@@ -732,7 +732,7 @@ static dvd_file_t *DVDOpenVOBPath( dvd_reader_t *dvd, int title, int menu )
     int i;
 
     dvd_file = (dvd_file_t *) malloc( sizeof( dvd_file_t ) );
-    if( !dvd_file ) return 0;
+    if( !dvd_file ) return NULL;
     dvd_file->dvd = dvd;
     /*Hack*/ dvd_file->css_title = title << 1 | menu;
     dvd_file->lb_start = 0;
@@ -751,19 +751,19 @@ static dvd_file_t *DVDOpenVOBPath( dvd_reader_t *dvd, int title, int menu )
         }
         if( !findDVDFile( dvd, filename, full_path ) ) {
             free( dvd_file );
-            return 0;
+            return NULL;
         }
 
         dev = dvdinput_open( full_path );
         if( dev == NULL ) {
             free( dvd_file );
-            return 0;
+            return NULL;
         }
 
         if( stat( full_path, &fileinfo ) < 0 ) {
             fprintf( stderr, "libdvdread: Can't stat() %s.\n", filename );
             free( dvd_file );
-            return 0;
+            return NULL;
         }
         dvd_file->title_sizes[ 0 ] = fileinfo.st_size / DVD_VIDEO_LB_LEN;
         dvd_file->title_devs[ 0 ] = dev;
@@ -790,7 +790,7 @@ static dvd_file_t *DVDOpenVOBPath( dvd_reader_t *dvd, int title, int menu )
         }
         if( !dvd_file->title_devs[ 0 ] ) {
             free( dvd_file );
-            return 0;
+            return NULL;
         }
     }
 
