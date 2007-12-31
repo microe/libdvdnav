@@ -263,6 +263,10 @@ static dvd_reader_t *DVDOpenPath( const char *path_root )
     dvd->isImageFile = 0;
     dvd->dev = 0;
     dvd->path_root = strdup( path_root );
+    if(!dvd->path_root) {
+      free(dvd);
+      return 0;
+    }
 
     dvd->udfcache_level = DEFAULT_UDF_CACHE_LEVEL;
     dvd->udfcache = NULL;
