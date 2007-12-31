@@ -447,6 +447,11 @@ dvd_reader_t *DVDOpen( const char *ppath )
 	      path_copy[ strlen( path_copy ) - 9 ] = '\0';
 	    }
 	}
+	
+	if(path_copy[0] == '\0') {
+	    path_copy[0] = '/';
+	    path_copy[1] = '\0';
+	}
 
 #if defined(SYS_BSD)
 	if( ( fe = getfsfile( path_copy ) ) ) {
