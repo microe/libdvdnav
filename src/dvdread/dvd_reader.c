@@ -231,7 +231,10 @@ static dvd_reader_t *DVDOpenImageFile( const char *location, int have_css )
     }
 
     dvd = (dvd_reader_t *) malloc( sizeof( dvd_reader_t ) );
-    if( !dvd ) return NULL;
+    if( !dvd ) {
+        dvdinput_close(dev);
+        return NULL;
+    }
     dvd->isImageFile = 1;
     dvd->dev = dev;
     dvd->path_root = 0;
@@ -653,6 +656,7 @@ static dvd_file_t *DVDOpenFilePath( dvd_reader_t *dvd, char *filename )
     dvd_file = (dvd_file_t *) malloc( sizeof( dvd_file_t ) );
     if( !dvd_file ) {
       fprintf( stderr, "libdvdnav:DVDOpenFilePath:dvd_file malloc failed\n" );
+      dvdinput_close(dev);
       return NULL;
     }
     dvd_file->dvd = dvd;
@@ -762,6 +766,7 @@ static dvd_file_t *DVDOpenVOBPath( dvd_reader_t *dvd, int title, int menu )
 
         if( stat( full_path, &fileinfo ) < 0 ) {
             fprintf( stderr, "libdvdread: Can't stat() %s.\n", filename );
+            dvdinput_close(dev);
             free( dvd_file );
             return NULL;
         }
