@@ -237,7 +237,7 @@ static dvd_reader_t *DVDOpenImageFile( const char *location, int have_css )
     }
     dvd->isImageFile = 1;
     dvd->dev = dev;
-    dvd->path_root = 0;
+    dvd->path_root = NULL;
     
     dvd->udfcache_level = DEFAULT_UDF_CACHE_LEVEL;
     dvd->udfcache = NULL;
@@ -324,7 +324,7 @@ dvd_reader_t *DVDOpen( const char *ppath )
     int ret;
     int have_css;
 	dvd_reader_t *ret_val = NULL;
-    char *dev_name = 0;
+    char *dev_name = NULL;
 	char *path;
 
 #ifdef _MSC_VER
