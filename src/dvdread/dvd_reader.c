@@ -418,13 +418,16 @@ dvd_reader_t *DVDOpen( const char *ppath )
 	    
 	    if( cdir >= 0 ) {
 		chdir( path_copy );
-		new_path = getcwd( NULL, PATH_MAX );
+		new_path = malloc(PATH_MAX+1);
+		if(!new_path) {
+		  free(path);
+		  return NULL;
+		}
+		getcwd(new_path, PATH_MAX );
 		fchdir( cdir );
 		close( cdir );
-		if( new_path ) {
 		    free( path_copy );
 		    path_copy = new_path;
-		}
 	    }
 	}
 #endif	
