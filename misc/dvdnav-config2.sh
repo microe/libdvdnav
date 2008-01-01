@@ -65,7 +65,7 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I$prefix/include -I$prefix/include/dvdnav $dvdreadcflags $extracflags $threadcflags
+      echo -I$prefix/include $dvdreadcflags $extracflags $threadcflags
 fi
 
 if test "$echo_minicflags" = "yes"; then
