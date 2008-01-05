@@ -182,7 +182,7 @@ dvdnav-config: $(.OBJDIR)
 	@echo 'threadlib='$(THREADLIB) >> $(.OBJDIR)/dvdnav-config
 	@echo >> $(.OBJDIR)/dvdnav-config
 	cat $(SRC_PATH_BARE)/misc/dvdnav-config2.sh >> $(.OBJDIR)/dvdnav-config
-	chmod 0755 $(SRC_PATH_BARE)/$(.OBJDIR)/dvdnav-config
+	chmod 0755 $(.OBJDIR)/dvdnav-config
 
 install-dvdnav-config: dvdnav-config
 	install -d $(PREFIX)/bin
