@@ -57,7 +57,7 @@ optimizations="-O3"
 threadlib="-lpthread"
 
 for opt do
-  optval=`echo $opt | cut -d '=' -f 2`
+  optval=`echo $opt | cut -d '=' -f 2-`
   case "$opt" in
   --enable-shared) SHARED=yes
   ;;
