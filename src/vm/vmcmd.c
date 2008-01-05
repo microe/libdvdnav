@@ -53,22 +53,22 @@
 #define PRIu16 "d"
 #endif
 
-static const char *cmp_op_table[] = {
-  NULL, "&", "==", "!=", ">=", ">", "<=", "<"
+static const char cmp_op_table[][4] = {
+  "", "&", "==", "!=", ">=", ">", "<=", "<"
 };
-static const char *set_op_table[] = {
-  NULL, "=", "<->", "+=", "-=", "*=", "/=", "%=", "rnd", "&=", "|=", "^="
+static const char set_op_table[][4] = {
+  "", "=", "<->", "+=", "-=", "*=", "/=", "%=", "rnd", "&=", "|=", "^="
 };
 
-static const char *link_table[] = {
+static const char link_table[][16] = {
   "LinkNoLink",  "LinkTopC",    "LinkNextC",   "LinkPrevC",
-  NULL,          "LinkTopPG",   "LinkNextPG",  "LinkPrevPG",
-  NULL,          "LinkTopPGC",  "LinkNextPGC", "LinkPrevPGC",
-  "LinkGoUpPGC", "LinkTailPGC", NULL,          NULL,
+  "",            "LinkTopPG",   "LinkNextPG",  "LinkPrevPG",
+  "",            "LinkTopPGC",  "LinkNextPGC", "LinkPrevPGC",
+  "LinkGoUpPGC", "LinkTailPGC", "",            "",
   "RSM"
 };
 
-static const char *system_reg_table[] = {
+static const char *const system_reg_table[] = {
   "Menu Description Language Code",
   "Audio Stream Number",
   "Sub-picture Stream Number",
@@ -95,8 +95,8 @@ static const char *system_reg_table[] = {
   "Reserved 23"
 };
 
-static const char *system_reg_abbr_table[] = {
-  NULL,
+static const char system_reg_abbr_table[][8] = {
+  "",
   "ASTN",
   "SPSTN",
   "AGLN",
@@ -107,23 +107,23 @@ static const char *system_reg_abbr_table[] = {
   "HL_BTNN",
   "NVTMR",
   "NV_PGCN",
-  NULL,
+  "",
   "CC_PLT",
   "PLT",
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
 };
 
 static void print_system_reg(uint16_t reg) {
-  if(reg < sizeof(system_reg_abbr_table) / sizeof(char *))
+  if(reg < sizeof(system_reg_abbr_table) / sizeof(system_reg_abbr_table[0]))
     fprintf(MSG_OUT, "%s (SRPM:%d)", system_reg_table[reg], reg);
   else
     fprintf(MSG_OUT, " WARNING: Unknown system register ( reg=%d ) ", reg);
@@ -144,14 +144,14 @@ static void print_reg(uint8_t reg) {
 }
 
 static void print_cmp_op(uint8_t op) {
-  if(op < sizeof(cmp_op_table) / sizeof(char *) && cmp_op_table[op] != NULL)
+  if(op < sizeof(cmp_op_table) / sizeof(cmp_op_table[0]))
     fprintf(MSG_OUT, " %s ", cmp_op_table[op]);
   else
     fprintf(MSG_OUT, " WARNING: Unknown compare op ");
 }
 
 static void print_set_op(uint8_t op) {
-  if(op < sizeof(set_op_table) / sizeof(char *) && set_op_table[op] != NULL)
+  if(op < sizeof(set_op_table) / sizeof(cmp_op_table[0]))
     fprintf(MSG_OUT, " %s ", set_op_table[op]);
   else
     fprintf(MSG_OUT, " WARNING: Unknown set op ");
@@ -285,7 +285,7 @@ static void print_linksub_instruction(command_t* command) {
   uint32_t linkop = vm_getbits(command, 7, 8);
   uint32_t button = vm_getbits(command, 15, 6);
   
-  if(linkop < sizeof(link_table)/sizeof(char *) && link_table[linkop] != NULL)
+  if(linkop < sizeof(link_table)/sizeof(link_table[0]))
     fprintf(MSG_OUT, "%s (button %" PRIu8 ")", link_table[linkop], button);
   else
     fprintf(MSG_OUT, "WARNING: Unknown linksub instruction (%i)", linkop);
