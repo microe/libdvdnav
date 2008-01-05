@@ -417,7 +417,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
    For the swap case the contents of reg is stored in reg2.
 */
 static void eval_set_op(command_t* command, int32_t op, int32_t reg, int32_t reg2, int32_t data) {
-  const int32_t shortmax = 0xffff;
+  static const int32_t shortmax = 0xffff;
   int32_t     tmp; 
   switch(op) {
     case 1:
