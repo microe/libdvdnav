@@ -120,45 +120,45 @@ endif
 # Install targets
 
 install-headers:
-	install -d $(incdir)
-	install -m 644 $(HEADERS) $(incdir)
+	install -d $(DESTDIR)$(incdir)
+	install -m 644 $(HEADERS) $(DESTDIR)$(incdir)
 ifeq ($(DVDREAD),internal)
-	install -d $(dvdread_incdir)
-	install -m 644 $(DVDREAD_HEADERS) $(dvdread_incdir)
+	install -d $(DESTDIR)$(dvdread_incdir)
+	install -m 644 $(DVDREAD_HEADERS) $(DESTDIR)$(dvdread_incdir)
 endif
 
 install-shared: $(SHLIB)
-	install -d $(shlibdir)
+	install -d $(DESTDIR)$(shlibdir)
 
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(SHLIB) \
-		$(shlibdir)/$(SHLIB).$(SHLIB_VERSION)
+		$(DESTDIR)$(shlibdir)/$(SHLIB).$(SHLIB_VERSION)
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(MINI_SHLIB) \
-		$(shlibdir)/$(MINI_SHLIB).$(SHLIB_VERSION)
+		$(DESTDIR)$(shlibdir)/$(MINI_SHLIB).$(SHLIB_VERSION)
 
-	cd $(shlibdir) && \
+	cd $(DESTDIR)$(shlibdir) && \
 		ln -sf $(SHLIB).$(SHLIB_VERSION) $(SHLIB).$(SHLIB_MAJOR)
-	cd $(shlibdir) && \
+	cd $(DESTDIR)$(shlibdir) && \
 		ln -sf $(MINI_SHLIB).$(SHLIB_VERSION) $(MINI_SHLIB).$(SHLIB_MAJOR)
-	cd $(shlibdir) && \
+	cd $(DESTDIR)$(shlibdir) && \
 		ln -sf $(SHLIB).$(SHLIB_MAJOR) $(SHLIB)
-	cd $(shlibdir) && \
+	cd $(DESTDIR)$(shlibdir) && \
 		ln -sf $(MINI_SHLIB).$(SHLIB_MAJOR) $(MINI_SHLIB)
 
 ifeq ($(DVDREAD),internal)
 	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(DVDREAD_SHLIB) \
-		$(shlibdir)/$(DVDREAD_SHLIB).$(SHLIB_VERSION)
-	cd $(shlibdir) && \
+		$(DESTDIR)$(shlibdir)/$(DVDREAD_SHLIB).$(SHLIB_VERSION)
+	cd $(DESTDIR)$(shlibdir) && \
 		ln -sf $(DVDREAD_SHLIB).$(SHLIB_VERSION) $(DVDREAD_SHLIB).$(SHLIB_MAJOR)
-	cd $(shlibdir) && \
+	cd $(DESTDIR)$(shlibdir) && \
 		ln -sf $(DVDREAD_SHLIB).$(SHLIB_MAJOR) $(DVDREAD_SHLIB)
 endif
 
 install-static: $(LIB)
-	install -d $(libdir)
+	install -d $(DESTDIR)$(libdir)
 
-	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(LIB) $(libdir)/$(LIB)
+	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(LIB) $(DESTDIR)$(libdir)/$(LIB)
 ifeq ($(DVDREAD),internal)
-	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(DVDREAD_LIB) $(libdir)/$(DVDREAD_LIB)
+	install $(INSTALLSTRIP) -m 755 $(.OBJDIR)/$(DVDREAD_LIB) $(DESTDIR)$(libdir)/$(DVDREAD_LIB)
 endif
 
 
@@ -185,8 +185,8 @@ dvdnav-config: $(.OBJDIR)
 	chmod 0755 $(.OBJDIR)/dvdnav-config
 
 install-dvdnav-config: dvdnav-config
-	install -d $(PREFIX)/bin
-	install -m 0755 $(.OBJDIR)/dvdnav-config $(PREFIX)/bin/dvdnav-config
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install -m 0755 $(.OBJDIR)/dvdnav-config $(DESTDIR)$(PREFIX)/bin/dvdnav-config
 
 
 vpath %.so ${.OBJDIR}
