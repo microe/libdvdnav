@@ -26,8 +26,9 @@ from xine-dvdnav and went into the first version of libdvdnav.
 Where is it now?
 ----------------
 
-libdvdnav is hosted on http://dvd.sourceforge.net/. Please report bugs to the
-developers mailinglist at mailto:dvd-devel@lists.sourceforge.net
+libdvdnav is hosted on http://www.mplayerhq.hu/MPlayer/releases/dvdnav/ .
+Please report bugs to the developers mailinglist at
+mailto:dvdnav-discuss@mplayerhq.hu .
 
 We are still in beta stage, but libdvdnav is already quite usable. With
 regular DVD playback, there should not be any serious issues. The library
