@@ -229,7 +229,10 @@ remap_t* remap_loadmap( char *title) {
 	}
     }
 
-    if (map->nblocks == 0 && map->debug == 0) return NULL;
+    if (map->nblocks == 0 && map->debug == 0) {
+        free(map);
+        return NULL;
+    }
     return map;
 }
 
