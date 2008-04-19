@@ -88,6 +88,8 @@ struct dvd_reader_s {
     void *udfcache;
 };
 
+#define TITLES_MAX 9
+
 struct dvd_file_s {
     /* Basic information. */
     dvd_reader_t *dvd;
@@ -100,8 +102,8 @@ struct dvd_file_s {
     uint32_t seek_pos;
 
     /* Information required for a directory path drive. */
-    size_t title_sizes[ 9 ];
-    dvd_input_t title_devs[ 9 ];
+    size_t title_sizes[ TITLES_MAX ];
+    dvd_input_t title_devs[ TITLES_MAX ];
 
     /* Calculated at open-time, size in blocks. */
     ssize_t filesize;
@@ -441,10 +443,10 @@ dvd_reader_t *DVDOpen( const char *ppath )
 		path_copy[ strlen( path_copy ) - 1 ] = '\0';
 	}
 
-	if( strlen( path_copy ) > 9 ) {
-	    if( !strcasecmp( &(path_copy[ strlen( path_copy ) - 9 ]), 
+	if( strlen( path_copy ) > TITLES_MAX ) {
+	    if( !strcasecmp( &(path_copy[ strlen( path_copy ) - TITLES_MAX ]), 
 			     "/video_ts" ) ) {
-	      path_copy[ strlen( path_copy ) - 9 ] = '\0';
+	      path_copy[ strlen( path_copy ) - TITLES_MAX ] = '\0';
 	    }
 	}
 	
@@ -788,7 +790,7 @@ static dvd_file_t *DVDOpenVOBPath( dvd_reader_t *dvd, int title, int menu )
         dvd_file->filesize = dvd_file->title_sizes[ 0 ];
 
     } else {
-        for( i = 0; i < 9; ++i ) {
+        for( i = 0; i < TITLES_MAX; ++i ) {
 
             sprintf( filename, "VTS_%02i_%i.VOB", title, i + 1 );
             if( !findDVDFile( dvd, filename, full_path ) ) {
@@ -873,7 +875,7 @@ void DVDCloseFile( dvd_file_t *dvd_file )
         if( dvd_file->dvd->isImageFile ) {
 	    ;
 	} else {
-            for( i = 0; i < 9; ++i ) {
+            for( i = 0; i < TITLES_MAX; ++i ) {
                 if( dvd_file->title_devs[ i ] ) {
                     dvdinput_close( dvd_file->title_devs[i] );
                 }
@@ -936,7 +938,7 @@ static int DVDReadBlocksPath( dvd_file_t *dvd_file, unsigned int offset,
 
     ret = 0;
     ret2 = 0;
-    for( i = 0; i < 9; ++i ) {
+    for( i = 0; i < TITLES_MAX; ++i ) {
       if( !dvd_file->title_sizes[ i ] ) return 0; /* Past end of file */
 
         if( offset < dvd_file->title_sizes[ i ] ) {
