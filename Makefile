@@ -60,13 +60,13 @@ DVDREAD_DEPS= ${DVDREAD_OBJS:%.o=%.d}
 BUILDDEPS = Makefile config.mak
 
 ifeq ($(BUILD_SHARED),yes)
-all:	$(SHLIB) $(MINI_SHLIB) $(DVDREAD_SHLIB) dvdnav-config
-install: $(SHLIB) $(DVDREAD_SHLIB) install-shared install-dvdnav-config
+all:	$(SHLIB) $(MINI_SHLIB) $(DVDREAD_SHLIB) dvdnav-config dvdread-config
+install: $(SHLIB) $(DVDREAD_SHLIB) install-shared install-dvdnav-config install-dvdread-config
 endif
 
 ifeq ($(BUILD_STATIC),yes)
-all:	$(LIB) $(DVDREAD_LIB) dvdnav-config
-install: $(LIB) $(DVDREAD_LIB) install-static install-dvdnav-config
+all:	$(LIB) $(DVDREAD_LIB) dvdnav-config dvdread-config
+install: $(LIB) $(DVDREAD_LIB) install-static install-dvdnav-config install-dvdread-config
 endif
 
 install: install-headers
@@ -188,6 +188,18 @@ install-dvdnav-config: dvdnav-config
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m 0755 $(.OBJDIR)/dvdnav-config $(DESTDIR)$(PREFIX)/bin/dvdnav-config
 
+dvdread-config: $(.OBJDIR)
+	@echo '#!/bin/sh' > $(.OBJDIR)/dvdread-config
+	@echo 'prefix='$(PREFIX) >> $(.OBJDIR)/dvdread-config
+	@echo 'libdir='$(shlibdir) >> $(.OBJDIR)/dvdread-config
+	@echo 'version='$(SHLIB_VERSION) >> $(.OBJDIR)/dvdread-config
+	@echo >> $(.OBJDIR)/dvdread-config
+	cat $(SRC_PATH_BARE)/misc/dvdread-config.sh >> $(.OBJDIR)/dvdread-config
+	chmod 0755 $(.OBJDIR)/dvdread-config
+
+install-dvdread-config: dvdread-config
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install -m 0755 $(.OBJDIR)/dvdread-config $(DESTDIR)$(PREFIX)/bin/dvdread-config
 
 vpath %.so ${.OBJDIR}
 vpath %.o ${.OBJDIR}
