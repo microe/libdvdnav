@@ -53,6 +53,7 @@
 static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   /* clear everything except file, vm, mutex, readahead */
 
+  pthread_mutex_lock(&this->vm_lock);
   if (this->file) DVDCloseFile(this->file);
   this->file = NULL;
 
@@ -70,6 +71,7 @@ static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   this->cur_cell_time = 0;
 
   dvdnav_read_cache_clear(this->cache);
+  pthread_mutex_unlock(&this->vm_lock);
   
   return DVDNAV_STATUS_OK;
 }
