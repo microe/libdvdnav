@@ -562,6 +562,7 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
 	cached_dir = (uint8_t *)(((uintptr_t)cached_dir_base & ~((uintptr_t)2047)) + 2048);
 	if( DVDReadLBUDF( device, lbnum, dir_lba, cached_dir, 0) <= 0 ) {
 	  free(cached_dir_base);
+	  cached_dir_base = NULL;
 	  cached_dir = NULL;
 	}
 	/*
