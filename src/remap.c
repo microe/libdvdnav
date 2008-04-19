@@ -228,6 +228,7 @@ remap_t* remap_loadmap( char *title) {
 	    remap_add_node( map, tmp);
 	}
     }
+    fclose(fp);
 
     if (map->nblocks == 0 && map->debug == 0) {
         free(map);
