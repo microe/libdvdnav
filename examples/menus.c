@@ -215,7 +215,6 @@ int main(int argc, char **argv) {
        * engine of the player so that it knows the dimensions of the button areas. */
       {
 	pci_t *pci;
-	dsi_t *dsi;
 	
 	/* Applications with fifos should not use these functions to retrieve NAV packets,
 	 * they should implement their own NAV handling, because the packet you get from these
@@ -223,7 +222,7 @@ int main(int argc, char **argv) {
 	 * Applications with fifos should therefore pass the NAV packet through the fifo
 	 * and decoding pipeline just like any other data. */
 	pci = dvdnav_get_current_nav_pci(dvdnav);
-	dsi = dvdnav_get_current_nav_dsi(dvdnav);
+	dvdnav_get_current_nav_dsi(dvdnav);
 	
 	if(pci->hli.hl_gi.btn_ns > 0) {
 	  int button;
