@@ -1823,13 +1823,15 @@ static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang) {
 
 /* Uses state to decide what to return */
 static pgcit_t* get_PGCIT(vm_t *vm) {
-  pgcit_t *pgcit;
+  pgcit_t *pgcit = NULL;
   
   switch ((vm->state).domain) {
   case VTS_DOMAIN:
+    if(!vm->vtsi) return NULL;
     pgcit = vm->vtsi->vts_pgcit;
     break;
   case VTSM_DOMAIN:
+    if(!vm->vtsi) return NULL;
     pgcit = get_MENU_PGCIT(vm, vm->vtsi, (vm->state).registers.SPRM[0]);
     break;
   case VMGM_DOMAIN:
