@@ -612,6 +612,7 @@ int vm_get_current_menu(vm_t *vm, int *menuid) {
   int pgcn;
   pgcn = (vm->state).pgcN;
   pgcit = get_PGCIT(vm);
+  if(pgcit==NULL) return 0;
   *menuid = pgcit->pgci_srp[pgcn - 1].entry_id & 0xf ;
   return 1;
 }
