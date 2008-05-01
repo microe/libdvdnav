@@ -5,7 +5,11 @@ test $svn_revision || svn_revision=`cd "$1" && grep revision .svn/entries 2>/dev
                                     cut -d '"' -f2 2> /dev/null`
 test $svn_revision || svn_revision=UNKNOWN
 
-NEW_REVISION="#define VERSION \"SVN-r$svn_revision\""
+if test "$svn_revision" = UNKNOWN && test -n "$2"; then
+    NEW_REVISION="#define VERSION \"$2\""
+else
+    NEW_REVISION="#define VERSION \"SVN-r$svn_revision\""
+fi
 OLD_REVISION=`cat version.h 2> /dev/null`
 
 # Update version.h only on revision changes to avoid spurious rebuilds
