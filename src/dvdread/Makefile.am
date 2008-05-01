@@ -7,8 +7,8 @@ AM_CPPFLAGS = -DDVDNAV_COMPILE -I$(top_srcdir)/src/vm
 lib_LTLIBRARIES = libdvdread.la
 
 libdvdread_la_SOURCES = dvd_reader.c nav_read.c ifo_read.c \
-	dvd_input.c dvd_udf.c md5.c nav_print.c ifo_print.c \
-	bswap.h dvd_input.h dvdread_internal.h dvd_udf.h md5.h
+	dvd_input.c dvd_udf.c md5.c nav_print.c ifo_print.c bitreader.c \
+	bswap.h dvd_input.h dvdread_internal.h dvd_udf.h md5.h bitreader.h
 
 libdvdread_la_LIBADD = $(DYNAMIC_LD_LIBS)
 
@@ -16,4 +16,4 @@ libdvdread_la_LDFLAGS = -version-info $(DVDNAV_LT_CURRENT):$(DVDNAV_LT_REVISION)
 	-export-symbols-regex "(^dvd.*|^nav.*|^ifo.*|^DVD.*|^UDF.*)"
 
 include_HEADERS = dvd_reader.h nav_read.h ifo_read.h \
-	nav_print.h ifo_print.h ifo_types.h nav_types.h dvd_udf.h
+	nav_print.h ifo_print.h ifo_types.h nav_types.h dvd_udf.h bitreader.h
