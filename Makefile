@@ -80,6 +80,8 @@ endif
 
 version.h:
 	sh $(SRC_PATH)/version.sh $(SRC_PATH)
+	
+$(SRCS) $(DVDREAD_SRCS): version.h
 
 
 # General targets
