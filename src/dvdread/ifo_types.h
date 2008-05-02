@@ -75,7 +75,6 @@ typedef struct {
  * Video Attributes.
  */
 typedef struct {
-#ifdef WORDS_BIGENDIAN
   unsigned char mpeg_version         : 2;
   unsigned char video_format         : 2;
   unsigned char display_aspect_ratio : 2;
@@ -89,21 +88,6 @@ typedef struct {
   unsigned char picture_size         : 2;
   unsigned char letterboxed          : 1;
   unsigned char film_mode            : 1;
-#else
-  unsigned char permitted_df         : 2;
-  unsigned char display_aspect_ratio : 2;
-  unsigned char video_format         : 2;
-  unsigned char mpeg_version         : 2;
-  
-  unsigned char film_mode            : 1;
-  unsigned char letterboxed          : 1;
-  unsigned char picture_size         : 2;
-  
-  unsigned char bit_rate             : 1;
-  unsigned char unknown1             : 1;
-  unsigned char line21_cc_2          : 1;
-  unsigned char line21_cc_1          : 1;
-#endif
 } ATTRIBUTE_PACKED video_attr_t;
 
 /**

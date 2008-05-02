@@ -30,6 +30,7 @@
 #include "ifo_read.h"
 #include "dvd_reader.h"
 #include "dvdread_internal.h"
+#include "bitreader.h"
 
 #ifndef DVD_BLOCK_LEN
 #define DVD_BLOCK_LEN 2048
@@ -93,6 +94,24 @@ static inline int DVDFileSeek_( dvd_file_t *dvd_file, uint32_t offset ) {
   return (DVDFileSeek(dvd_file, (int)offset) == (int)offset);
 }
 
+static void read_video_attr(video_attr_t *va) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(video_attr_t)];
+
+  memcpy(buf, va, sizeof(video_attr_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  va->mpeg_version = dvdread_getbits(&state, 2);
+  va->video_format = dvdread_getbits(&state, 2);
+  va->display_aspect_ratio = dvdread_getbits(&state, 2);
+  va->permitted_df = dvdread_getbits(&state, 2);
+  va->line21_cc_1 = dvdread_getbits(&state, 1);
+  va->line21_cc_2 = dvdread_getbits(&state, 1);
+  va->unknown1 = dvdread_getbits(&state, 1);
+  va->bit_rate = dvdread_getbits(&state, 1);
+  va->picture_size = dvdread_getbits(&state, 2);
+  va->letterboxed = dvdread_getbits(&state, 1);
+  va->film_mode = dvdread_getbits(&state, 1);
+}
 
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
@@ -318,6 +337,7 @@ static int ifoRead_VMG(ifo_handle_t *ifofile) {
   B2N_32(vmgi_mat->vmgm_vobu_admap);
   B2N_16(vmgi_mat->vmgm_audio_attr.lang_code);
   B2N_16(vmgi_mat->vmgm_subp_attr.lang_code);
+  read_video_attr(&vmgi_mat->vmgm_video_attr);
 
 
   CHECK_ZERO(vmgi_mat->zero_1);
@@ -390,6 +410,8 @@ static int ifoRead_VTS(ifo_handle_t *ifofile) {
     return 0;
   }
 
+  read_video_attr(&vtsi_mat->vtsm_video_attr);
+  read_video_attr(&vtsi_mat->vts_video_attr);
   B2N_32(vtsi_mat->vts_last_sector);
   B2N_32(vtsi_mat->vtsi_last_sector);
   B2N_32(vtsi_mat->vts_category);
@@ -1841,6 +1863,8 @@ static int ifoRead_VTS_ATTRIBUTES(ifo_handle_t *ifofile,
   if(!(DVDReadBytes(ifofile->file, vts_attributes, sizeof(vts_attributes_t))))
     return 0;
 
+  read_video_attr(&vts_attributes->vtsm_vobs_attr);
+  read_video_attr(&vts_attributes->vtstt_vobs_video_attr);
   B2N_32(vts_attributes->last_byte);
   B2N_32(vts_attributes->vts_cat);
   B2N_16(vts_attributes->vtsm_audio_attr.lang_code);
