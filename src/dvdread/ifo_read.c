@@ -139,6 +139,34 @@ static void read_audio_attr(audio_attr_t *aa) {
   fprintf(stderr, "\r\nLANG: %c%c, x: %x\r\n", aa->lang_code>>8, aa->lang_code&0xFF, aa->lang_code);
 }
 
+static void read_multichannel_ext(multichannel_ext_t *me) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(multichannel_ext_t)];
+  
+  memcpy(buf, me, sizeof(multichannel_ext_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  me->zero1 = dvdread_getbits(&state, 7);
+  me->ach0_gme = dvdread_getbits(&state, 1);
+  me->zero2 = dvdread_getbits(&state, 7);
+  me->ach1_gme = dvdread_getbits(&state, 1);
+  me->zero3 = dvdread_getbits(&state, 4);
+  me->ach2_gv1e = dvdread_getbits(&state, 1);
+  me->ach2_gv2e = dvdread_getbits(&state, 1);
+  me->ach2_gm1e = dvdread_getbits(&state, 1);
+  me->ach2_gm2e = dvdread_getbits(&state, 1);
+  me->zero4 = dvdread_getbits(&state, 4);
+  me->ach3_gv1e = dvdread_getbits(&state, 1);
+  me->ach3_gv2e = dvdread_getbits(&state, 1);
+  me->ach3_gmAe = dvdread_getbits(&state, 1);
+  me->ach3_se2e = dvdread_getbits(&state, 1);
+  me->zero5 = dvdread_getbits(&state, 4);
+  me->ach4_gv1e = dvdread_getbits(&state, 1);
+  me->ach4_gv2e = dvdread_getbits(&state, 1);
+  me->ach4_gmBe = dvdread_getbits(&state, 1);
+  me->ach4_seBe = dvdread_getbits(&state, 1);
+}
+
+
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
 
@@ -510,6 +538,7 @@ static int ifoRead_VTS(ifo_handle_t *ifofile) {
     CHECK_ZERO(vtsi_mat->vts_subp_attr[i]);      
   
   for(i = 0; i < 8; i++) {
+    read_multichannel_ext(&vtsi_mat->vts_mu_audio_attr[i]);
     CHECK_ZERO0(vtsi_mat->vts_mu_audio_attr[i].zero1);
     CHECK_ZERO0(vtsi_mat->vts_mu_audio_attr[i].zero2);
     CHECK_ZERO0(vtsi_mat->vts_mu_audio_attr[i].zero3);

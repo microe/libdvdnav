@@ -128,7 +128,6 @@ typedef struct {
  * MultiChannel Extension
  */
 typedef struct {
-#ifdef WORDS_BIGENDIAN
   unsigned int zero1      : 7;
   unsigned int ach0_gme   : 1;
 
@@ -152,31 +151,6 @@ typedef struct {
   unsigned int ach4_gv2e  : 1;
   unsigned int ach4_gmBe  : 1;
   unsigned int ach4_seBe  : 1;
-#else
-  unsigned char ach0_gme   : 1;
-  unsigned char zero1      : 7;
-
-  unsigned char ach1_gme   : 1;
-  unsigned char zero2      : 7;
-
-  unsigned char ach2_gm2e  : 1;
-  unsigned char ach2_gm1e  : 1;
-  unsigned char ach2_gv2e  : 1;
-  unsigned char ach2_gv1e  : 1;
-  unsigned char zero3      : 4;
-
-  unsigned char ach3_se2e  : 1;
-  unsigned char ach3_gmAe  : 1;
-  unsigned char ach3_gv2e  : 1;
-  unsigned char ach3_gv1e  : 1;
-  unsigned char zero4      : 4;
-
-  unsigned char ach4_seBe  : 1;
-  unsigned char ach4_gmBe  : 1;
-  unsigned char ach4_gv2e  : 1;
-  unsigned char ach4_gv1e  : 1;
-  unsigned char zero5      : 4;
-#endif
   uint8_t zero6[19];
 } ATTRIBUTE_PACKED multichannel_ext_t;
 
