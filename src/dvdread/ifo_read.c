@@ -136,7 +136,6 @@ static void read_audio_attr(audio_attr_t *aa) {
   aa->app_info.karaoke.version = dvdread_getbits(&state, 2);
   aa->app_info.karaoke.mc_intro = dvdread_getbits(&state, 1);
   aa->app_info.karaoke.mode = dvdread_getbits(&state, 1);
-  fprintf(stderr, "\r\nLANG: %c%c, x: %x\r\n", aa->lang_code>>8, aa->lang_code&0xFF, aa->lang_code);
 }
 
 static void read_multichannel_ext(multichannel_ext_t *me) {
