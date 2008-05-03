@@ -165,6 +165,20 @@ static void read_multichannel_ext(multichannel_ext_t *me) {
   me->ach4_seBe = dvdread_getbits(&state, 1);
 }
 
+static void read_subp_attr(subp_attr_t *sa) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(subp_attr_t)];
+  
+  memcpy(buf, sa, sizeof(subp_attr_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  sa->code_mode = dvdread_getbits(&state, 3);
+  sa->zero1 = dvdread_getbits(&state, 3);
+  sa->type = dvdread_getbits(&state, 2);
+  sa->zero2 = dvdread_getbits(&state, 8);
+  sa->lang_code = dvdread_getbits(&state, 16);
+  sa->lang_extension = dvdread_getbits(&state, 8);
+  sa->code_extension = dvdread_getbits(&state, 8);
+}
 
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
@@ -388,9 +402,9 @@ static int ifoRead_VMG(ifo_handle_t *ifofile) {
   B2N_32(vmgi_mat->txtdt_mgi);
   B2N_32(vmgi_mat->vmgm_c_adt);
   B2N_32(vmgi_mat->vmgm_vobu_admap);
-  B2N_16(vmgi_mat->vmgm_subp_attr.lang_code);
   read_video_attr(&vmgi_mat->vmgm_video_attr);
   read_audio_attr(&vmgi_mat->vmgm_audio_attr);
+  read_subp_attr(&vmgi_mat->vmgm_subp_attr);
 
 
   CHECK_ZERO(vmgi_mat->zero_1);
@@ -468,6 +482,9 @@ static int ifoRead_VTS(ifo_handle_t *ifofile) {
   read_audio_attr(&vtsi_mat->vtsm_audio_attr);
   for(i=0; i<8; i++)
     read_audio_attr(&vtsi_mat->vts_audio_attr[i]);
+  read_subp_attr(&vtsi_mat->vtsm_subp_attr);
+  for(i=0; i<32; i++)
+    read_subp_attr(&vtsi_mat->vts_subp_attr[i]);
   B2N_32(vtsi_mat->vts_last_sector);
   B2N_32(vtsi_mat->vtsi_last_sector);
   B2N_32(vtsi_mat->vts_category);
@@ -482,9 +499,6 @@ static int ifoRead_VTS(ifo_handle_t *ifofile) {
   B2N_32(vtsi_mat->vtsm_vobu_admap);
   B2N_32(vtsi_mat->vts_c_adt);
   B2N_32(vtsi_mat->vts_vobu_admap);
-  B2N_16(vtsi_mat->vtsm_subp_attr.lang_code);
-  for(i = 0; i < 32; i++)
-    B2N_16(vtsi_mat->vts_subp_attr[i].lang_code);
 
 
   CHECK_ZERO(vtsi_mat->zero_1);
@@ -1922,11 +1936,11 @@ static int ifoRead_VTS_ATTRIBUTES(ifo_handle_t *ifofile,
   read_audio_attr(&vts_attributes->vtsm_audio_attr);
   for(i=0; i<8; i++)
     read_audio_attr(&vts_attributes->vtstt_audio_attr[i]);
+  read_subp_attr(&vts_attributes->vtsm_subp_attr);
+  for(i=0; i<32; i++)
+    read_subp_attr(&vts_attributes->vtstt_subp_attr[i]);
   B2N_32(vts_attributes->last_byte);
   B2N_32(vts_attributes->vts_cat);
-  B2N_16(vts_attributes->vtsm_subp_attr.lang_code);
-  for(i = 0; i < 32; i++)
-    B2N_16(vts_attributes->vtstt_subp_attr[i].lang_code);
   
   CHECK_ZERO(vts_attributes->zero_1);
   CHECK_ZERO(vts_attributes->zero_2);

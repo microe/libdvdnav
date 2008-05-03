@@ -169,15 +169,9 @@ typedef struct {
    * language: indicates language if type == 1
    * lang extension: if type == 1 contains the lang extension
    */
-#ifdef WORDS_BIGENDIAN
   unsigned char code_mode : 3;
   unsigned char zero1     : 3;
   unsigned char type      : 2;
-#else
-  unsigned char type      : 2;
-  unsigned char zero1     : 3;
-  unsigned char code_mode : 3;
-#endif
   uint8_t  zero2;
   uint16_t lang_code;
   uint8_t  lang_extension;
