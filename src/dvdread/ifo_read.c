@@ -113,6 +113,32 @@ static void read_video_attr(video_attr_t *va) {
   va->film_mode = dvdread_getbits(&state, 1);
 }
 
+static void read_audio_attr(audio_attr_t *aa) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(audio_attr_t)];
+  
+  memcpy(buf, aa, sizeof(audio_attr_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  aa->audio_format = dvdread_getbits(&state, 3);
+  aa->multichannel_extension = dvdread_getbits(&state, 1);
+  aa->lang_type = dvdread_getbits(&state, 2);
+  aa->application_mode = dvdread_getbits(&state, 2);
+  aa->quantization = dvdread_getbits(&state, 2);
+  aa->sample_frequency = dvdread_getbits(&state, 2);
+  aa->unknown1 = dvdread_getbits(&state, 1);
+  aa->channels = dvdread_getbits(&state, 3);
+  aa->lang_code = dvdread_getbits(&state, 16);
+  aa->lang_extension = dvdread_getbits(&state, 8);
+  aa->code_extension = dvdread_getbits(&state, 8);
+  aa->unknown3 = dvdread_getbits(&state, 8);
+  aa->app_info.karaoke.unknown4 = dvdread_getbits(&state, 1);
+  aa->app_info.karaoke.channel_assignment = dvdread_getbits(&state, 3);
+  aa->app_info.karaoke.version = dvdread_getbits(&state, 2);
+  aa->app_info.karaoke.mc_intro = dvdread_getbits(&state, 1);
+  aa->app_info.karaoke.mode = dvdread_getbits(&state, 1);
+  fprintf(stderr, "\r\nLANG: %c%c, x: %x\r\n", aa->lang_code>>8, aa->lang_code&0xFF, aa->lang_code);
+}
+
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
 
@@ -335,9 +361,9 @@ static int ifoRead_VMG(ifo_handle_t *ifofile) {
   B2N_32(vmgi_mat->txtdt_mgi);
   B2N_32(vmgi_mat->vmgm_c_adt);
   B2N_32(vmgi_mat->vmgm_vobu_admap);
-  B2N_16(vmgi_mat->vmgm_audio_attr.lang_code);
   B2N_16(vmgi_mat->vmgm_subp_attr.lang_code);
   read_video_attr(&vmgi_mat->vmgm_video_attr);
+  read_audio_attr(&vmgi_mat->vmgm_audio_attr);
 
 
   CHECK_ZERO(vmgi_mat->zero_1);
@@ -412,6 +438,9 @@ static int ifoRead_VTS(ifo_handle_t *ifofile) {
 
   read_video_attr(&vtsi_mat->vtsm_video_attr);
   read_video_attr(&vtsi_mat->vts_video_attr);
+  read_audio_attr(&vtsi_mat->vtsm_audio_attr);
+  for(i=0; i<8; i++)
+    read_audio_attr(&vtsi_mat->vts_audio_attr[i]);
   B2N_32(vtsi_mat->vts_last_sector);
   B2N_32(vtsi_mat->vtsi_last_sector);
   B2N_32(vtsi_mat->vts_category);
@@ -426,10 +455,7 @@ static int ifoRead_VTS(ifo_handle_t *ifofile) {
   B2N_32(vtsi_mat->vtsm_vobu_admap);
   B2N_32(vtsi_mat->vts_c_adt);
   B2N_32(vtsi_mat->vts_vobu_admap);
-  B2N_16(vtsi_mat->vtsm_audio_attr.lang_code);
   B2N_16(vtsi_mat->vtsm_subp_attr.lang_code);
-  for(i = 0; i < 8; i++)
-    B2N_16(vtsi_mat->vts_audio_attr[i].lang_code);
   for(i = 0; i < 32; i++)
     B2N_16(vtsi_mat->vts_subp_attr[i].lang_code);
 
@@ -1865,12 +1891,12 @@ static int ifoRead_VTS_ATTRIBUTES(ifo_handle_t *ifofile,
 
   read_video_attr(&vts_attributes->vtsm_vobs_attr);
   read_video_attr(&vts_attributes->vtstt_vobs_video_attr);
+  read_audio_attr(&vts_attributes->vtsm_audio_attr);
+  for(i=0; i<8; i++)
+    read_audio_attr(&vts_attributes->vtstt_audio_attr[i]);
   B2N_32(vts_attributes->last_byte);
   B2N_32(vts_attributes->vts_cat);
-  B2N_16(vts_attributes->vtsm_audio_attr.lang_code);
   B2N_16(vts_attributes->vtsm_subp_attr.lang_code);
-  for(i = 0; i < 8; i++)
-    B2N_16(vts_attributes->vtstt_audio_attr[i].lang_code);
   for(i = 0; i < 32; i++)
     B2N_16(vts_attributes->vtstt_subp_attr[i].lang_code);
   

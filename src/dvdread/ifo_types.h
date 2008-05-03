@@ -94,7 +94,6 @@ typedef struct {
  * Audio Attributes.
  */
 typedef struct {
-#ifdef WORDS_BIGENDIAN
   unsigned char audio_format           : 3;
   unsigned char multichannel_extension : 1;
   unsigned char lang_type              : 2;
@@ -104,47 +103,22 @@ typedef struct {
   unsigned char sample_frequency       : 2;
   unsigned char unknown1               : 1;
   unsigned char channels               : 3;
-#else
-  unsigned char application_mode       : 2;
-  unsigned char lang_type              : 2;
-  unsigned char multichannel_extension : 1;
-  unsigned char audio_format           : 3;
-  
-  unsigned char channels               : 3;
-  unsigned char unknown1               : 1;
-  unsigned char sample_frequency       : 2;
-  unsigned char quantization           : 2;
-#endif
   uint16_t lang_code;
   uint8_t  lang_extension;
   uint8_t  code_extension;
   uint8_t unknown3;
   union {
     struct ATTRIBUTE_PACKED {
-#ifdef WORDS_BIGENDIAN
       unsigned char unknown4           : 1;
       unsigned char channel_assignment : 3;
       unsigned char version            : 2;
       unsigned char mc_intro           : 1; /* probably 0: true, 1:false */
       unsigned char mode               : 1; /* Karaoke mode 0: solo 1: duet */
-#else
-      unsigned char mode               : 1;
-      unsigned char mc_intro           : 1;
-      unsigned char version            : 2;
-      unsigned char channel_assignment : 3;
-      unsigned char unknown4           : 1;
-#endif
     } karaoke;
     struct ATTRIBUTE_PACKED {
-#ifdef WORDS_BIGENDIAN
       unsigned char unknown5           : 4;
       unsigned char dolby_encoded      : 1; /* suitable for surround decoding */
       unsigned char unknown6           : 3;
-#else
-      unsigned char unknown6           : 3;
-      unsigned char dolby_encoded      : 1;
-      unsigned char unknown5           : 4;
-#endif
     } surround;
   } app_info;
 } ATTRIBUTE_PACKED audio_attr_t;
