@@ -25,7 +25,6 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include "config.h" // Needed for WORDS_BIGENDIAN
 #include "ifo_types.h"
 #include "ifo_read.h"
 #include "ifo_print.h"
