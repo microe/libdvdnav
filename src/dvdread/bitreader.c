@@ -23,7 +23,6 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "bswap.h"
 #include "bitreader.h"
 
 int dvdread_getbits_init(getbits_state_t *state, uint8_t *start) {
