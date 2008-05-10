@@ -236,9 +236,8 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
   if(c == NULL) {
     c = calloc(1, sizeof(struct udf_cache));    
     /* fprintf(stderr, "calloc: %d\n", sizeof(struct udf_cache)); */
-    if(c == NULL) {
+    if(c == NULL)
       return 0;
-    }
     SetUDFCacheHandle(device, c);
   }
 
@@ -555,9 +554,9 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
 
       if(!GetUDFCache(device, LBUDFCache, lbnum, &cached_dir)) {
           dir_lba = (Dir.Length + DVD_VIDEO_LB_LEN) / DVD_VIDEO_LB_LEN;
-          if((cached_dir_base = malloc(dir_lba * DVD_VIDEO_LB_LEN + 2048)) == NULL) {
+          if((cached_dir_base = malloc(dir_lba * DVD_VIDEO_LB_LEN + 2048)) == NULL)
             return 0;
-          }
+
           cached_dir = (uint8_t *)(((uintptr_t)cached_dir_base & ~((uintptr_t)2047)) + 2048);
           if( DVDReadLBUDF( device, lbnum, dir_lba, cached_dir, 0) <= 0 ) {
             free(cached_dir_base);
@@ -679,13 +678,12 @@ static int UDFGetAVDP( dvd_reader_t *device,
         terminate = 1;
       } else {
         /* TODO: Find last sector of the disc (this is optional). */
-        if( lastsector ) {
+        if( lastsector )
           /* Try #2, backup anchor */
           lbnum = lastsector - 256;
-        } else {
+        else
           /* Unable to find last sector */
           return 0;
-        }
       }
     } else
       /* It's an anchor! We can leave */
@@ -749,7 +747,7 @@ static int UDFFindPartition( dvd_reader_t *device, int partnum,
                 part->valid = ( partnum == part->Number );
             } else if( ( TagID == 6 ) && ( !volvalid ) ) {
                 /* Logical Volume Descriptor */
-                if( UDFLogVolume( LogBlock, part->VolumeDesc ) ) {  
+                if( UDFLogVolume( LogBlock, part->VolumeDesc ) ) {
                     /* TODO: sector size wrong! */
                 } else
                     volvalid = 1;
