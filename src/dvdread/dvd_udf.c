@@ -226,6 +226,7 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
 {
   int n;
   struct udf_cache *c;
+  void *tmp;
 
   if(DVDUDFCacheLevel(device, -1) <= 0)
     return 0;
@@ -270,16 +271,18 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
       }
     }
     c->lb_num++;
-    c->lbs = realloc(c->lbs, c->lb_num * sizeof(struct lbudf));
+    tmp = realloc(c->lbs, c->lb_num * sizeof(struct lbudf));
     /*
     fprintf(stderr, "realloc lb: %d * %d = %d\n",
       c->lb_num, sizeof(struct lbudf),
       c->lb_num * sizeof(struct lbudf));
     */
-    if(c->lbs == NULL) {
+    if(tmp == NULL) {
+      if(c->lbs) free(c->lbs);
       c->lb_num = 0;
       return 0;
     }
+    c->lbs = tmp;
     c->lbs[n].data_base = ((uint8_t **)data)[0];
     c->lbs[n].data = ((uint8_t **)data)[1];
     c->lbs[n].lb = nr;
@@ -294,16 +297,18 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
       }
     }
     c->map_num++;
-    c->maps = realloc(c->maps, c->map_num * sizeof(struct icbmap));
+    tmp = realloc(c->maps, c->map_num * sizeof(struct icbmap));
     /*
     fprintf(stderr, "realloc maps: %d * %d = %d\n",
       c->map_num, sizeof(struct icbmap),
       c->map_num * sizeof(struct icbmap));
     */
-    if(c->maps == NULL) {
+    if(tmp == NULL) {
+      if(c->maps) free(c->maps);
       c->map_num = 0;
       return 0;
     }
+    c->maps = tmp;
     c->maps[n] = *(struct icbmap *)data;
     c->maps[n].lbn = nr;
     break;
