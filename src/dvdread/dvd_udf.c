@@ -501,7 +501,7 @@ static int UDFMapICB( dvd_reader_t *device, struct AD ICB, uint8_t *FileType,
     tmpmap.lbn = lbnum;
     if(GetUDFCache(device, MapCache, lbnum, &tmpmap)) {
       *FileType = tmpmap.filetype;
-      *File = tmpmap.file;
+      memcpy(File, &tmpmap.file, sizeof(tmpmap.file));
       return 1;
     }
 
@@ -514,7 +514,7 @@ static int UDFMapICB( dvd_reader_t *device, struct AD ICB, uint8_t *FileType,
 
         if( TagID == 261 ) {
             UDFFileEntry( LogBlock, FileType, partition, File );
-           tmpmap.file = *File;
+           memcpy(&tmpmap.file, File, sizeof(tmpmap.file));
            tmpmap.filetype = *FileType;
            SetUDFCache(device, MapCache, tmpmap.lbn, &tmpmap);
             return 1;
