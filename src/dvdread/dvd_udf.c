@@ -549,30 +549,29 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
       /* caching */
 
       if(!GetUDFCache(device, LBUDFCache, lbnum, &cached_dir)) {
-	dir_lba = (Dir.Length + DVD_VIDEO_LB_LEN) / DVD_VIDEO_LB_LEN;
-	if((cached_dir_base = malloc(dir_lba * DVD_VIDEO_LB_LEN + 2048)) == NULL) {
-	  return 0;
-	}
-	cached_dir = (uint8_t *)(((uintptr_t)cached_dir_base & ~((uintptr_t)2047)) + 2048);
-	if( DVDReadLBUDF( device, lbnum, dir_lba, cached_dir, 0) <= 0 ) {
-	  free(cached_dir_base);
-	  cached_dir_base = NULL;
-	  cached_dir = NULL;
-	}
-	/*
-	if(cached_dir) {
-	  fprintf(stderr, "malloc dir: %d\n",
-		  dir_lba * DVD_VIDEO_LB_LEN);
-	}
-	*/
-	{
-	  uint8_t *data[2];
-	  data[0] = cached_dir_base;
-	  data[1] = cached_dir;
-	  SetUDFCache(device, LBUDFCache, lbnum, data);
-	}
+          dir_lba = (Dir.Length + DVD_VIDEO_LB_LEN) / DVD_VIDEO_LB_LEN;
+          if((cached_dir_base = malloc(dir_lba * DVD_VIDEO_LB_LEN + 2048)) == NULL) {
+            return 0;
+          }
+          cached_dir = (uint8_t *)(((uintptr_t)cached_dir_base & ~((uintptr_t)2047)) + 2048);
+          if( DVDReadLBUDF( device, lbnum, dir_lba, cached_dir, 0) <= 0 ) {
+            free(cached_dir_base);
+            cached_dir_base = NULL;
+            cached_dir = NULL;
+          }
+          /*
+          if(cached_dir) {
+            fprintf(stderr, "malloc dir: %d\n",  dir_lba * DVD_VIDEO_LB_LEN);
+          }
+          */
+          {
+            uint8_t *data[2];
+            data[0] = cached_dir_base;
+            data[1] = cached_dir;
+            SetUDFCache(device, LBUDFCache, lbnum, data);
+          }
       } else
-	in_cache = 1;
+        in_cache = 1;
 
       if(cached_dir == NULL)
         return 0;
@@ -582,30 +581,26 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
       while( p < Dir.Length ) {
         UDFDescriptor( &cached_dir[ p ], &TagID );
         if( TagID == 257 ) {
-	  p += UDFFileIdentifier( &cached_dir[ p ], &filechar,
-				  filename, &tmpICB );
-	  if(cache_file_info && !in_cache) {
-	    uint8_t tmpFiletype;
-	    struct AD tmpFile;
+          p += UDFFileIdentifier( &cached_dir[ p ], &filechar, filename, &tmpICB );
+          if(cache_file_info && !in_cache) {
+            uint8_t tmpFiletype;
+            struct AD tmpFile;
 
-	    if( !strcasecmp( FileName, filename ) ) {
-	      *FileICB = tmpICB;
-	      found = 1;
-
-	    }
-	    UDFMapICB(device, tmpICB, &tmpFiletype,
-		      partition, &tmpFile);
-	  } else {
-	    if( !strcasecmp( FileName, filename ) ) {
-	      *FileICB = tmpICB;
-	      return 1;
-	    }
-	  }
+            if( !strcasecmp( FileName, filename ) ) {
+                *FileICB = tmpICB;
+                found = 1;
+            }
+            UDFMapICB(device, tmpICB, &tmpFiletype, partition, &tmpFile);
+          } else {
+            if( !strcasecmp( FileName, filename ) ) {
+                *FileICB = tmpICB;
+                return 1;
+            }
+          }
         } else {
-	  if(cache_file_info && (!in_cache) && found) {
-	    return 1;
-	  }
-	  return 0;
+          if(cache_file_info && (!in_cache) && found)
+            return 1;
+          return 0;
         }
       }
       if(cache_file_info && (!in_cache) && found)
@@ -618,23 +613,23 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
 
     p = 0;
     while( p < Dir.Length ) {
-        if( p > DVD_VIDEO_LB_LEN ) {
-            ++lbnum;
-            p -= DVD_VIDEO_LB_LEN;
-            Dir.Length -= DVD_VIDEO_LB_LEN;
-            if( DVDReadLBUDF( device, lbnum, 2, directory, 0 ) <= 0 ) {
-                return 0;
-            }
-        }
-        UDFDescriptor( &directory[ p ], &TagID );
-        if( TagID == 257 ) {
-            p += UDFFileIdentifier( &directory[ p ], &filechar,
-                                    filename, FileICB );
-            if( !strcasecmp( FileName, filename ) ) {
-                return 1;
-            }
-        } else
+      if( p > DVD_VIDEO_LB_LEN ) {
+        ++lbnum;
+        p -= DVD_VIDEO_LB_LEN;
+        Dir.Length -= DVD_VIDEO_LB_LEN;
+        if( DVDReadLBUDF( device, lbnum, 2, directory, 0 ) <= 0 ) {
             return 0;
+        }
+      }
+      UDFDescriptor( &directory[ p ], &TagID );
+      if( TagID == 257 ) {
+        p += UDFFileIdentifier( &directory[ p ], &filechar,
+                                filename, FileICB );
+        if( !strcasecmp( FileName, filename ) ) {
+            return 1;
+        }
+      } else
+          return 0;
     }
 
     return 0;
@@ -671,21 +666,21 @@ static int UDFGetAVDP( dvd_reader_t *device,
       if( terminate ) return 0; /* Final try failed */
 
       if( lastsector ) {
-	
-	/* We already found the last sector.  Try #3, alternative
-	 * backup anchor.  If that fails, don't try again.
-	 */
-	lbnum = lastsector;
-	terminate = 1;
+        /*
+         * We already found the last sector.  Try #3, alternative
+         * backup anchor.  If that fails, don't try again.
+        */
+        lbnum = lastsector;
+        terminate = 1;
       } else {
-	/* TODO: Find last sector of the disc (this is optional). */
-	if( lastsector ) {
-	  /* Try #2, backup anchor */
-	  lbnum = lastsector - 256;
-	} else {
-	  /* Unable to find last sector */
-	  return 0;
-	}
+        /* TODO: Find last sector of the disc (this is optional). */
+        if( lastsector ) {
+          /* Try #2, backup anchor */
+          lbnum = lastsector - 256;
+        } else {
+          /* Unable to find last sector */
+          return 0;
+        }
       }
     } else
       /* It's an anchor! We can leave */
@@ -760,9 +755,9 @@ static int UDFFindPartition( dvd_reader_t *device, int partnum,
                  && ( ( !part->valid ) || ( !volvalid ) ) );
 
         if( ( !part->valid) || ( !volvalid ) ) {
-	  /* Backup volume descriptor */
-	  MVDS_location = avdp.mvds.location;
-	  MVDS_length = avdp.mvds.length;
+            /* Backup volume descriptor */
+            MVDS_location = avdp.mvds.location;
+            MVDS_length = avdp.mvds.length;
         }
     } while( i-- && ( ( !part->valid ) || ( !volvalid ) ) );
 
