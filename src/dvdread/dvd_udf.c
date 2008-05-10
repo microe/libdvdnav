@@ -153,9 +153,8 @@ void FreeUDFCache(void *cache)
       free(c->lbs[n].data_base);
     free(c->lbs);
   }
-  if(c->maps) {
+  if(c->maps)
     free(c->maps);
-  }
   free(c);
 }
 
@@ -228,9 +227,8 @@ static int SetUDFCache(dvd_reader_t *device, UDFCacheType type,
   int n;
   struct udf_cache *c;
 
-  if(DVDUDFCacheLevel(device, -1) <= 0) {
+  if(DVDUDFCacheLevel(device, -1) <= 0)
     return 0;
-  }
 
   c = (struct udf_cache *)GetUDFCacheHandle(device);
 
@@ -503,11 +501,10 @@ static int UDFMapICB( dvd_reader_t *device, struct AD ICB, uint8_t *FileType,
     }
 
     do {
-        if( DVDReadLBUDF( device, lbnum++, 1, LogBlock, 0 ) <= 0 ) {
+        if( DVDReadLBUDF( device, lbnum++, 1, LogBlock, 0 ) <= 0 )
             TagID = 0;
-        } else {
+        else
             UDFDescriptor( LogBlock, &TagID );
-        }
 
         if( TagID == 261 ) {
             UDFFileEntry( LogBlock, FileType, partition, File );
@@ -574,9 +571,8 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
 	  data[1] = cached_dir;
 	  SetUDFCache(device, LBUDFCache, lbnum, data);
 	}
-      } else {
+      } else
 	in_cache = 1;
-      }
 
       if(cached_dir == NULL)
         return 0;
@@ -637,9 +633,8 @@ static int UDFScanDir( dvd_reader_t *device, struct AD Dir, char *FileName,
             if( !strcasecmp( FileName, filename ) ) {
                 return 1;
             }
-        } else {
+        } else
             return 0;
-        }
     }
 
     return 0;
@@ -692,10 +687,9 @@ static int UDFGetAVDP( dvd_reader_t *device,
 	  return 0;
 	}
       }
-    } else {
+    } else
       /* It's an anchor! We can leave */
       break;
-    }
   }
   /* Main volume descriptor */
   UDFExtentAD( &Anchor[ 16 ], &MVDS_length, &MVDS_location );
@@ -743,11 +737,10 @@ static int UDFFindPartition( dvd_reader_t *device, int partnum,
         lbnum = MVDS_location;
         do {
 
-            if( DVDReadLBUDF( device, lbnum++, 1, LogBlock, 0 ) <= 0 ) {
+            if( DVDReadLBUDF( device, lbnum++, 1, LogBlock, 0 ) <= 0 )
                 TagID = 0;
-            } else {
+            else
                 UDFDescriptor( LogBlock, &TagID );
-            }
 
             if( ( TagID == 5 ) && ( !part->valid ) ) {
                 /* Partition Descriptor */
