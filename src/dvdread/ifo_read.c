@@ -180,6 +180,40 @@ static void read_subp_attr(subp_attr_t *sa) {
   sa->code_extension = dvdread_getbits(&state, 8);
 }
 
+static void read_user_ops(user_ops_t *uo) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(user_ops_t)];
+  
+  memcpy(buf, uo, sizeof(user_ops_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  uo->zero                           = dvdread_getbits(&state, 7);
+  uo->video_pres_mode_change         = dvdread_getbits(&state, 1);
+  uo->karaoke_audio_pres_mode_change = dvdread_getbits(&state, 1);
+  uo->angle_change                   = dvdread_getbits(&state, 1);
+  uo->subpic_stream_change           = dvdread_getbits(&state, 1);
+  uo->audio_stream_change            = dvdread_getbits(&state, 1);
+  uo->pause_on                       = dvdread_getbits(&state, 1);
+  uo->still_off                      = dvdread_getbits(&state, 1);
+  uo->button_select_or_activate      = dvdread_getbits(&state, 1);
+  uo->resume                         = dvdread_getbits(&state, 1);
+  uo->chapter_menu_call              = dvdread_getbits(&state, 1);
+  uo->angle_menu_call                = dvdread_getbits(&state, 1);
+  uo->audio_menu_call                = dvdread_getbits(&state, 1);
+  uo->subpic_menu_call               = dvdread_getbits(&state, 1);
+  uo->root_menu_call                 = dvdread_getbits(&state, 1);
+  uo->title_menu_call                = dvdread_getbits(&state, 1);
+  uo->backward_scan                  = dvdread_getbits(&state, 1);
+  uo->forward_scan                   = dvdread_getbits(&state, 1);
+  uo->next_pg_search                 = dvdread_getbits(&state, 1);
+  uo->prev_or_top_pg_search          = dvdread_getbits(&state, 1);
+  uo->time_or_chapter_search         = dvdread_getbits(&state, 1);
+  uo->go_up                          = dvdread_getbits(&state, 1);
+  uo->stop                           = dvdread_getbits(&state, 1);
+  uo->title_play                     = dvdread_getbits(&state, 1);
+  uo->chapter_search_or_play         = dvdread_getbits(&state, 1);
+  uo->title_or_time_play             = dvdread_getbits(&state, 1);
+}
+
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
 
@@ -721,6 +755,7 @@ static int ifoRead_PGC(ifo_handle_t *ifofile, pgc_t *pgc, unsigned int offset) {
   if(!(DVDReadBytes(ifofile->file, pgc, PGC_SIZE)))
     return 0;
 
+  read_user_ops(&pgc->prohibited_ops);
   B2N_16(pgc->next_pgc_nr);
   B2N_16(pgc->prev_pgc_nr);
   B2N_16(pgc->goup_pgc_nr);
