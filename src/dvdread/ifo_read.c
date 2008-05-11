@@ -214,6 +214,20 @@ static void read_user_ops(user_ops_t *uo) {
   uo->title_or_time_play             = dvdread_getbits(&state, 1);
 }
 
+static void read_pgci_srp(pgci_srp_t *ps) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(pgci_srp_t)];
+  
+  memcpy(buf, ps, sizeof(pgci_srp_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  ps->entry_id                       = dvdread_getbits(&state, 8);
+  ps->block_mode                     = dvdread_getbits(&state, 2);
+  ps->block_type                     = dvdread_getbits(&state, 2);
+  ps->unknown1                       = dvdread_getbits(&state, 4);
+  ps->ptl_id_mask                    = dvdread_getbits(&state, 16);
+  ps->pgc_start_byte                 = dvdread_getbits(&state, 32);
+}
+
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
 
@@ -1752,8 +1766,7 @@ static int ifoRead_PGCIT_internal(ifo_handle_t *ifofile, pgcit_t *pgcit,
   for(i = 0; i < pgcit->nr_of_pgci_srp; i++) {
     memcpy(&pgcit->pgci_srp[i], ptr, PGCI_SRP_SIZE);
     ptr += PGCI_SRP_SIZE;
-    B2N_16(pgcit->pgci_srp[i].ptl_id_mask);
-    B2N_32(pgcit->pgci_srp[i].pgc_start_byte);
+    read_pgci_srp(&pgcit->pgci_srp[i]);
     CHECK_VALUE(pgcit->pgci_srp[i].unknown1 == 0);
   }
   free(data);

@@ -320,15 +320,9 @@ typedef struct {
  */
 typedef struct {
   uint8_t  entry_id;
-#ifdef WORDS_BIGENDIAN
   unsigned int block_mode : 2;
   unsigned int block_type : 2;
   unsigned int unknown1   : 4;
-#else
-  unsigned char unknown1   : 4;
-  unsigned char block_type : 2;
-  unsigned char block_mode : 2;
-#endif  
   uint16_t ptl_id_mask;
   uint32_t pgc_start_byte;
   pgc_t *pgc;
