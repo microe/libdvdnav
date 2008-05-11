@@ -257,6 +257,22 @@ static void read_cell_playback(cell_playback_t *cp) {
   cp->last_sector                     = dvdread_getbits(&state, 32);
 }
 
+static void read_playback_type(playback_type_t *pt) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(playback_type_t)];
+  
+  memcpy(buf, pt, sizeof(playback_type_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  pt->zero_1                          = dvdread_getbits(&state, 1);
+  pt->multi_or_random_pgc_title       = dvdread_getbits(&state, 1);
+  pt->jlc_exists_in_cell_cmd          = dvdread_getbits(&state, 1);
+  pt->jlc_exists_in_prepost_cmd       = dvdread_getbits(&state, 1);
+  pt->jlc_exists_in_button_cmd        = dvdread_getbits(&state, 1);
+  pt->jlc_exists_in_tt_dom            = dvdread_getbits(&state, 1);
+  pt->chapter_search_or_play          = dvdread_getbits(&state, 1);
+  pt->title_or_time_play              = dvdread_getbits(&state, 1);
+}
+
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
 
@@ -1013,6 +1029,7 @@ int ifoRead_TT_SRPT(ifo_handle_t *ifofile) {
   CHECK_VALUE((int)tt_srpt->nr_of_srpts * sizeof(title_info_t) <= info_length);
   
   for(i = 0; i < tt_srpt->nr_of_srpts; i++) {
+    read_playback_type(&tt_srpt->title[i].pb_ty);
     CHECK_VALUE(tt_srpt->title[i].pb_ty.zero_1 == 0);
     CHECK_VALUE(tt_srpt->title[i].nr_of_angles != 0);
     CHECK_VALUE(tt_srpt->title[i].nr_of_angles < 10);

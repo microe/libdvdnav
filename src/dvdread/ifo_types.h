@@ -433,7 +433,6 @@ typedef struct {
 } ATTRIBUTE_PACKED vmgi_mat_t;
 
 typedef struct {
-#ifdef WORDS_BIGENDIAN
   unsigned int zero_1                    : 1;
   unsigned int multi_or_random_pgc_title : 1; /* 0: one sequential pgc title */
   unsigned int jlc_exists_in_cell_cmd    : 1;
@@ -442,16 +441,6 @@ typedef struct {
   unsigned int jlc_exists_in_tt_dom      : 1;
   unsigned int chapter_search_or_play    : 1; /* UOP 1 */
   unsigned int title_or_time_play        : 1; /* UOP 0 */
-#else
-  unsigned char title_or_time_play        : 1;
-  unsigned char chapter_search_or_play    : 1;
-  unsigned char jlc_exists_in_tt_dom      : 1;
-  unsigned char jlc_exists_in_button_cmd  : 1;
-  unsigned char jlc_exists_in_prepost_cmd : 1;
-  unsigned char jlc_exists_in_cell_cmd    : 1;
-  unsigned char multi_or_random_pgc_title : 1;
-  unsigned char zero_1                    : 1;
-#endif
 } ATTRIBUTE_PACKED playback_type_t;
 
 /**
