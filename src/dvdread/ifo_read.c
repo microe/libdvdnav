@@ -228,6 +228,35 @@ static void read_pgci_srp(pgci_srp_t *ps) {
   ps->pgc_start_byte                 = dvdread_getbits(&state, 32);
 }
 
+static void read_cell_playback(cell_playback_t *cp) {
+  getbits_state_t state;
+  uint8_t buf[sizeof(cell_playback_t)];
+  
+  memcpy(buf, cp, sizeof(cell_playback_t));
+  if (!dvdread_getbits_init(&state, buf)) abort();
+  cp->block_mode                      = dvdread_getbits(&state, 2);
+  cp->block_type                      = dvdread_getbits(&state, 2);
+  cp->seamless_play                   = dvdread_getbits(&state, 1);
+  cp->interleaved                     = dvdread_getbits(&state, 1);
+  cp->stc_discontinuity               = dvdread_getbits(&state, 1);
+  cp->seamless_angle                  = dvdread_getbits(&state, 1);
+  cp->playback_mode                   = dvdread_getbits(&state, 1);
+  cp->restricted                      = dvdread_getbits(&state, 1);
+  cp->unknown2                        = dvdread_getbits(&state, 6);
+  cp->still_time                      = dvdread_getbits(&state, 8);
+  cp->cell_cmd_nr                     = dvdread_getbits(&state, 8);
+  
+  cp->playback_time.hour              = dvdread_getbits(&state, 8);
+  cp->playback_time.minute            = dvdread_getbits(&state, 8);
+  cp->playback_time.second            = dvdread_getbits(&state, 8);
+  cp->playback_time.frame_u           = dvdread_getbits(&state, 8);
+  
+  cp->first_sector                    = dvdread_getbits(&state, 32);
+  cp->first_ilvu_end_sector           = dvdread_getbits(&state, 32);
+  cp->last_vobu_start_sector          = dvdread_getbits(&state, 32);
+  cp->last_sector                     = dvdread_getbits(&state, 32);
+}
+
 ifo_handle_t *ifoOpen(dvd_reader_t *dvd, int title) {
   ifo_handle_t *ifofile;
 
@@ -724,11 +753,7 @@ static int ifoRead_CELL_PLAYBACK_TBL(ifo_handle_t *ifofile,
     return 0;
 
   for(i = 0; i < nr; i++) {
-    B2N_32(cell_playback[i].first_sector);
-    B2N_32(cell_playback[i].first_ilvu_end_sector);
-    B2N_32(cell_playback[i].last_vobu_start_sector);
-    B2N_32(cell_playback[i].last_sector);
-    
+    read_cell_playback(&cell_playback[i]);
     /* Changed < to <= because this was false in the movie 'Pi'. */
     CHECK_VALUE(cell_playback[i].last_vobu_start_sector <= 
            cell_playback[i].last_sector);

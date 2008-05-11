@@ -203,29 +203,15 @@ typedef uint8_t pgc_program_map_t;
  * Cell Playback Information.
  */
 typedef struct {
-#ifdef WORDS_BIGENDIAN
   unsigned int block_mode       : 2;
   unsigned int block_type       : 2;
   unsigned int seamless_play    : 1;
   unsigned int interleaved      : 1;
   unsigned int stc_discontinuity: 1;
   unsigned int seamless_angle   : 1;
-  
   unsigned int playback_mode    : 1;  /**< When set, enter StillMode after each VOBU */
   unsigned int restricted       : 1;  /**< ?? drop out of fastforward? */
   unsigned int unknown2         : 6;
-#else
-  unsigned char seamless_angle   : 1;
-  unsigned char stc_discontinuity: 1;
-  unsigned char interleaved      : 1;
-  unsigned char seamless_play    : 1;
-  unsigned char block_type       : 2;
-  unsigned char block_mode       : 2;
-  
-  unsigned char unknown2         : 6;
-  unsigned char restricted       : 1;
-  unsigned char playback_mode    : 1;
-#endif
   uint8_t still_time;
   uint8_t cell_cmd_nr;
   dvd_time_t playback_time;
