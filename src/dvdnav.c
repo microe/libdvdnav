@@ -137,11 +137,13 @@ dvdnav_status_t dvdnav_close(dvdnav_t *this) {
 #endif
 
   if (this->file) {
+    pthread_mutex_lock(&this->vm_lock); 
     DVDCloseFile(this->file);
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: close:file closing\n");
 #endif
     this->file = NULL;
+    pthread_mutex_unlock(&this->vm_lock); 
   }
 
   /* Free the VM */
