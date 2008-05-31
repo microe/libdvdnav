@@ -1,11 +1,11 @@
 include $(top_srcdir)/misc/Makefile.common
 
-SUBDIRS = dvdread vm
+SUBDIRS = libdvdread vm
 
 includedir = ${prefix}/include/dvdnav
 
 AM_CPPFLAGS = -DDVDNAV_COMPILE $(THREAD_CFLAGS) \
-	-I$(top_srcdir)/src/dvdread -I$(top_srcdir)/src/vm
+	-I$(top_srcdir)/src/libdvdread -I$(top_srcdir)/src/vm
 
 EXTRA_DIST = README.MAP FELLOWSHIP.map
 
@@ -17,7 +17,7 @@ libdvdnav_la_SOURCES = dvdnav.c \
 	dvdnav_internal.h read_cache.h remap.h
 
 libdvdnav_la_LIBADD = $(THREAD_LIBS) \
-	$(top_builddir)/src/dvdread/libdvdread.la \
+	$(top_builddir)/src/libdvdread/libdvdread.la \
 	$(top_builddir)/src/vm/libdvdvm.la
 
 libdvdnav_la_LDFLAGS = \

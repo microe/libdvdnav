@@ -1,6 +1,6 @@
 include $(top_srcdir)/misc/Makefile.common
 
-includedir = ${prefix}/include/dvdread
+includedir = ${prefix}/include/libdvdread
 
 AM_CPPFLAGS = -DDVDNAV_COMPILE -I$(top_srcdir)/src/vm
 

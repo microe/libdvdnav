@@ -224,7 +224,7 @@ dnl ---------------------------------------------
 AC_OUTPUT([
 Makefile 
 src/Makefile
-src/dvdread/Makefile
+src/libdvdread/Makefile
 src/vm/Makefile
 misc/Makefile
 misc/dvdnav-config

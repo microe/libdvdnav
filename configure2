@@ -49,7 +49,7 @@ show_help(){
 SHARED=yes
 STATIC=yes
 DVDREAD=internal
-dvdread_dir=src/dvdread/
+dvdread_dir=src/libdvdread/
 PREFIX=/usr/local/
 INSTALLSTRIP=-s
 USEDEBUG=-g
@@ -102,7 +102,7 @@ PREFIX=`cd $PREFIX && pwd`
 
 test -z "$libdir" && libdir=$PREFIX/lib
 test -z "$shlibdir" && shlibdir=$PREFIX/lib
-test -z "$incdir" && incdir=$PREFIX/include/dvdnav && dvdread_incdir=$PREFIX/include/dvdread
+test -z "$incdir" && incdir=$PREFIX/include/dvdnav && dvdread_incdir=$PREFIX/include/libdvdread
 
 if [ "$DVDREAD" != "internal" ] ; then
   if [ -d "$DVDREAD" -a -f "$DVDREAD/dvd_reader.h" ] ; then

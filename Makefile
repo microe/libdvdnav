@@ -27,19 +27,19 @@ ifeq ($(DVDREAD),internal)
 DVDREAD_L=libdvdread
 DVDREAD_LIB = $(DVDREAD_L).a
 DVDREAD_SHLIB = $(DVDREAD_L).so
-VPATH+= $(SRC_PATH_BARE)/src/dvdread
-DVDREAD_HEADERS = src/dvdread/dvd_reader.h \
-	src/dvdread/ifo_print.h \
-	src/dvdread/ifo_read.h \
-	src/dvdread/ifo_types.h \
-	src/dvdread/nav_print.h \
-	src/dvdread/nav_read.h \
-	src/dvdread/dvd_udf.h \
-	src/dvdread/nav_types.h \
-	src/dvdread/bitreader.h
+VPATH+= $(SRC_PATH_BARE)/src/libdvdread
+DVDREAD_HEADERS = src/libdvdread/dvd_reader.h \
+	src/libdvdread/ifo_print.h \
+	src/libdvdread/ifo_read.h \
+	src/libdvdread/ifo_types.h \
+	src/libdvdread/nav_print.h \
+	src/libdvdread/nav_read.h \
+	src/libdvdread/dvd_udf.h \
+	src/libdvdread/nav_types.h \
+	src/libdvdread/bitreader.h
 DVDREAD_SRCS = dvd_input.c dvd_reader.c dvd_udf.c ifo_print.c ifo_read.c \
 	md5.c nav_print.c nav_read.c bitreader.c
-CFLAGS += -I$(SRC_PATH)/src/dvdread
+CFLAGS += -I$(SRC_PATH)/src/libdvdread
 else
 CFLAGS += -I$(DVDREAD_DIR)
 endif

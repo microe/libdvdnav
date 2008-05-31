@@ -3,7 +3,7 @@ include $(top_srcdir)/misc/Makefile.common
 includedir = ${prefix}/include/dvdnav
 
 AM_CPPFLAGS = -DDVDNAV_COMPILE $(THREAD_CFLAGS) \
-	-I$(top_srcdir)/src -I$(top_srcdir)/src/dvdread
+	-I$(top_srcdir)/src -I$(top_srcdir)/src/libdvdread
 
 noinst_LTLIBRARIES = libdvdvm.la
 
