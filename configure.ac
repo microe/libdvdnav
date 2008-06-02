@@ -13,10 +13,10 @@ AC_PREREQ(2.53)
 dnl --------------------------------------------------------------
 dnl Making releases: DVDNAV_SUB += 1; change DVDNAV_LT_* accordingly
 dnl --------------------------------------------------------------
-DVDNAV_MAJOR=0
-DVDNAV_MINOR=2
-DVDNAV_SUB=1
-DVDNAV_PRE="cvs"
+DVDNAV_MAJOR=4
+DVDNAV_MINOR=1
+DVDNAV_SUB=2
+DVDNAV_PRE=""
 
 AC_SUBST(DVDNAV_MAJOR)
 AC_SUBST(DVDNAV_MINOR)
@@ -49,7 +49,7 @@ dnl    libname.so.(DVDNAV_LT_CURRENT - DVDNAV_LT_AGE).DVDNAV_LT_AGE.DVDNAV_LT_RE
 
 DVDNAV_LT_CURRENT=5
 DVDNAV_LT_AGE=1
-DVDNAV_LT_REVISION=1
+DVDNAV_LT_REVISION=2
 
 AC_SUBST(DVDNAV_LT_CURRENT)
 AC_SUBST(DVDNAV_LT_AGE)
