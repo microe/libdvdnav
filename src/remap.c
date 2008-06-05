@@ -200,6 +200,7 @@ remap_t* remap_loadmap( char *title) {
     block_t tmp;
     remap_t *map;
 
+    memset(&tmp, 0, sizeof(tmp));
     /* Build the map filename */
     home = getenv("HOME");
     if(!home) {
