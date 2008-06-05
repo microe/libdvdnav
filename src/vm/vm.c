@@ -159,7 +159,7 @@ static void dvd_read_name(char *name, const char *device) {
               fprintf(MSG_OUT, " ");
             }
           }
-          strncpy(name, &data[25], 48);
+          strncpy(name, (char*) &data[25], 48);
           name[48] = 0;
           fprintf(MSG_OUT, "\nlibdvdnav: DVD Serial Number: ");
           for(i=73; i < 89; i++ ) {
