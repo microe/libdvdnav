@@ -176,7 +176,8 @@ int main(int argc, char **argv) {
        * information only when necessary and update the decoding/displaying
        * accordingly. */
       {
-	int tt = 0, ptt = 0, pos, len;
+	int32_t tt = 0, ptt = 0;
+	uint32_t pos, len;
 	char input = '\0';
 	
 	dvdnav_current_title_info(dvdnav, &tt, &ptt);
