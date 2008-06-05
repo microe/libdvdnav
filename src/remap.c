@@ -35,7 +35,6 @@
 #endif
 #endif /* _MSC_VER */
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <sys/time.h>
@@ -202,7 +201,11 @@ remap_t* remap_loadmap( char *title) {
     remap_t *map;
 
     /* Build the map filename */
-    home = getenv("HOME"); assert(home);
+    home = getenv("HOME");
+    if(!home) {
+        fprintf(MSG_OUT, "libdvdnav: Unable to find home directory" );
+        return NULL;
+    }
     snprintf(fname, sizeof(fname), "%s/.dvdnav/%s.map", home, title);
 
     /* Open the map file */
