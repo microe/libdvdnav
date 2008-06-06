@@ -4,6 +4,16 @@ Foundation, Inc.
    This file is free documentation; the Free Software Foundation gives
 unlimited permission to copy, distribute and modify it.
 
+New build system
+================
+
+   The `configure2' shell script is a replacement for the autotools-
+-based `configure'. Either use only `configure2' or run `autogen.sh'
+and use the generated `configure'. Note that running `configure'
+overwrites the original Makefiles necessary for `configure2', so
+compilation won't succeed if you try using `configure2` after running
+`configure'.
+
 Basic Installation
 ==================
 
