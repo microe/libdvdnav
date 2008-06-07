@@ -19,6 +19,7 @@ m4_define([dvdnav_pre],   [])
 
 AC_INIT([libdvdnav], [dvdnav_major.dvdnav_minor.dvdnav_sub[]dvdnav_pre])
 AC_CONFIG_SRCDIR([src/dvdnav.c])
+AM_INIT_AUTOMAKE([1.3])
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AC_CONFIG_HEADERS([config.h])
