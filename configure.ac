@@ -107,7 +107,7 @@ dnl --------------------------------------------------------------
 dnl Libtool
 dnl --------------------------------------------------------------
 dnl LT_PREREQ only available in libtool-2.2+
-LT_PREREQ([1.4.0])
+dnl LT_PREREQ([1.4.0])
 AC_LIBTOOL_DLOPEN
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
