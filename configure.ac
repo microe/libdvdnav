@@ -8,7 +8,7 @@ AC_CONFIG_SRCDIR([src/dvdnav.c])
 dnl --------------------------------------------------------------
 dnl Require autoconf version 2.53
 dnl --------------------------------------------------------------
-AC_PREREQ(2.53)
+AC_PREREQ([2.53])
 
 dnl --------------------------------------------------------------
 dnl Making releases: DVDNAV_SUB += 1; change DVDNAV_LT_* accordingly
