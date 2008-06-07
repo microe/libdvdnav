@@ -67,19 +67,6 @@ AC_SUBST(DVDNAV_LT_CURRENT)
 AC_SUBST(DVDNAV_LT_AGE)
 AC_SUBST(DVDNAV_LT_REVISION)
 
-PACKAGE=$PACKAGE_NAME
-RELEASE="1"
-TAR_NAME=$PACKAGE_NAME-$PACKAGE_VERSION
-SPEC_VERSION=$PACKAGE_VERSION
-
-AC_SUBST(TAR_NAME)
-AC_SUBST(SPEC_VERSION)
-AC_SUBST(PACKAGE)
-AC_SUBST(RELEASE)
-
-LIBNAME=libdvdnav$DVDNAV_MAJOR
-AC_SUBST(LIBNAME)
-
 dnl --------------------------------------------------------------
 dnl Make possible to build for another arch.
 dnl --------------------------------------------------------------
