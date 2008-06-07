@@ -2,21 +2,32 @@ dnl --------------------------------------------------------------
 dnl Configure.ac for libdvdnav
 dnl --------------------------------------------------------------
 
-AC_INIT
-AC_CONFIG_SRCDIR([src/dvdnav.c])
-
 dnl --------------------------------------------------------------
 dnl Require autoconf version 2.53
 dnl --------------------------------------------------------------
 AC_PREREQ([2.53])
 
 dnl --------------------------------------------------------------
-dnl Making releases: DVDNAV_SUB += 1; change DVDNAV_LT_* accordingly
+dnl Making releases: dvdnav_sub += 1; change DVDNAV_LT_* accordingly
+dnl
+dnl These are defined in m4 so they can be passed to AC_INIT
 dnl --------------------------------------------------------------
-DVDNAV_MAJOR=4
-DVDNAV_MINOR=1
-DVDNAV_SUB=2
-DVDNAV_PRE=""
+m4_define([dvdnav_major], [4])
+m4_define([dvdnav_minor], [1])
+m4_define([dvdnav_sub],   [2])
+m4_define([dvdnav_pre],   [])
+
+AC_INIT([libdvdnav], [dvdnav_major.dvdnav_minor.dvdnav_sub[]dvdnav_pre])
+AC_CONFIG_SRCDIR([src/dvdnav.c])
+
+dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
+AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_HOST
+
+DVDNAV_MAJOR="dvdnav_major"
+DVDNAV_MINOR="dvdnav_minor"
+DVDNAV_SUB="dvdnav_sub"
+DVDNAV_PRE="dvdnav_pre"
 
 AC_SUBST(DVDNAV_MAJOR)
 AC_SUBST(DVDNAV_MINOR)
@@ -55,10 +66,10 @@ AC_SUBST(DVDNAV_LT_CURRENT)
 AC_SUBST(DVDNAV_LT_AGE)
 AC_SUBST(DVDNAV_LT_REVISION)
 
-PACKAGE="libdvdnav"
+PACKAGE=$PACKAGE_NAME
 RELEASE="1"
-TAR_NAME=$PACKAGE-$DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE
-SPEC_VERSION=$DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE
+TAR_NAME=$PACKAGE_NAME-$PACKAGE_VERSION
+SPEC_VERSION=$PACKAGE_VERSION
 
 AC_SUBST(TAR_NAME)
 AC_SUBST(SPEC_VERSION)
@@ -67,10 +78,6 @@ AC_SUBST(RELEASE)
 
 LIBNAME=libdvdnav$DVDNAV_MAJOR
 AC_SUBST(LIBNAME)
-
-AC_CANONICAL_TARGET
-
-AM_INIT_AUTOMAKE("libdvdnav", $DVDNAV_MAJOR.$DVDNAV_MINOR.$DVDNAV_SUB$DVDNAV_PRE)
 
 dnl --------------------------------------------------------------
 dnl Make possible to build for another arch.
@@ -82,9 +89,6 @@ if test x$DVDNAV_BUILD != "x"; then
 else
   check_athlon=yes
 fi
-
-dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
-AM_CONFIG_HEADER(config.h)
 
 dnl --------------------------------------------------------------
 dnl Checks for programs.
