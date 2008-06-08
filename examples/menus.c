@@ -28,9 +28,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "dvd_types.h"
-#include "dvd_reader.h"
-#include "nav_types.h"
-#include "ifo_types.h" /* For vm_cmd_t */
+#include <libdvdread/dvd_reader.h>
+#include <libdvdread/nav_types.h>
+#include <libdvdread/ifo_types.h> /* For vm_cmd_t */
 #include "dvdnav.h"
 #include "dvdnav_events.h"
 
