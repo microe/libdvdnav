@@ -48,8 +48,7 @@ show_help(){
 
 SHARED=yes
 STATIC=yes
-DVDREAD=internal
-dvdread_dir=src/libdvdread/
+DVDREAD_CONFIG=dvdread-config
 PREFIX=/usr/local/
 INSTALLSTRIP=-s
 USEDEBUG=-g
@@ -67,7 +66,7 @@ for opt do
   ;;
   --disable-static) STATIC=no
   ;;
-  --with-dvdread=*) DVDREAD="$optval"
+  --with-dvdread-config=*) DVDREAD_CONFIG="$optval"
   ;;
   --prefix=*) PREFIX="$optval"
   ;;
@@ -102,16 +101,15 @@ PREFIX=`cd $PREFIX && pwd`
 
 test -z "$libdir" && libdir=$PREFIX/lib
 test -z "$shlibdir" && shlibdir=$PREFIX/lib
-test -z "$incdir" && incdir=$PREFIX/include/dvdnav && dvdread_incdir=$PREFIX/include/libdvdread
+test -z "$incdir" && incdir=$PREFIX/include/dvdnav
 
-if [ "$DVDREAD" != "internal" ] ; then
-  if [ -d "$DVDREAD" -a -f "$DVDREAD/dvd_reader.h" ] ; then
-    dvdread_dir="$DVDREAD"
-    DVDREAD=external
-  else
-    DVDREAD=internal
-  fi
+DVDREAD=`$DVDREAD_CONFIG --prefix`
+if test -z "$DVDREAD" ; then
+  echo "dvdread-config --prefix returned an error. Can't proceed"
+  exit 1
 fi
+dvdread_cflags=`$DVDREAD_CONFIG --cflags`
+dvdread_libs=`$DVDREAD_CONFIG --libs`
 
 
 targetos=`uname -s`
@@ -130,7 +128,6 @@ PREFIX=$PREFIX
 libdir=$libdir
 shlibdir=$shlibdir
 incdir=$incdir
-dvdread_incdir=$dvdread_incdir
 THREADLIB=$threadlib
 BUILD_SHARED=$SHARED
 BUILD_STATIC=$STATIC
@@ -143,8 +140,8 @@ LDFLAGS=$ldflags
 SHLDFLAGS=$SHLDFLAGS
 INSTALLSTRIP=$INSTALLSTRIP
 USEDEBUG=$USEDEBUG
-DVDREAD=$DVDREAD
-DVDREAD_DIR=$dvdread_dir
+DVDREAD_CFLAGS=$dvdread_cflags
+DVDREAD_LIBS=$dvdread_libs
 
 SRC_PATH="$source_path"
 SRC_PATH_BARE=$source_path

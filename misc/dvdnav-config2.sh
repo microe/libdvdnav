@@ -1,10 +1,4 @@
-dvdreadlib="-ldvdread"
-dvdreadmsg="[--minilibs]"
-if test "$dvdread" = "external"; then
-    dvdreadmsg="[--minicflags]"
-    dvdreadcflags="-I$dvdreaddir"
     extracflags="-DDVDNAV_USES_EXTERNAL_DVDREAD"
-fi
 
 usage()
 {
@@ -15,7 +9,8 @@ Options:
 	[--version]
         [--libs]
 	[--cflags]
-        $dvdreadmsg
+	[--minilibs]
+	[--minicflags]
 EOF
 	exit $1
 }
@@ -41,11 +36,7 @@ while test $# -gt 0; do
       echo_cflags=yes
       ;;
     --minicflags)
-      if test "$dvdread" = "external"; then
           echo_minicflags=yes
-      else
-          usage 1 1>&2
-      fi
       ;;
     --libs)
       echo_libs=yes
@@ -65,7 +56,7 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I$prefix/include $dvdreadcflags $extracflags $threadcflags
+      echo -I$prefix/include $dvdread_cflags $extracflags $threadcflags
 fi
 
 if test "$echo_minicflags" = "yes"; then
@@ -73,7 +64,7 @@ if test "$echo_minicflags" = "yes"; then
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L$libdir -ldvdnav $dvdreadlib $threadlib
+      echo -L$libdir -ldvdnav $dvdread_libs $threadlib
 fi      
 
 if test "$echo_minilibs" = "yes"; then
