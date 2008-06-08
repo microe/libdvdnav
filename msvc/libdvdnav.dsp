@@ -45,7 +45,7 @@ LINK32=link.exe
 # ADD LINK32 /machine:IX86
 MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "..\..\libdvdcss\src" /I "." /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I ".." /I "../src" /I "../src/dvdread" /I "../src/vm" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "..\..\libdvdcss\src" /I "." /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I ".." /I "../src" /I "../src/vm" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /YX /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -79,7 +79,7 @@ LINK32=link.exe
 # SUBTRACT LINK32 /pdb:none /nodefaultlib
 MTL=midl.exe
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I "../src" /I "." /I ".." /I "../src/dvdread" /I "../src/vm" /D "WIN32" /D "_DEBUG" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /FR"Debug/libdvdnav/" /Fp"Debug/libdvdnav/libdvdnav.pch" /YX /Fo"Debug/libdvdnav/" /Fd"Debug/libdvdnav/" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "include" /I "contrib/dirent" /I "include/pthreads" /I "../../libdvdcss" /I "../src" /I "." /I ".." /I "../src/vm" /D "WIN32" /D "_DEBUG" /D "_LIB" /D "DVDNAV_COMPILE" /D "HAVE_CONFIG_H" /FR"Debug/libdvdnav/" /Fp"Debug/libdvdnav/libdvdnav.pch" /YX /Fo"Debug/libdvdnav/" /Fd"Debug/libdvdnav/" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -109,43 +109,11 @@ SOURCE=..\src\vm\decoder.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\dvdread\dvd_input.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\dvd_reader.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\dvd_udf.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\dvdnav.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\highlight.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\ifo_print.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\ifo_read.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\md5.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\nav_print.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\dvdread\nav_read.c
 # End Source File
 # Begin Source File
 
