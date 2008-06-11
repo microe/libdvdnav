@@ -81,7 +81,7 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
   struct timeval time;
   
   /* Create a new structure */
-  fprintf(MSG_OUT, "libdvdnav: Using dvdnav version %s from http://dvd.sf.net\n", VERSION);
+  fprintf(MSG_OUT, "libdvdnav: Using dvdnav version %s\n", VERSION);
 
   (*dest) = NULL;
   this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
