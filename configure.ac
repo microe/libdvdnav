@@ -176,6 +176,25 @@ case $host in
 esac
 
 dnl ---------------------------------------------
+dnl libdvdread
+dnl ---------------------------------------------
+AC_ARG_WITH([dvdread-config],
+  [AS_HELP_STRING([--with-dvdread-config=PROG],
+    [dvdread-config program to use @<:@default=from PATH@:>@])],
+  [DVDREAD_CONFIG="$withval"],
+  [dnl User didn't specify program, search PATH
+  AC_PATH_PROG([DVDREAD_CONFIG], [dvdread-config], [no])
+  test "x$DVDREAD_CONFIG" = xno && \
+    AC_MSG_ERROR([dvdread-config required to link with libdvdread])
+  ])
+DVDREAD_CFLAGS=`$DVDREAD_CONFIG --cflags` || \
+  AC_MSG_ERROR([Could not get libdvdread CFLAGS from $DVDREAD_CONFIG])
+DVDREAD_LIBS=`$DVDREAD_CONFIG --libs` || \
+  AC_MSG_ERROR([Could not get libdvdread LIBS from $DVDREAD_CONFIG])
+AC_SUBST([DVDREAD_CFLAGS])
+AC_SUBST([DVDREAD_LIBS])
+
+dnl ---------------------------------------------
 dnl cflags
 dnl ---------------------------------------------
 dnl Common cflags for all platforms
