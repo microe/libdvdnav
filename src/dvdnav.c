@@ -699,6 +699,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
 #endif
     (*len) = sizeof(dvdnav_audio_stream_change_event_t);
     stream_change->physical = vm_get_audio_active_stream( this->vm );
+    stream_change->logical = this->position_next.audio_channel;
     this->position_current.audio_channel = this->position_next.audio_channel;
 #ifdef LOG_DEBUG
     fprintf(MSG_OUT, "libdvdnav: AUDIO_STREAM_CHANGE stream_id=%d returning DVDNAV_STATUS_OK\n",stream_change->physical);
