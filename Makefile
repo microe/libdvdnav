@@ -40,12 +40,12 @@ BUILDDEPS = Makefile config.mak
 
 ifeq ($(BUILD_SHARED),yes)
 all:	$(SHLIB) $(MINI_SHLIB) dvdnav-config
-install: $(SHLIB) install-shared install-dvdnav-config install-dvdnav.pc
+install: $(SHLIB) install-shared install-dvdnav-config install-pkgconfig
 endif
 
 ifeq ($(BUILD_STATIC),yes)
 all:	$(LIB) dvdnav-config
-install: $(LIB) install-static install-dvdnav-config install-dvdnav.pc
+install: $(LIB) install-static install-dvdnav-config install-pkgconfig
 endif
 
 install: install-headers
@@ -119,6 +119,27 @@ install-static: $(LIB)
 clean:
 	rm -rf  *~ $(.OBJDIR) version.h
 
+pcedit = sed \
+	-e 's,@prefix@,$(PREFIX),' \
+	-e 's,@exec_prefix@,$(PREFIX),' \
+	-e 's,@libdir@,$(shlibdir),' \
+	-e 's,@includedir@,$(PREFIX)/include,' \
+	-e 's,@VERSION@,$(SHLIB_VERSION),' \
+	-e 's,@THREAD_CFLAGS@,,' \
+	-e 's,@THREAD_LIBS@,$(THREADLIB),' \
+	-e 's,@DVDREAD_CFLAGS@,$(DVDREAD_CFLAGS),'
+
+pkgconfig: $(.OBJDIR)/dvdnav.pc $(.OBJDIR)/dvdnavmini.pc
+$(.OBJDIR)/dvdnav.pc: misc/dvdnav.pc.in $(.OBJDIR)
+	$(pcedit) $< > $@
+$(.OBJDIR)/dvdnavmini.pc: misc/dvdnavmini.pc.in $(.OBJDIR)
+	$(pcedit) $< > $@
+
+install-pkgconfig: $(.OBJDIR)/dvdnav.pc $(.OBJDIR)/dvdnavmini.pc
+	install -d $(DESTDIR)$(libdir)/pkgconfig
+	install -m 0644 $(.OBJDIR)/dvdnav.pc $(DESTDIR)$(libdir)/pkgconfig
+	install -m 0644 $(.OBJDIR)/dvdnavmini.pc \
+	  $(DESTDIR)$(libdir)/pkgconfig
 
 distclean: clean
 	find . -name "*~" | xargs rm -rf
@@ -139,24 +160,6 @@ dvdnav-config: $(.OBJDIR)
 install-dvdnav-config: dvdnav-config
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m 0755 $(.OBJDIR)/dvdnav-config $(DESTDIR)$(PREFIX)/bin/dvdnav-config
-
-dvdnav.pc: $(.OBJDIR)
-	@echo 'prefix=$(PREFIX)' > $(.OBJDIR)/dvdnav.pc
-	@echo 'libdir=$(shlibdir)' >> $(.OBJDIR)/dvdnav.pc
-	@echo 'includedir=$(PREFIX)/include' >> $(.OBJDIR)/dvdnav.pc
-	@echo 'minilibs=-L$${libdir} -ldvdnavmini $(THREADLIB)' >> $(.OBJDIR)/dvdnav.pc
-	@echo >> $(.OBJDIR)/dvdnav.pc
-	@echo 'Libs: -L$${libdir} -ldvdnav $(THREADLIB)' >> $(.OBJDIR)/dvdnav.pc
-	@echo 'Cflags: -I$${includedir}' >> $(.OBJDIR)/dvdnav.pc
-	@echo 'Requires.private: dvdread >= 4.1.2' >> $(.OBJDIR)/dvdnav.pc
-	@echo >> $(.OBJDIR)/dvdnav.pc
-	@echo 'Name: dvdnav' >> $(.OBJDIR)/dvdnav.pc
-	@echo 'Description: High-level library for reading DVDs' >> $(.OBJDIR)/dvdnav.pc
-	@echo 'Version: $(SHLIB_VERSION)' >> $(.OBJDIR)/dvdnav.pc
-
-install-dvdnav.pc: dvdnav.pc
-	install -d $(DESTDIR)$(shlibdir)/pkgconfig
-	install -m 0644 $(.OBJDIR)/dvdnav.pc $(DESTDIR)$(shlibdir)/pkgconfig/dvdnav.pc
 
 vpath %.so ${.OBJDIR}
 vpath %.o ${.OBJDIR}

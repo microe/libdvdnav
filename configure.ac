@@ -243,6 +243,8 @@ src/Makefile
 src/vm/Makefile
 misc/Makefile
 misc/dvdnav-config
+misc/dvdnav.pc
+misc/dvdnavmini.pc
 misc/libdvdnav.spec
 misc/relchk.sh
 m4/Makefile
