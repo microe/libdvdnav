@@ -29,8 +29,6 @@
 #ifndef DVDNAV_H_INCLUDED
 #define DVDNAV_H_INCLUDED
 
-#define MP_DVDNAV 1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
