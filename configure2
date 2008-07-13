@@ -103,13 +103,15 @@ test -z "$libdir" && libdir=$PREFIX/lib
 test -z "$shlibdir" && shlibdir=$PREFIX/lib
 test -z "$incdir" && incdir=$PREFIX/include/dvdnav
 
-dvdread_cflags=`$DVDREAD_CONFIG --cflags`
-dvdread_libs=`$DVDREAD_CONFIG --libs`
-if test -z "$dvdread_cflags" ; then
-  echo "$DVDREAD_CONFIG --cflags returned an error. Can't proceed"
+dvdread=no
+$DVDREAD_CONFIG --prefix >> /dev/null 2>&1 && dvdread=yes
+test "$dvdread" != "yes" && $DVDREAD_CONFIG --exists >> /dev/null 2>&1 && dvdread=yes
+if test "$dvdread" != "yes" ; then
+  echo "$DVDREAD_CONFIG returned an error. Can't proceed"
   exit 1
 fi
-
+dvdread_cflags=`$DVDREAD_CONFIG --cflags`
+dvdread_libs=`$DVDREAD_CONFIG --libs`
 
 targetos=`uname -s`
 case $targetos in
