@@ -33,8 +33,8 @@
 #include <limits.h>
 #include <string.h>  /* For memset */
 #include <sys/time.h>
-#include <libdvdread/nav_types.h>
-#include <libdvdread/ifo_types.h> /* vm_cmd_t */
+#include <dvdread/nav_types.h>
+#include <dvdread/ifo_types.h> /* vm_cmd_t */
 
 #include "dvd_types.h"
 #include "remap.h"

@@ -40,9 +40,9 @@
 #include <sys/time.h>
 #include <fcntl.h>
 
-#include <libdvdread/nav_types.h>
-#include <libdvdread/ifo_types.h>
-#include <libdvdread/ifo_read.h>
+#include <dvdread/nav_types.h>
+#include <dvdread/ifo_types.h>
+#include <dvdread/ifo_read.h>
 #include "dvd_types.h"
 
 #include "decoder.h"
