@@ -41,7 +41,9 @@
 /* Navigation API calls */
 
 dvdnav_status_t dvdnav_still_skip(dvdnav_t *this) {
+  pthread_mutex_lock(&this->vm_lock);
   this->position_current.still = 0;
+  pthread_mutex_unlock(&this->vm_lock);
   this->skip_still = 1;
   this->sync_wait = 0;
   this->sync_wait_skip = 1;
