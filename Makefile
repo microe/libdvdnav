@@ -63,14 +63,11 @@ $(SRCS): version.h
 
 # General targets
 
-$(.OBJDIR):
-	mkdir $(.OBJDIR)
-
-${LIB}: version.h $(.OBJDIR) $(OBJS) $(BUILDDEPS)
+${LIB}: version.h $(OBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(AR) rc $@ $(OBJS)
 	cd $(.OBJDIR) && $(RANLIB) $@
 
-${SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
+${SHLIB}: version.h $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -Wl,-soname=$(SHLIB).$(SHLIB_MAJOR) -o $@ $(SHOBJS) $(DVDREAD_LIBS) $(THREADLIB)
 ${MINI_SHLIB}: version.h $(.OBJDIR) $(SHOBJS) $(BUILDDEPS)
 	cd $(.OBJDIR) && $(CC) $(SHLDFLAGS) -Wl,-soname=$(MINI_SHLIB).$(SHLIB_MAJOR) -o $@ $(SHOBJS) $(THREADLIB)
@@ -115,7 +112,7 @@ install-static: $(LIB)
 # Clean targets
 
 clean:
-	rm -rf  *~ $(.OBJDIR) version.h
+	rm -rf  *~ $(.OBJDIR)/* version.h
 
 pcedit = sed \
 	-e 's,@prefix@,$(PREFIX),' \
@@ -128,9 +125,9 @@ pcedit = sed \
 	-e 's,@DVDREAD_CFLAGS@,$(DVDREAD_CFLAGS),'
 
 pkgconfig: $(.OBJDIR)/dvdnav.pc $(.OBJDIR)/dvdnavmini.pc
-$(.OBJDIR)/dvdnav.pc: misc/dvdnav.pc.in $(.OBJDIR)
+$(.OBJDIR)/dvdnav.pc: misc/dvdnav.pc.in $(BUILDDEPS)
 	$(pcedit) $< > $@
-$(.OBJDIR)/dvdnavmini.pc: misc/dvdnavmini.pc.in $(.OBJDIR)
+$(.OBJDIR)/dvdnavmini.pc: misc/dvdnavmini.pc.in $(BUILDDEPS)
 	$(pcedit) $< > $@
 
 install-pkgconfig: $(.OBJDIR)/dvdnav.pc $(.OBJDIR)/dvdnavmini.pc
@@ -141,9 +138,10 @@ install-pkgconfig: $(.OBJDIR)/dvdnav.pc $(.OBJDIR)/dvdnavmini.pc
 
 distclean: clean
 	find . -name "*~" | xargs rm -rf
-	rm -rf config.mak
+	rm -rf config.mak $(.OBJDIR)
 
-dvdnav-config: $(.OBJDIR)
+dvdnav-config: $(.OBJDIR)/dvdnav-config
+$(.OBJDIR)/dvdnav-config: $(BUILDDEPS)
 	@echo '#!/bin/sh' > $(.OBJDIR)/dvdnav-config
 	@echo 'prefix='$(PREFIX) >> $(.OBJDIR)/dvdnav-config
 	@echo 'libdir='$(shlibdir) >> $(.OBJDIR)/dvdnav-config
