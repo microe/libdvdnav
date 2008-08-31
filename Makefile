@@ -37,12 +37,12 @@ DEPS= ${OBJS:%.o=%.d}
 BUILDDEPS = Makefile config.mak
 
 ifeq ($(BUILD_SHARED),yes)
-all:	$(SHLIB) $(MINI_SHLIB) dvdnav-config
+all:	$(SHLIB) $(MINI_SHLIB) dvdnav-config pkgconfig
 install: $(SHLIB) install-shared install-dvdnav-config install-pkgconfig
 endif
 
 ifeq ($(BUILD_STATIC),yes)
-all:	$(LIB) dvdnav-config
+all:	$(LIB) dvdnav-config pkgconfig
 install: $(LIB) install-static install-dvdnav-config install-pkgconfig
 endif
 
