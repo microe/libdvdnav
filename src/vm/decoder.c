@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2000, 2001 Martin Norbäck, Håkan Hjort
  *               2002-2004 the dvdnav project
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library. It is modified
  * from a file originally part of the Ogle DVD player.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
@@ -49,7 +49,7 @@ uint32_t vm_getbits(command_t *command, int32_t start, int32_t count) {
   uint64_t bit_mask = 0;
   uint64_t examining = 0;
   int32_t  bits;
-  
+
   if (count == 0) return 0;
 
   if ( ((start - count) < -1) ||
@@ -79,19 +79,19 @@ static uint16_t get_GPRM(registers_t* registers, uint8_t reg) {
     gettimeofday(&current_time, NULL);
     time_offset.tv_sec = current_time.tv_sec - registers->GPRM_time[reg].tv_sec;
     time_offset.tv_usec = current_time.tv_usec - registers->GPRM_time[reg].tv_usec;
-    if (time_offset.tv_usec < 0) { 
-      time_offset.tv_sec--; 
+    if (time_offset.tv_usec < 0) {
+      time_offset.tv_sec--;
       time_offset.tv_usec += 1000000;
     }
     result = (uint16_t) (time_offset.tv_sec & 0xffff);
     registers->GPRM[reg]=result;
-    return result; 
+    return result;
 
   } else {
     /* Register mode */
     return registers->GPRM[reg];
   }
-  
+
 }
 
 static void set_GPRM(registers_t* registers, uint8_t reg, uint16_t value) {
@@ -134,7 +134,7 @@ static uint16_t eval_reg_or_data(command_t* command, int32_t imm, int32_t start)
    xBBB_BBBB, if immediate use all 7 bits for data else use
    lower four bits for the general purpose register number. */
 /* Evaluates gprm or data depending on bit, data is in byte n */
-static uint16_t eval_reg_or_data_2(command_t* command, 
+static uint16_t eval_reg_or_data_2(command_t* command,
 				   int32_t imm, int32_t start) {
   if(imm) /* immediate */
     return vm_getbits(command, (start - 1), 7);
@@ -143,7 +143,7 @@ static uint16_t eval_reg_or_data_2(command_t* command,
 }
 
 
-/* Compare data using operation, return result from comparison. 
+/* Compare data using operation, return result from comparison.
    Helper function for the different if functions. */
 static int32_t eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
   switch(operation) {
@@ -172,7 +172,7 @@ static int32_t eval_compare(uint8_t operation, uint16_t data1, uint16_t data2) {
 static int32_t eval_if_version_1(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
-    return eval_compare(op, eval_reg(command, vm_getbits(command, 39, 8)), 
+    return eval_compare(op, eval_reg(command, vm_getbits(command, 39, 8)),
                             eval_reg_or_data(command, vm_getbits(command, 55, 1), 31));
   }
   return 1;
@@ -183,7 +183,7 @@ static int32_t eval_if_version_1(command_t* command) {
 static int32_t eval_if_version_2(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
-    return eval_compare(op, eval_reg(command, vm_getbits(command, 15, 8)), 
+    return eval_compare(op, eval_reg(command, vm_getbits(command, 15, 8)),
                             eval_reg(command, vm_getbits(command, 7, 8)));
   }
   return 1;
@@ -194,19 +194,19 @@ static int32_t eval_if_version_2(command_t* command) {
 static int32_t eval_if_version_3(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
-    return eval_compare(op, eval_reg(command, vm_getbits(command, 47, 8)), 
+    return eval_compare(op, eval_reg(command, vm_getbits(command, 47, 8)),
                             eval_reg_or_data(command, vm_getbits(command, 55, 1), 15));
   }
   return 1;
 }
 
 /* Evaluate if version 4.
-   Has comparison data in byte 1 and 4-5 (immediate or register) 
+   Has comparison data in byte 1 and 4-5 (immediate or register)
    The register in byte 1 is only the lowe nibble (4 bits) */
 static int32_t eval_if_version_4(command_t* command) {
   uint8_t op = vm_getbits(command, 54, 3);
   if(op) {
-    return eval_compare(op, eval_reg(command, vm_getbits(command, 51, 4)), 
+    return eval_compare(op, eval_reg(command, vm_getbits(command, 51, 4)),
                             eval_reg_or_data(command, vm_getbits(command, 55, 1), 31));
   }
   return 1;
@@ -216,7 +216,7 @@ static int32_t eval_if_version_4(command_t* command) {
    0 if no new row and 256 if Break. */
 static int32_t eval_special_instruction(command_t* command, int32_t cond) {
   int32_t line, level;
-  
+
   switch(vm_getbits(command, 51, 4)) {
     case 0: /*  NOP */
       line = 0;
@@ -229,7 +229,7 @@ static int32_t eval_special_instruction(command_t* command, int32_t cond) {
       line = 256;
       return cond ? 256 : 0;
     case 3: /*  Set temporary parental level and goto */
-      line = vm_getbits(command, 7, 8); 
+      line = vm_getbits(command, 7, 8);
       level = vm_getbits(command, 11, 4);
       if(cond) {
 	/*  This always succeeds now, if we want real parental protection */
@@ -247,7 +247,7 @@ static int32_t eval_special_instruction(command_t* command, int32_t cond) {
 static int32_t eval_link_subins(command_t* command, int32_t cond, link_t *return_values) {
   uint16_t button = vm_getbits(command, 15, 6);
   uint8_t  linkop = vm_getbits(command, 4, 5);
-  
+
   if(linkop > 0x10)
     return 0;    /*  Unknown Link by Sub-Instruction command */
 
@@ -263,7 +263,7 @@ static int32_t eval_link_subins(command_t* command, int32_t cond, link_t *return
    Actual link instruction is in return_values parameter */
 static int32_t eval_link_instruction(command_t* command, int32_t cond, link_t *return_values) {
   uint8_t op = vm_getbits(command, 51, 4);
-  
+
   switch(op) {
     case 1:
 	return eval_link_subins(command, cond, return_values);
@@ -295,7 +295,7 @@ static int32_t eval_link_instruction(command_t* command, int32_t cond, link_t *r
    returns 1 if jump or 0 if no jump
    actual jump instruction is in return_values parameter */
 static int32_t eval_jump_instruction(command_t* command, int32_t cond, link_t *return_values) {
-  
+
   switch(vm_getbits(command, 51, 4)) {
     case 1:
       return_values->command = Exit;
@@ -361,12 +361,12 @@ static int32_t eval_jump_instruction(command_t* command, int32_t cond, link_t *r
   return 0;
 }
 
-/* Evaluate a set sytem register instruction 
+/* Evaluate a set sytem register instruction
    May contain a link so return the same as eval_link */
 static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_values) {
   int32_t i;
   uint16_t data, data2;
-  
+
   switch(vm_getbits(command, 59, 4)) {
     case 1: /*  Set system reg 1 &| 2 &| 3 (Audio, Subp. Angle) */
       for(i = 1; i <= 3; i++) {
@@ -418,7 +418,7 @@ static int32_t eval_system_set(command_t* command, int32_t cond, link_t *return_
 */
 static void eval_set_op(command_t* command, int32_t op, int32_t reg, int32_t reg2, int32_t data) {
   static const int32_t shortmax = 0xffff;
-  int32_t     tmp; 
+  int32_t     tmp;
   switch(op) {
     case 1:
       set_GPRM(command->registers, reg, data);
@@ -589,11 +589,11 @@ static int32_t eval_command(uint8_t *bytes, registers_t* registers, link_t *retu
 }
 
 /* Evaluate a set of commands in the given register set (which is modified) */
-int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands, 
+int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
 	       registers_t *registers, link_t *return_values) {
   int32_t i = 0;
   int32_t total = 0;
-  
+
 #ifdef TRACE
   /*  DEBUG */
   fprintf(MSG_OUT, "libdvdnav: Registers before transaction\n");
@@ -605,25 +605,25 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
   fprintf(MSG_OUT, "libdvdnav: Single stepping commands\n");
 #endif
 
-  i = 0; 
+  i = 0;
   while(i < num_commands && total < 100000) {
     int32_t line;
-    
+
 #ifdef TRACE
     vm_print_cmd(i, &commands[i]);
 #endif
 
     line = eval_command(&commands[i].bytes[0], registers, return_values);
-    
+
     if (line < 0) { /*  Link command */
 #ifdef TRACE
       fprintf(MSG_OUT, "libdvdnav: Registers after transaction\n");
       vm_print_registers( registers );
-      fprintf(MSG_OUT, "libdvdnav: eval: Doing Link/Jump/Call\n"); 
+      fprintf(MSG_OUT, "libdvdnav: eval: Doing Link/Jump/Call\n");
 #endif
       return 1;
     }
-    
+
     if (line > 0) /*  Goto command */
       i = line - 1;
     else /*  Just continue on the next line */
@@ -631,7 +631,7 @@ int32_t vmEval_CMD(vm_cmd_t commands[], int32_t num_commands,
 
     total++;
   }
-  
+
   memset(return_values, 0, sizeof(link_t));
 #ifdef TRACE
   fprintf(MSG_OUT, "libdvdnav: Registers after transaction\n");
@@ -710,7 +710,7 @@ static char *linkcmd2str(link_cmd_t cmd) {
 
 void vm_print_link(link_t value) {
   char *cmd = linkcmd2str(value.command);
-    
+
   switch(value.command) {
   case LinkNoLink:
   case LinkTopC:
@@ -748,7 +748,7 @@ void vm_print_link(link_t value) {
     fprintf(MSG_OUT, "libdvdnav: %s %d:%d\n", cmd, value.data1, value.data2);
     break;
   case JumpSS_VTSM:
-    fprintf(MSG_OUT, "libdvdnav: %s vts %d title %d menu %d\n", 
+    fprintf(MSG_OUT, "libdvdnav: %s vts %d title %d menu %d\n",
 	    cmd, value.data1, value.data2, value.data3);
     break;
   case CallSS_FP:

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifndef _MSC_VER 
+#ifndef _MSC_VER
 #include <sys/param.h>
 #include <sys/fcntl.h>
 #else
@@ -98,7 +98,7 @@ static int compare_block( block_t *a, block_t *b) {
     } else if (a->start_block > b->end_block) {
 	/*
 	 * if a->start_block == b->end_block then the two regions
-	 * aren't strictly overlapping, but they should be merged 
+	 * aren't strictly overlapping, but they should be merged
 	 * anyway since there are zero blocks between them
 	 */
 	return 1;
@@ -154,7 +154,7 @@ static void remap_add_node( remap_t *map, block_t block) {
     }
 }
 
-static int parseblock(char *buf, int *dom, int *tt, int *pg, 
+static int parseblock(char *buf, int *dom, int *tt, int *pg,
 		      unsigned long *start, unsigned long *end) {
     long tmp;
     char *tok;
@@ -184,7 +184,7 @@ static int parseblock(char *buf, int *dom, int *tt, int *pg,
 	    case 4:
 		*end = tmp;
 		break;
-	} 
+	}
 	st++;
         tok = strtok( NULL, " ");
     }
@@ -223,7 +223,7 @@ remap_t* remap_loadmap( char *title) {
         if (strncasecmp( buf, "debug", 5) == 0) {
 	    map->debug = 1;
 	} else {
-	    res = parseblock( buf, 
+	    res = parseblock( buf,
 		&tmp.domain, &tmp.title, &tmp.program, &tmp.start_block, &tmp.end_block);
 	    if (res != 5) {
 		fprintf(MSG_OUT, "libdvdnav: Ignoring map line (%d): %s\n", res, buf);
@@ -241,9 +241,9 @@ remap_t* remap_loadmap( char *title) {
     return map;
 }
 
-unsigned long remap_block( 
-	remap_t *map, int domain, int title, int program, 
-	unsigned long cblock, unsigned long offset) 
+unsigned long remap_block(
+	remap_t *map, int domain, int title, int program,
+	unsigned long cblock, unsigned long offset)
 {
     block_t key;
     block_t *b;
@@ -258,7 +258,7 @@ unsigned long remap_block(
     key.program = program;
     key.start_block = key.end_block = cblock + offset;
     b = findblock( map, &key);
-    
+
     if (b) {
        if (map->debug) {
 	   fprintf(MSG_OUT, "libdvdnav: Redirected to %lx\n", b->end_block);

@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2003 by the libdvdnav project
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
@@ -50,20 +50,20 @@ int main(int argc, char **argv) {
   int finished = 0;
   int output_fd = 0;
   int dump = 0, tt_dump = 0;
-  
+
   /* open dvdnav handle */
   printf("Opening DVD...\n");
   if (dvdnav_open(&dvdnav, "/dev/dvd") != DVDNAV_STATUS_OK) {
     printf("Error on dvdnav_open\n");
     return 1;
   }
-  
+
   /* set read ahead cache usage */
   if (dvdnav_set_readahead_flag(dvdnav, DVD_READ_CACHE) != DVDNAV_STATUS_OK) {
     printf("Error on dvdnav_set_readahead_flag: %s\n", dvdnav_err_to_string(dvdnav));
     return 2;
   }
-  
+
   /* set the language */
   if (dvdnav_menu_language_select(dvdnav, DVD_LANGUAGE) != DVDNAV_STATUS_OK ||
       dvdnav_audio_language_select(dvdnav, DVD_LANGUAGE) != DVDNAV_STATUS_OK ||
@@ -71,14 +71,14 @@ int main(int argc, char **argv) {
     printf("Error on setting languages: %s\n", dvdnav_err_to_string(dvdnav));
     return 2;
   }
-  
+
   /* set the PGC positioning flag to have position information relatively to the
    * whole feature instead of just relatively to the current chapter */
   if (dvdnav_set_PGC_positioning_flag(dvdnav, 1) != DVDNAV_STATUS_OK) {
     printf("Error on dvdnav_set_PGC_positioning_flag: %s\n", dvdnav_err_to_string(dvdnav));
     return 2;
   }
-  
+
 
   /* the read loop which regularly calls dvdnav_get_next_block
    * and handles the returned events */
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   while (!finished) {
     int result, event, len;
     uint8_t *buf = mem;
-    
+
     /* the main reading function */
 #if DVD_READ_CACHE
     result = dvdnav_get_next_cache_block(dvdnav, &buf, &event, &len);
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
       /* We have received a regular block of the currently playing MPEG stream.
        * A real player application would now pass this block through demuxing
        * and decoding. We simply write it to disc here. */
-      
+
       if (!output_fd) {
 	printf("Opening output...\n");
 	output_fd = open("libdvdnav.mpg", O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG);
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 	  return 4;
 	}
       }
-      
+
       if (dump || tt_dump)
 	write(output_fd, buf, len);
 
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     case DVDNAV_NOP:
       /* Nothing to do here. */
       break;
-    case DVDNAV_STILL_FRAME: 
+    case DVDNAV_STILL_FRAME:
       /* We have reached a still frame. A real player application would wait
        * the amount of time specified by the still's length while still handling
        * user input to make menus and other interactive stills work.
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
       /* Player applications should inform their audio decoder to switch channels */
       break;
     case DVDNAV_HIGHLIGHT:
-      /* Player applications should inform their overlay engine to highlight the 
+      /* Player applications should inform their overlay engine to highlight the
        * given button */
       {
 	dvdnav_highlight_event_t *highlight_event = (dvdnav_highlight_event_t *)buf;
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
 	int32_t tt = 0, ptt = 0;
 	uint32_t pos, len;
 	char input = '\0';
-	
+
 	dvdnav_current_title_info(dvdnav, &tt, &ptt);
 	dvdnav_get_position(dvdnav, &pos, &len);
 	printf("Cell change: Title %d, Chapter %d\n", tt, ptt);
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
 	    printf("(a)ppend cell to output\n(s)kip cell\nappend until end of (t)itle\n(q)uit\n");
 	    scanf("%c", &input);
 	  }
-	  
+
 	  switch (input) {
 	  case 'a':
 	    dump = 1;
@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
        * engine of the player so that it knows the dimensions of the button areas. */
       {
 	pci_t *pci;
-	
+
 	/* Applications with fifos should not use these functions to retrieve NAV packets,
 	 * they should implement their own NAV handling, because the packet you get from these
 	 * functions will already be ahead in the stream which can cause state inconsistencies.
@@ -224,15 +224,15 @@ int main(int argc, char **argv) {
 	 * and decoding pipeline just like any other data. */
 	pci = dvdnav_get_current_nav_pci(dvdnav);
 	dvdnav_get_current_nav_dsi(dvdnav);
-	
+
 	if(pci->hli.hl_gi.btn_ns > 0) {
 	  int button;
-	  
+
 	  printf("Found %i DVD menu buttons...\n", pci->hli.hl_gi.btn_ns);
 
 	  for (button = 0; button < pci->hli.hl_gi.btn_ns; button++) {
 	    btni_t *btni = &(pci->hli.btnit[button]);
-	    printf("Button %i top-left @ (%i,%i), bottom-right @ (%i,%i)\n", 
+	    printf("Button %i top-left @ (%i,%i), bottom-right @ (%i,%i)\n",
 		    button + 1, btni->x_start, btni->y_start,
 		    btni->x_end, btni->y_end);
 	  }
@@ -269,13 +269,13 @@ int main(int argc, char **argv) {
     dvdnav_free_cache_block(dvdnav, buf);
 #endif
   }
-  
+
   /* destroy dvdnav handle */
   if (dvdnav_close(dvdnav) != DVDNAV_STATUS_OK) {
     printf("Error on dvdnav_close: %s\n", dvdnav_err_to_string(dvdnav));
     return 5;
   }
   close(output_fd);
-  
+
   return 0;
-} 
+}

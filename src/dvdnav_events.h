@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2001 Rich Wareham <richwareham@users.sourceforge.net>
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
@@ -22,7 +22,7 @@
  */
 
 /*
- * This header defines events and event types 
+ * This header defines events and event types
  */
 
 #ifndef DVDNAV_EVENTS_H_INCLUDED
@@ -87,7 +87,7 @@ typedef struct {
    * Use this, if you blend the SPU on an anamorphic image after
    * unsqueezing it the pan&scan way. */
   int physical_pan_scan;
-  
+
   /* The logical (DVD) stream number. */
   int logical;
 } dvdnav_spu_stream_change_event_t;
@@ -194,7 +194,7 @@ typedef struct {
   int display;
 
   /* FIXME: these fields are currently not set */
-  uint32_t palette;     /* The CLUT entries for the highlight palette 
+  uint32_t palette;     /* The CLUT entries for the highlight palette
 			   (4-bits per entry -> 4 entries) */
   uint16_t sx,sy,ex,ey; /* The start/end x,y positions */
   uint32_t pts;         /* Highlight PTS to match with SPU */

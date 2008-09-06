@@ -260,7 +260,7 @@ int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, 
 
   if (use >= 0) {
     read_cache_chunk_t *chunk;
-    
+
     /* Increment read-ahead size if sector follows the last sector */
     if (sector == (self->last_sector + 1)) {
       if (self->read_ahead_incr < READ_AHEAD_SIZE_MAX)

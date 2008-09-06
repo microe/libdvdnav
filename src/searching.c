@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2000 Rich Wareham <richwareham@users.sourceforge.net>
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
@@ -104,7 +104,7 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, uint32_
    only the cell times */
 dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 				   uint64_t time) {
-  
+
   uint64_t target = time;
   uint64_t length = 0;
   uint32_t first_cell_nr, last_cell_nr, cell_nr;
@@ -116,7 +116,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
     printerr("Cannot seek in a still frame.");
     return DVDNAV_STATUS_ERR;
   }
-  
+
   pthread_mutex_lock(&this->vm_lock);
   state = &(this->vm->state);
   if(!state->pgc) {
@@ -125,8 +125,8 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
     return DVDNAV_STATUS_ERR;
   }
 
-  
-  this->cur_cell_time = 0;  
+
+  this->cur_cell_time = 0;
   if (this->pgc_based) {
     first_cell_nr = 1;
     last_cell_nr = state->pgc->nr_of_cells;
@@ -152,7 +152,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
       /* FIXME: there must be a better way than interpolation */
       target = target * (cell->last_sector - cell->first_sector + 1) / length;
       target += cell->first_sector;
-      
+
       found = 1;
       break;
     }
@@ -166,7 +166,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 #endif
     if (dvdnav_scan_admap(this, state->domain, target, &vobu) == DVDNAV_STATUS_OK) {
       uint32_t start = state->pgc->cell_playback[cell_nr-1].first_sector;
-      
+
       if (vm_jump_cell_block(this->vm, cell_nr, vobu - start)) {
 #ifdef LOG_DEBUG
         fprintf(MSG_OUT, "libdvdnav: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
@@ -178,7 +178,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
       }
     }
   }
-  
+
   fprintf(MSG_OUT, "libdvdnav: Error when seeking\n");
   printerr("Error when seeking.");
   pthread_mutex_unlock(&this->vm_lock);
@@ -199,12 +199,12 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     printerr("Cannot seek in a still frame.");
     return DVDNAV_STATUS_ERR;
   }
-  
+
   result = dvdnav_get_position(this, &target, &length);
   if(!result) {
     return DVDNAV_STATUS_ERR;
   }
- 
+
   pthread_mutex_lock(&this->vm_lock);
   state = &(this->vm->state);
   if(!state->pgc) {
@@ -213,7 +213,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     return DVDNAV_STATUS_ERR;
   }
 #ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lu pos=%u length=%u\n", offset, target, length); 
+  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lu pos=%u length=%u\n", offset, target, length);
   fprintf(MSG_OUT, "libdvdnav: Before cellN=%u blockN=%u\n", state->cellN, state->blockN);
 #endif
 
@@ -248,7 +248,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
-  
+
   this->cur_cell_time = 0;
   if (this->pgc_based) {
     first_cell_nr = 1;
@@ -287,7 +287,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
 #endif
     if (dvdnav_scan_admap(this, state->domain, target, &vobu) == DVDNAV_STATUS_OK) {
       int32_t start = state->pgc->cell_playback[cell_nr-1].first_sector;
-      
+
       if (vm_jump_cell_block(this->vm, cell_nr, vobu - start)) {
 #ifdef LOG_DEBUG
         fprintf(MSG_OUT, "libdvdnav: After cellN=%u blockN=%u target=%x vobu=%x start=%x\n" ,
@@ -299,9 +299,9 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
       }
     }
   }
-  
+
   fprintf(MSG_OUT, "libdvdnav: Error when seeking\n");
-  fprintf(MSG_OUT, "libdvdnav: FIXME: Implement seeking to location %u\n", target); 
+  fprintf(MSG_OUT, "libdvdnav: FIXME: Implement seeking to location %u\n", target);
   printerr("Error when seeking.");
   pthread_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_ERR;
@@ -309,7 +309,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
 
 dvdnav_status_t dvdnav_part_search(dvdnav_t *this, int32_t part) {
   int32_t title, old_part;
-  
+
   if (dvdnav_current_title_info(this, &title, &old_part) == DVDNAV_STATUS_OK)
     return dvdnav_part_play(this, title, part);
   return DVDNAV_STATUS_ERR;
@@ -415,14 +415,14 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   vm_t *try_vm;
-  
+
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
-  
+
   this->cur_cell_time = 0;
   /* make a copy of current VM and try to navigate the copy to the menu */
   try_vm = vm_new_copy(this->vm);
@@ -434,24 +434,24 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
         vm_free_copy(try_vm);
         this->position_current.still = 0;
         this->vm->hop_channel++;
-        pthread_mutex_unlock(&this->vm_lock); 
+        pthread_mutex_unlock(&this->vm_lock);
         return DVDNAV_STATUS_OK;
     }
   }
   if (menu == DVD_MENU_Escape) menu = DVD_MENU_Root;
- 
+
   if (vm_jump_menu(try_vm, menu) && !try_vm->stopped) {
     /* merge changes on success */
     vm_merge(this->vm, try_vm);
     vm_free_copy(try_vm);
     this->position_current.still = 0;
     this->vm->hop_channel++;
-    pthread_mutex_unlock(&this->vm_lock); 
+    pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_OK;
   } else {
     vm_free_copy(try_vm);
     printerr("No such menu or menu not reachable.");
-    pthread_mutex_unlock(&this->vm_lock); 
+    pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 }
@@ -511,7 +511,7 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
     }
     *len += cell->last_sector - cell->first_sector + 1;
   }
-  
+
   assert((signed)*pos != -1);
 
   pthread_mutex_unlock(&this->vm_lock);
@@ -543,10 +543,10 @@ dvdnav_status_t dvdnav_get_position_in_title(dvdnav_t *this,
   first_cell = &(state->pgc->cell_playback[first_cell_nr-1]);
   last_cell_nr = state->pgc->nr_of_cells;
   last_cell = &(state->pgc->cell_playback[last_cell_nr-1]);
-  
+
   *pos = cur_sector - first_cell->first_sector;
   *len = last_cell->last_sector - first_cell->first_sector;
-  
+
   return DVDNAV_STATUS_OK;
 }
 
@@ -577,15 +577,15 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
     printerr("Couldn't open IFO for chosen title, exit.");
     goto fail;
   }
-  
+
   ptitle = &this->vm->vmgi->tt_srpt->title[title-1];
   parts = ptitle->nr_of_ptts;
   ptt = ifo->vts_ptt_srpt->title[ptitle->vts_ttn-1].ptt;
-  
+
   tmp = calloc(1, sizeof(uint64_t)*parts);
   if(!tmp)
     goto fail;
- 
+
   length = 0;
   for(i=0; i<parts; i++) {
     uint32_t cellnr, endcellnr;
@@ -594,13 +594,13 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
       printerr("WRONG part number.");
       goto fail;
     }
- 
+
     cellnr = pgc->program_map[ptt[i].pgn-1];
     if(ptt[i].pgn < pgc->nr_of_programs)
       endcellnr = pgc->program_map[ptt[i].pgn];
     else
       endcellnr = 0;
- 
+
     do {
       cell = &pgc->cell_playback[cellnr-1];
       if(!(cell->block_type == BLOCK_TYPE_ANGLE_BLOCK &&

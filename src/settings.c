@@ -1,18 +1,18 @@
-/* 
+/*
  * Copyright (C) 2000 Rich Wareham <richwareham@users.sourceforge.net>
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
@@ -67,7 +67,7 @@ static dvdnav_status_t set_language_register(dvdnav_t *this, char *code, int reg
     printerr("Passed illegal language code.");
     return DVDNAV_STATUS_ERR;
   }
-  
+
   pthread_mutex_lock(&this->vm_lock);
   this->vm->state.registers.SPRM[reg] = (code[0] << 8) | code[1];
   pthread_mutex_unlock(&this->vm_lock);
