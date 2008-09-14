@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001 Björn Englund, Håkan Hjort
+ * Copyright (C) 2000, 2001 BjÃ¶rn Englund, HÃ¥kan Hjort
  *
  * This file is part of libdvdnav, a DVD navigation library. It is a modified
  * file originally part of the Ogle DVD player project.

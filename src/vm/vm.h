@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001 Håkan Hjort
+ * Copyright (C) 2000, 2001 HÃ¥kan Hjort
  * Copyright (C) 2001 Rich Wareham <richwareham@users.sourceforge.net>
  *
  * This file is part of libdvdnav, a DVD navigation library. It is modified
