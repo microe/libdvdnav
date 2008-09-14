@@ -18,8 +18,8 @@
  * $Id$
  */
 
-#ifndef __REMAP__H
-#define __REMAP__H
+#ifndef LIBDVDNAV_REMAP_H
+#define LIBDVDNAV_REMAP_H
 typedef struct block_s block_t;
 
 typedef struct remap_s remap_t;
@@ -30,4 +30,4 @@ unsigned long remap_block(
 	remap_t *map, int domain, int title, int program,
 	unsigned long cblock, unsigned long offset);
 
-#endif
+#endif /* LIBDVDNAV_REMAP_H */

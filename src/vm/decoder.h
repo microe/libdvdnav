@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef DECODER_H_INCLUDED
-#define DECODER_H_INCLUDED
+#ifndef LIBDVDNAV_DECODER_H
+#define LIBDVDNAV_DECODER_H
 
 /* link command types */
 typedef enum {
@@ -109,4 +109,4 @@ void vm_print_link(link_t value);
 void vm_print_registers( registers_t *registers );
 #endif
 
-#endif /* DECODER_H_INCLUDED */
+#endif /* LIBDVDNAV_DECODER_H */

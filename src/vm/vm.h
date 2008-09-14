@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef VM_H_INCLUDED
-#define VM_H_INCLUDED
+#ifndef LIBDVDNAV_VM_H
+#define LIBDVDNAV_VM_H
 
 /* DOMAIN enum */
 
@@ -179,4 +179,4 @@ void vm_position_print(vm_t *vm, vm_position_t *position);
 #endif
 
 
-#endif /* VM_HV_INCLUDED */
+#endif /* LIBDVDNAV_VM_H */

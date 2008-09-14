@@ -25,8 +25,8 @@
  * This header defines events and event types
  */
 
-#ifndef DVDNAV_EVENTS_H_INCLUDED
-#define DVDNAV_EVENTS_H_INCLUDED
+#ifndef LIBDVDNAV_DVDNAV_EVENTS_H
+#define LIBDVDNAV_DVDNAV_EVENTS_H
 
 /*
  * DVDNAV_BLOCK_OK
@@ -236,4 +236,4 @@ typedef struct {
 #define DVDNAV_WAIT			13
 
 
-#endif /* DVDNAV_EVENTS_H_INCLUDED */
+#endif /* LIBDVDNAV_DVDNAV_EVENTS_H */

@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef __DVDNAV_READ_CACHE_H
-#define __DVDNAV_READ_CACHE_H
+#ifndef LIBDVDNAV_READ_CACHE_H
+#define LIBDVDNAV_READ_CACHE_H
 
 /* Opaque cache type -- defined in dvdnav_internal.h */
 /* typedef struct read_cache_s read_cache_t; */
@@ -46,4 +46,4 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
  * Those buffers must _never_ be freed. */
 int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, uint8_t **buf);
 
-#endif /* __DVDNAV_READ_CACHE_H */
+#endif /* LIBDVDNAV_READ_CACHE_H */

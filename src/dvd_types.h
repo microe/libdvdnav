@@ -26,8 +26,8 @@
  * Various useful structs and enums for DVDs.
  */
 
-#ifndef DVD_H_INCLUDED
-#define DVD_H_INCLUDED
+#ifndef LIBDVDNAV_DVD_TYPES_H
+#define LIBDVDNAV_DVD_TYPES_H
 
 /*
  * DVD Menu ID
@@ -275,4 +275,4 @@ typedef int DVDVideoCompression_t;
 
 #endif
 
-#endif /* DVD_H_INCLUDED */
+#endif /* LIBDVDNAV_DVD_TYPES_H */

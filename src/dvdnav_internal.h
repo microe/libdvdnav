@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef DVDNAV_INTERNAL_H_INCLUDED
-#define DVDNAV_INTERNAL_H_INCLUDED
+#ifndef LIBDVDNAV_DVDNAV_INTERNAL_H
+#define LIBDVDNAV_DVDNAV_INTERNAL_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -195,4 +195,4 @@ int64_t dvdnav_convert_time(dvd_time_t *time);
 #define printerr(str) \
 	do { if (this) strncpy(this->err_str, str, MAX_ERR_LEN - 1); } while (0)
 
-#endif /* DVDNAV_INTERNAL_H_INCLUDED */
+#endif /* LIBDVDNAV_DVDNAV_INTERNAL_H */

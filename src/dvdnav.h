@@ -26,8 +26,8 @@
  * to access dvdnav functionality.
  */
 
-#ifndef DVDNAV_H_INCLUDED
-#define DVDNAV_H_INCLUDED
+#ifndef LIBDVDNAV_DVDNAV_H
+#define LIBDVDNAV_DVDNAV_H
 
 #define MP_DVDNAV 1
 
@@ -681,4 +681,4 @@ int8_t dvdnav_is_domain_vts(dvdnav_t *self);
 }
 #endif
 
-#endif /* DVDNAV_H_INCLUDED */
+#endif /* LIBDVDNAV_DVDNAV_H */
