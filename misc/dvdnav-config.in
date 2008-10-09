@@ -85,4 +85,4 @@ fi
 
 if test "$echo_minilibs" = "yes"; then
       echo -L@libdir@ -ldvdnavmini @THREAD_LIBS@
-fi      
+fi

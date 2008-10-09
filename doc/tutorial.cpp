@@ -2,7 +2,7 @@
 
 The <tt>libdvdnav</tt> library provides a powerful API allowing your
 programs to take advantage of the sophisticated navigation features
-on DVDs. 
+on DVDs.
 
 \subsection wherenow Tutorial sections
 
@@ -12,13 +12,13 @@ on DVDs.
   - For a step-by step walkthrough of a simple program look in
     section \ref firstprog .
   - FIXME: More sections :)
-  
+
 */
 
 /*! \page dvdnavissues An introduction to DVD navigation
 
 The DVD format represents a radical departure from the traditional
-form of video home-entertainment. Instead of just being a linear 
+form of video home-entertainment. Instead of just being a linear
 programme which is watched from beginning to end like a novel
 DVD allows the user to jump about at will (much like those
 'Choose your own adventure' or 'Which Way' books which were
@@ -42,7 +42,7 @@ A typical DVD might have the following structure:
   |   |-- Chapter 1
   |   |   |-- Cell 1
   |   |   |   |-- VOBU 1
-  |   |   |   |-- ... 
+  |   |   |   |-- ...
   |   |   |   `-- VOBU n
   |   |   |-- ...
   |   |   `-- Cell n
@@ -50,7 +50,7 @@ A typical DVD might have the following structure:
   |   `-- Chapter 2
   |       |-- Cell 1
   |       |   |-- VOBU 1
-  |       |   |-- ... 
+  |       |   |-- ...
   |       |   `-- VOBU n
   |       |-- ...
   |       `-- Cell n
@@ -59,7 +59,7 @@ A typical DVD might have the following structure:
       |-- Chapter 1
       |   |-- Cell 1
       |   |   |-- VOBU 1
-      |   |   |-- ... 
+      |   |   |-- ...
       |   |   `-- VOBU n
       |   |-- ...
       |   `-- Cell n
@@ -67,7 +67,7 @@ A typical DVD might have the following structure:
       `-- Chapter 2
           |-- Cell 1
           |   |-- VOBU 1
-          |   |-- ... 
+          |   |-- ...
           |   `-- VOBU n
           |-- ...
           `-- Cell n
@@ -96,7 +96,7 @@ the location jumped to is always the start of a valid MPEG stream. For multiple-
 DVDs VOBUs for each angle can be interleaved into one Interleaved Video Unit (ILVU).
 In this case when the player get to the end of the VOBU for angle <i>n</i> instead of
 jumping to the next VOBU the player will move forward to the VOBU for angle <i>n</i>
-in the next ILVU. 
+in the next ILVU.
 
 This is summarised in the following diagram showing how the VOBUs are actually
 laid out on disc.
@@ -117,9 +117,9 @@ If the layout of the DVD were the only feature of the format the DVD
 would only have a limited amount of interactivity, you could jump
 around between Titles, Parts and Cells but not much else.
 
-The feature most people associate with DVDs is its ability to 
+The feature most people associate with DVDs is its ability to
 present the user with full-motion interactive menus. To provide
-these features the DVD format includes a specification for a 
+these features the DVD format includes a specification for a
 DVD 'virtual machine'.
 
 To a first order approximation x86 programs can only be run on
@@ -161,13 +161,13 @@ int main(int argc, char **argv) {
   dvdnav_t *dvdnav;
   int finished, len, event;
   uint8_t buf[2050];
- 
+
   /* Open the DVD */
   dvdnav_open(&dvdnav, "/dev/dvd");
 
   fprintf(stderr, "Reading...\n");
   finished = 0;
-  while(!finished) {  
+  while(!finished) {
     int result = dvdnav_get_next_block(dvdnav, buf,
                                        &event, &len);
 
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
         /* Write output to stdout */
         fwrite(buf, len, 1, stdout);
       break;
-     case DVDNAV_STILL_FRAME: 
+     case DVDNAV_STILL_FRAME:
        {
         fprintf(stderr, "Skipping still frame\n");
         dvdnav_still_skip(dvdnav);
@@ -198,11 +198,11 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  
+
   dvdnav_close(dvdnav);
-  
+
   return 0;
-} 
+}
 \endverbatim
 
 If you have correctly installled <tt>libdvdnav</tt>, you should have the

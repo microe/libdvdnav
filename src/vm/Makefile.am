@@ -11,6 +11,6 @@ libdvdvm_la_SOURCES = decoder.c vm.c vmcmd.c
 
 libdvdvm_la_LDFLAGS = $(THREAD_LIBS)
 
-include_HEADERS = 
+include_HEADERS =
 
 noinst_HEADERS = decoder.h vm.h vmcmd.h

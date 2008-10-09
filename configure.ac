@@ -35,7 +35,7 @@ AC_SUBST(DVDNAV_MINOR)
 AC_SUBST(DVDNAV_SUB)
 
 dnl The libtool version numbers (DVDNAV_LT_*); Don't even think about faking this!
-dnl 
+dnl
 dnl immediately before every release do:
 dnl ===================================
 dnl if (the interface is totally unchanged from previous release)
@@ -48,7 +48,7 @@ dnl       AGE ++;
 dnl    if (any interfaces have been _removed_ or _incompatibly changed_)
 dnl       AGE = 0;
 dnl }
-dnl 
+dnl
 dnl If you want to know more about what you are doing, here are some details:
 dnl  * DVDNAV_LT_CURRENT is the current API version
 dnl  * DVDNAV_LT_REVISION is an internal revision number which is increased when the API
@@ -238,7 +238,7 @@ dnl ---------------------------------------------
 dnl Output configuration files
 dnl ---------------------------------------------
 AC_OUTPUT([
-Makefile 
+Makefile
 src/Makefile
 src/vm/Makefile
 misc/Makefile

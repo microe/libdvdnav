@@ -7,19 +7,19 @@
 CFG=libdvdcss - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "libdvdcss.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "libdvdcss.mak" CFG="libdvdcss - Win32 Debug"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "libdvdcss - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "libdvdcss - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -93,7 +93,7 @@ PostBuild_Desc=Create libdvdcss Install
 PostBuild_Cmds=scripts\libdvdcss_intstall.bat Debug
 # End Special Build Tool
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 

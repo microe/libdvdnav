@@ -7,7 +7,7 @@ domain 8, title 1, program 1, start 0x0000, end 0x1f0a   # Introduction
 domain 2, title 1, program 1, start 0x11ff3, end 0x1272c # gore
 #domain 2, title 1, program 1, start 0x173f1, end 0x185d6 # violence/death
 
-# hobbiton 
+# hobbiton
 domain 2, title 1, program 2, start 0x30373, end 0x31946 # vices/smoking
 domain 2, title 1, program 2, start 0x32942, end 0x34426 # vices/smoking
 domain 2, title 1, program 2, start 0x34895, end 0x34ad1 # vices/smoking
@@ -20,7 +20,7 @@ domain 2, title 1, program 3, start 0x4cfbe, end 0x4f955 # vices/smoking
 # party
 domain 2, title 1, program 4, start 0x53ee0, end 0x54396 # vices/drinking
 domain 2, title 1, program 4, start 0x58851, end 0x5ae3d # imitative/theft
-domain 2, title 1, program 4, start 0x5cd0a, end 0x5e216 # jump 
+domain 2, title 1, program 4, start 0x5cd0a, end 0x5e216 # jump
 
 # gandalf departs
 domain 2, title 1, program 6, start 0x7f05d, end 0x7f1b3 # jump

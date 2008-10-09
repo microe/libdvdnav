@@ -65,7 +65,7 @@ fi
 
 if test "$echo_libs" = "yes"; then
       echo -L$libdir -ldvdnav $dvdread_libs $threadlib
-fi      
+fi
 
 if test "$echo_minilibs" = "yes"; then
       echo -L$libdir -ldvdnavmini $threadlib

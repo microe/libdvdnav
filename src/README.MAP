@@ -10,22 +10,22 @@ WHAT ARE MAP FILES
 
 Map files are an experimental feature that lets you customize the way
 you watch DVDs.  If you are opposed to violence, are sickened by gore,
-or would rather your two year old didn't ask you just yet why that 
-woman in the movie was naked, you might want to create a map file.  
+or would rather your two year old didn't ask you just yet why that
+woman in the movie was naked, you might want to create a map file.
 
 Map files identify sections of the movie that will be skipped during
 playback.  You can skip any section you like with the only restriction
-(right now) that the movie player must play at least the last VOBU 
+(right now) that the movie player must play at least the last VOBU
 (about a fifth of a second) of each chapter in the movie in order
-to detect chapter changes correctly.  
+to detect chapter changes correctly.
 
 Included with this patch is an example map file that describes most
-of the potentially objectionable content in the new "The Lord of the 
-Rings" DVD.  I've added a comment after each block that identifies 
+of the potentially objectionable content in the new "The Lord of the
+Rings" DVD.  I've added a comment after each block that identifies
 what content it contains so that you can customize the file to your
 preferences.  The map file looks something like this:
 
- # The Lord of the Rings: Fellowship of the Ring 
+ # The Lord of the Rings: Fellowship of the Ring
  # (Widescreen Theatrical Release)
  debug
  domain 8, title 1, program 1, start 0x0000, end 0x1f0a   # Introduction
@@ -55,7 +55,7 @@ HOWTO
 To create your own map files you would create a new map file using the
 title of the disk as the filename, and add the debug line to it.  The
 map file should be placed in your '.xine' directory and have a '.map'
-extension added.  For example "The Lord Of The Rings" map must be stored 
+extension added.  For example "The Lord Of The Rings" map must be stored
 in the file ~/.xine/FELLOWSHIP.map
 
 After you create the file with the DEBUG line you will see output that
@@ -77,7 +77,7 @@ map file:
    domain 8, title 1, program 1, start 0x2205, end 0x248a # 4 blocks
 
 Xine uses a buffered input chain so that if you pause the viewer you
-won't find the same VOBU being displayed on the terminal as is 
+won't find the same VOBU being displayed on the terminal as is
 currently on the screen.  In my testing the correct VOBU to use if
 you pause exactly on the section you want to cut will be about five
 or six lines above the last one printed to the screen.  Replay the
@@ -96,10 +96,10 @@ WHOM TO BLAME
 =============
 
 If the patch doesn't work for you (and you want it to) you can contact
-me at 'kevin_smathers@hp.com'.  
+me at 'kevin_smathers@hp.com'.
 
-If the patch works for you and you don't want it to, remember that 
-not everyone in the world has the same needs.  The freedom to censor 
-movies in our own homes is quite different from the government 
-interfering into libraries and other public forums to censor movies 
+If the patch works for you and you don't want it to, remember that
+not everyone in the world has the same needs.  The freedom to censor
+movies in our own homes is quite different from the government
+interfering into libraries and other public forums to censor movies
 for us.

@@ -14,7 +14,7 @@ getdir() {
   else
     filelist=`ls`
   fi
-  
+
   for file in $filelist; do
 
     if test -d $file -a $file != "CVS" -a $file != $distdir; then
@@ -60,7 +60,7 @@ main() {
 
   echo " * Log is ${log##*/}"
   echo " * Error log is ${logerror##*/}"
-  
+
 }
 
 main
