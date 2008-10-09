@@ -48,9 +48,14 @@ int main(int argc, char **argv) {
   int output_fd = 0;
   int dump = 0, tt_dump = 0;
 
+  if (argc < 2) {
+    printf("Specify DVD device.\n");
+    return 1;
+  }
+
   /* open dvdnav handle */
   printf("Opening DVD...\n");
-  if (dvdnav_open(&dvdnav, "/dev/dvd") != DVDNAV_STATUS_OK) {
+  if (dvdnav_open(&dvdnav, argv[1]) != DVDNAV_STATUS_OK) {
     printf("Error on dvdnav_open\n");
     return 1;
   }
