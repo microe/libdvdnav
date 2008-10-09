@@ -52,6 +52,11 @@
 #include <io.h>   /* read() */
 #endif /* _MSC_VER */
 
+#ifdef __OS2__
+#define INCL_DOS
+#include <os2.h>
+#endif
+
 /*
 #define STRICT
 */
@@ -128,6 +133,27 @@ static void vm_print_current_domain_state(vm_t *vm) {
                    (vm->state).VTS_TTN_REG,
                    (vm->state).TTN_REG,
                    (vm->state).TT_PGCN_REG);
+}
+#endif
+
+#ifdef __OS2__
+#define open os2_open
+
+static int os2_open(const char *name, int oflag)
+{
+    HFILE hfile;
+    ULONG ulAction;
+    ULONG rc;
+
+    rc = DosOpen( name, &hfile, &ulAction, 0, FILE_NORMAL,
+                  OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW,
+                  OPEN_ACCESS_READONLY | OPEN_SHARE_DENYNONE | OPEN_FLAGS_DASD,
+                  NULL );
+
+    if( rc )
+        return -1;
+
+    return ( int )hfile;
 }
 #endif
 
