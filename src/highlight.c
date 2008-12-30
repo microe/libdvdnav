@@ -30,13 +30,12 @@
 #include <string.h>
 #include <sys/time.h>
 #include <dvdread/nav_types.h>
-#include "dvd_types.h"
+#include "dvdnav/dvdnav.h"
 #include "remap.h"
 #include "vm/decoder.h"
 #include "vm/vm.h"
 #include "vm/vmcmd.h"
 #include "dvdnav_internal.h"
-#include "dvdnav.h"
 
 /*
 #define BUTTON_TESTING

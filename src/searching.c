@@ -29,13 +29,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include "dvd_types.h"
+#include "dvdnav/dvdnav.h"
 #include <dvdread/nav_types.h>
 #include <dvdread/ifo_types.h>
 #include "remap.h"
 #include "vm/decoder.h"
 #include "vm/vm.h"
-#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 /*

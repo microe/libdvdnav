@@ -40,12 +40,11 @@
 #include <dvdread/nav_types.h>
 #include <dvdread/ifo_types.h>
 #include <dvdread/ifo_read.h>
-#include "dvd_types.h"
+#include "dvdnav/dvdnav.h"
 
 #include "decoder.h"
 #include "remap.h"
 #include "vm.h"
-#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 #ifdef _MSC_VER

@@ -33,12 +33,11 @@
 #include <dvdread/nav_types.h>
 #include <dvdread/ifo_types.h> /* vm_cmd_t */
 
-#include "dvd_types.h"
+#include "dvdnav/dvdnav.h"
 #include "remap.h"
 #include "decoder.h"
 #include "vm.h"
 #include "vmcmd.h"
-#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 uint32_t vm_getbits(command_t *command, int32_t start, int32_t count) {
