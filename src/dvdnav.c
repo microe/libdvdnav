@@ -825,6 +825,11 @@ dvdnav_status_t dvdnav_get_title_string(dvdnav_t *this, const char **title_str) 
   return DVDNAV_STATUS_OK;
 }
 
+dvdnav_status_t dvdnav_get_serial_string(dvdnav_t *this, const char **serial_str) {
+  (*serial_str) = this->vm->dvd_serial;
+  return DVDNAV_STATUS_OK;
+}
+
 uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
   uint8_t         retval;
 

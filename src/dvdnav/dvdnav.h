@@ -537,6 +537,13 @@ dvdnav_status_t dvdnav_spu_language_select(dvdnav_t *self,
 dvdnav_status_t dvdnav_get_title_string(dvdnav_t *self, const char **title_str);
 
 /*
+ * Returns a string containing the serial number of the DVD.
+ * This has a max of 15 characters and should be more unique than the
+ * title string.
+ */
+dvdnav_status_t dvdnav_get_serial_string(dvdnav_t *self, const char **serial_str);
+
+/*
  * Get video aspect code.
  * The aspect code does only change on VTS boundaries.
  * See the DVDNAV_VTS_CHANGE event.

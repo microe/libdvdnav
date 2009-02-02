@@ -156,7 +156,7 @@ static int os2_open(const char *name, int oflag)
 }
 #endif
 
-static void dvd_read_name(char *name, const char *device) {
+static void dvd_read_name(char *name, char *serial, const char *device) {
     /* Because we are compiling with _FILE_OFFSET_BITS=64
      * all off_t are 64bit.
      */
@@ -192,6 +192,8 @@ static void dvd_read_name(char *name, const char *device) {
               fprintf(MSG_OUT, " ");
             }
           }
+          strncpy(serial, (char*) &data[73], (i-73));
+          serial[14] = 0;
           fprintf(MSG_OUT, "\nlibdvdnav: DVD Title (Alternative): ");
           for(i=89; i < 128; i++ ) {
             if((data[i] == 0)) break;
@@ -352,7 +354,7 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
       fprintf(MSG_OUT, "libdvdnav: vm: failed to open/read the DVD\n");
       return 0;
     }
-    dvd_read_name(vm->dvd_name, dvdroot);
+    dvd_read_name(vm->dvd_name, vm->dvd_serial, dvdroot);
     vm->map  = remap_loadmap(vm->dvd_name);
     vm->vmgi = ifoOpenVMGI(vm->dvd);
     if(!vm->vmgi) {
