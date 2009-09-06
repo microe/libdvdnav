@@ -54,6 +54,8 @@
 #ifdef __OS2__
 #define INCL_DOS
 #include <os2.h>
+#include <io.h>     /* setmode() */
+#include <fcntl.h>  /* O_BINARY  */
 #endif
 
 /*
@@ -144,13 +146,15 @@ static int os2_open(const char *name, int oflag)
     ULONG ulAction;
     ULONG rc;
 
-    rc = DosOpen( name, &hfile, &ulAction, 0, FILE_NORMAL,
-                  OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW,
-                  OPEN_ACCESS_READONLY | OPEN_SHARE_DENYNONE | OPEN_FLAGS_DASD,
-                  NULL );
+    rc = DosOpenL( name, &hfile, &ulAction, 0, FILE_NORMAL,
+                   OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW,
+                   OPEN_ACCESS_READONLY | OPEN_SHARE_DENYNONE | OPEN_FLAGS_DASD,
+                   NULL );
 
     if( rc )
         return -1;
+
+    setmode( hfile, O_BINARY );
 
     return ( int )hfile;
 }
