@@ -844,6 +844,22 @@ uint8_t dvdnav_get_video_aspect(dvdnav_t *this) {
 
   return retval;
 }
+int dvdnav_get_video_resolution(dvdnav_t *this, uint32_t *width, uint32_t *height) {
+  int w, h;
+
+  if(!this->started) {
+    printerr("Virtual DVD machine not started.");
+    return -1;
+  }
+
+  pthread_mutex_lock(&this->vm_lock);
+  vm_get_video_res(this->vm, &w, &h);
+  pthread_mutex_unlock(&this->vm_lock);
+
+  *width  = w;
+  *height = h;
+  return 0;
+}
 
 uint8_t dvdnav_get_video_scale_permission(dvdnav_t *this) {
   uint8_t         retval;

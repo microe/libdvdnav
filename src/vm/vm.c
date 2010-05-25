@@ -858,8 +858,8 @@ void vm_get_subp_info(vm_t *vm, int *current, int *num_avail) {
     break;
   }
 }
+#endif
 
-/* currently unused */
 void vm_get_video_res(vm_t *vm, int *width, int *height) {
   video_attr_t attr = vm_get_video_attr(vm);
 
@@ -883,7 +883,6 @@ void vm_get_video_res(vm_t *vm, int *width, int *height) {
     break;
   }
 }
-#endif
 
 int vm_get_video_aspect(vm_t *vm) {
   int aspect = vm_get_video_attr(vm).display_aspect_ratio;
