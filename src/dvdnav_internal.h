@@ -34,7 +34,7 @@ typedef CRITICAL_SECTION pthread_mutex_t;
 #define pthread_mutex_init(a, b) InitializeCriticalSection(a)
 #define pthread_mutex_lock(a)    EnterCriticalSection(a)
 #define pthread_mutex_unlock(a)  LeaveCriticalSection(a)
-#define pthread_mutex_destroy(a)
+#define pthread_mutex_destroy(a) DeleteCriticalSection(a)
 
 #ifndef HAVE_GETTIMEOFDAY
 /* replacement gettimeofday implementation */
