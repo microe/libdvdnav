@@ -1689,6 +1689,7 @@ static int set_PGCN(vm_t *vm, int pgcN) {
 /* Figure out the correct pgN from the cell and update (vm->state). */
 static int set_PGN(vm_t *vm) {
   int new_pgN = 0;
+  int dummy, part;
 
   while(new_pgN < (vm->state).pgc->nr_of_programs
 	&& (vm->state).cellN >= (vm->state).pgc->program_map[new_pgN])
@@ -1705,14 +1706,8 @@ static int set_PGN(vm_t *vm) {
     if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
       return 0; /* ?? */
     pb_ty = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1].pb_ty;
-    if(pb_ty->multi_or_random_pgc_title == /* One_Sequential_PGC_Title */ 0) {
-      int dummy, part;
       vm_get_current_title_part(vm, &dummy, &part);
       (vm->state).PTTN_REG = part;
-    } else {
-      /* FIXME: Handle RANDOM or SHUFFLE titles. */
-      fprintf(MSG_OUT, "libdvdnav: RANDOM or SHUFFLE titles are NOT handled yet.\n");
-    }
   }
   return 1;
 }
