@@ -63,6 +63,9 @@ struct remap_s {
 
 static remap_t* remap_new( char *title) {
     remap_t *map = malloc( sizeof(remap_t));
+    if (map == NULL)
+	return NULL;
+
     map->title = strdup(title);
     map->maxblocks = 0;
     map->nblocks = 0;
@@ -140,8 +143,10 @@ static void remap_add_node( remap_t *map, block_t block) {
     } else {
         /* new block */
 	if (map->nblocks >= map->maxblocks) {
+	    if ((map->blocks = realloc( map->blocks, sizeof( block_t)*( map->maxblocks + 20))) == NULL)
+		return;
+
 	    map->maxblocks += 20;
-	    map->blocks = realloc( map->blocks, sizeof( block_t)*map->maxblocks);
 	}
 	n = map->nblocks++;
 	while (n > 0 && compare_block( &block, &map->blocks[ n-1]) < 0) {
@@ -159,7 +164,9 @@ static int parseblock(char *buf, int *dom, int *tt, int *pg,
     char *epos;
     char *marker[]={"domain", "title", "program", "start", "end"};
     int st = 0;
-    tok = strtok( buf, " ");
+    if ((tok = strtok( buf, " ")) == NULL)
+        return st;
+
     while (st < 5) {
         if (strcmp(tok, marker[st])) return -st-1000;
         tok = strtok( NULL, " ");
@@ -184,7 +191,7 @@ static int parseblock(char *buf, int *dom, int *tt, int *pg,
 		break;
 	}
 	st++;
-        tok = strtok( NULL, " ");
+        if (!(tok = strtok( NULL, " "))) return -st-2000;
     }
     return st;
 }
@@ -215,7 +222,12 @@ remap_t* remap_loadmap( char *title) {
     }
 
     /* Load the map file */
-    map = remap_new( title);
+    if ((map = remap_new( title)) == NULL) {
+	fprintf(MSG_OUT, "libdvdnav: Unable to load map '%s'\n", title);
+        fclose(fp);
+	return NULL;
+    }
+
     while (fgets( buf, sizeof(buf), fp) != NULL) {
         if (buf[0] == '\n' || buf[0] == '#' || buf[0] == 0) continue;
         if (strncasecmp( buf, "debug", 5) == 0) {
