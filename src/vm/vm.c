@@ -171,8 +171,7 @@ static void dvd_read_name(char *name, char *serial, const char *device) {
     uint8_t data[DVD_VIDEO_LB_LEN];
 
     /* Read DVD name */
-    fd = open(device, O_RDONLY);
-    if (fd > 0) {
+    if (device && (fd = open(device, O_RDONLY)) > 0) {
       off = lseek( fd, 32 * (off_t) DVD_VIDEO_LB_LEN, SEEK_SET );
       if( off == ( 32 * (off_t) DVD_VIDEO_LB_LEN ) ) {
         off = read( fd, data, DVD_VIDEO_LB_LEN );

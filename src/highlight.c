@@ -242,8 +242,13 @@ static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
 }
 
 static dvdnav_status_t button_auto_action(dvdnav_t *this, pci_t *pci) {
-  if (get_current_button(this, pci)->auto_action_mode)
+  btni_t *button_ptr;
+  if ((button_ptr = get_current_button(this, pci)) == NULL)
+      return DVDNAV_STATUS_ERR;
+
+  if (button_ptr->auto_action_mode)
     return dvdnav_button_activate(this, pci);
+
   return DVDNAV_STATUS_OK;
 }
 
@@ -366,7 +371,11 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
     return DVDNAV_STATUS_ERR;
   }
 
-  button_ptr = get_current_button(this, pci);
+  if ((button_ptr = get_current_button(this, pci)) == NULL) {
+    pthread_mutex_unlock(&this->vm_lock);
+    return DVDNAV_STATUS_ERR;
+  }
+
   /* Finally, make the VM execute the appropriate code and probably
    * schedule a jump */
 #ifdef BUTTON_TESTING
