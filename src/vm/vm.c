@@ -85,6 +85,8 @@ static int  set_TT(vm_t *vm, int tt);
 static int  set_PTT(vm_t *vm, int tt, int ptt);
 static int  set_VTS_TT(vm_t *vm, int vtsN, int vts_ttn);
 static int  set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part);
+static int  set_PROG(vm_t *vm, int tt, int pgcn, int pgn);
+static int  set_VTS_PROG(vm_t *vm, int vtsN, int vts_ttn, int pgcn, int pgn);
 static int  set_FP_PGC(vm_t *vm);
 static int  set_MENU(vm_t *vm, int menu);
 static int  set_PGCN(vm_t *vm, int pgcN);
@@ -517,6 +519,24 @@ int vm_jump_cell_block(vm_t *vm, int cell, int block) {
   /* play_Cell can jump to a different cell in case of angles */
   if ((vm->state).cellN == cell)
     (vm->state).blockN = block;
+  return 1;
+}
+
+int vm_jump_title_program(vm_t *vm, int title, int pgcn, int pgn) {
+  link_t link;
+
+  if(!set_PROG(vm, title, pgcn, pgn))
+    return 0;
+  /* Some DVDs do not want us to jump directly into a title and have
+   * PGC pre commands taking us back to some menu. Since we do not like that,
+   * we do not execute PGC pre commands that would do a jump. */
+  /* process_command(vm, play_PGC_PG(vm, (vm->state).pgN)); */
+  link = play_PGC_PG(vm, (vm->state).pgN);
+  if (link.command != PlayThis)
+    /* jump occured -> ignore it and play the PG anyway */
+    process_command(vm, play_PG(vm));
+  else
+    process_command(vm, link);
   return 1;
 }
 
@@ -1644,6 +1664,42 @@ static int set_VTS_PTT(vm_t *vm, int vtsN, int vts_ttn, int part) {
 
   res = set_PGCN(vm, pgcN);   /* This clobber's state.pgN (sets it to 1), but we don't want clobbering here. */
   (vm->state).pgN = pgN;
+  return res;
+}
+
+static int set_PROG(vm_t *vm, int tt, int pgcn, int pgn) {
+  assert(tt <= vm->vmgi->tt_srpt->nr_of_srpts);
+  return set_VTS_PROG(vm, vm->vmgi->tt_srpt->title[tt - 1].title_set_nr,
+		     vm->vmgi->tt_srpt->title[tt - 1].vts_ttn, pgcn, pgn);
+}
+
+static int set_VTS_PROG(vm_t *vm, int vtsN, int vts_ttn, int pgcn, int pgn) {
+  int pgcN, pgN, res, title, part = 0;
+
+  (vm->state).domain = VTS_DOMAIN;
+
+  if (vtsN != (vm->state).vtsN)
+    if (!ifoOpenNewVTSI(vm, vm->dvd, vtsN))  /* Also sets (vm->state).vtsN */
+      return 0;
+
+  if ((vts_ttn < 1) || (vts_ttn > vm->vtsi->vts_ptt_srpt->nr_of_srpts)) {
+    return 0;
+  }
+
+  pgcN = pgcn;
+  pgN = pgn;
+
+  (vm->state).TT_PGCN_REG = pgcN;
+  (vm->state).TTN_REG     = get_TT(vm, vtsN, vts_ttn);
+  assert( (vm->state.TTN_REG) != 0 );
+  (vm->state).VTS_TTN_REG = vts_ttn;
+  (vm->state).vtsN        = vtsN;  /* Not sure about this one. We can get to it easily from TTN_REG */
+  /* Any other registers? */
+
+  res = set_PGCN(vm, pgcN);   /* This clobber's state.pgN (sets it to 1), but we don't want clobbering here. */
+  (vm->state).pgN = pgN;
+  vm_get_current_title_part(vm, &title, &part);
+  (vm->state).PTTN_REG    = part;
   return res;
 }
 
