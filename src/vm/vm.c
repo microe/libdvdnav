@@ -1507,7 +1507,7 @@ static int process_command(vm_t *vm, link_t link_values) {
       link_values = play_PGC(vm);
       break;
     case JumpSS_VMGM_MENU:
-      /* Jump to Video Manger domain - Title Menu:data1 or any PGC in VMG */
+      /* Jump to Video Manager domain - Title Menu:data1 or any PGC in VMG */
       /* Allowed from anywhere except the VTS Title domain */
       /* Stop SPRM9 Timer and any GPRM counters */
       assert((vm->state).domain != VTS_DOMAIN); /* ?? */
