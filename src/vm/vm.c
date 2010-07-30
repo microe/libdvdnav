@@ -619,7 +619,9 @@ int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
       (vm->state).domain = VTSM_DOMAIN;
       break;
     }
-    if(get_PGCIT(vm) && set_MENU(vm, menuid)) {
+    if(vm->vmgi == NULL || vm->vmgi->pgci_ut == NULL)
+      return 0;
+    else if(get_PGCIT(vm) && set_MENU(vm, menuid)) {
       process_command(vm, play_PGC(vm));
       return 1;  /* Jump */
     } else {
