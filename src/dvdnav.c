@@ -178,9 +178,9 @@ dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: clearing dvdnav\n");
 #endif
+  pthread_mutex_unlock(&this->vm_lock);
   result = dvdnav_clear(this);
 
-  pthread_mutex_unlock(&this->vm_lock);
   return result;
 }
 
