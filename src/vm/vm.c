@@ -1689,7 +1689,7 @@ static int set_PGCN(vm_t *vm, int pgcN) {
 /* Figure out the correct pgN from the cell and update (vm->state). */
 static int set_PGN(vm_t *vm) {
   int new_pgN = 0;
-  int dummy, part;
+  int dummy, part = 0;
 
   while(new_pgN < (vm->state).pgc->nr_of_programs
 	&& (vm->state).cellN >= (vm->state).pgc->program_map[new_pgN])
