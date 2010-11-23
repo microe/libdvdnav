@@ -160,7 +160,7 @@ static int parseblock(char *buf, int *dom, int *tt, int *pg,
 		      unsigned long *start, unsigned long *end) {
     long tmp;
     char *tok;
-    char *epos;
+    char *epos = NULL;
     char *marker[]={"domain", "title", "program", "start", "end"};
     int st = 0;
     if ((tok = strtok( buf, " ")) == NULL)
