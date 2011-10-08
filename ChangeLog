@@ -1,4 +1,4 @@
-libdvdnav (4.1.4)
+libdvdnav (4.2.0)
   * OS/2 support
   * added dvdnav_get_serial_string() function
   * fixed ifo leak in dvdnav_describe_chapters()
