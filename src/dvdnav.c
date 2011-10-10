@@ -734,7 +734,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
        * otherwise it might show stills or menus too shortly */
       if ((this->position_current.still || this->pci.hli.hl_gi.hli_ss) && !this->sync_wait_skip) {
         this->sync_wait = 1;
-      } else {
+      }
 	if( this->position_current.still == 0 || this->skip_still ) {
 	  /* no active cell still -> get us to the next cell */
 	  vm_get_next_cell(this->vm);
@@ -742,7 +742,6 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
 	  this->skip_still = 0;
 	  this->sync_wait_skip = 0;
 	}
-      }
       /* handle related state changes in next iteration */
       (*event) = DVDNAV_NOP;
       (*len) = 0;
