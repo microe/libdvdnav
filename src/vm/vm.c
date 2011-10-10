@@ -1186,15 +1186,6 @@ static link_t play_Cell_post(vm_t *vm) {
   if(cell->cell_cmd_nr != 0) {
     link_t link_values;
 
-/*  These asserts are now not needed.
- *  Some DVDs have no cell commands listed in the PGC,
- *  but the Cell itself points to a cell command that does not exist.
- *  For this situation, just ignore the cell command and continue.
- *
- *  assert((vm->state).pgc->command_tbl != NULL);
- *  assert((vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr);
- */
-
     if ((vm->state).pgc->command_tbl != NULL &&
         (vm->state).pgc->command_tbl->nr_of_cell >= cell->cell_cmd_nr) {
 #ifdef TRACE
