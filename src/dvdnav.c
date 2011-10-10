@@ -732,16 +732,16 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
       /* we are about to leave a cell, so a lot of state changes could occur;
        * under certain conditions, the application should get in sync with us before this,
        * otherwise it might show stills or menus too shortly */
-      if ((this->position_current.still || this->pci.hli.hl_gi.hli_ss) && !this->sync_wait_skip) {
+      if ((this->position_current.still || this->pci.hli.hl_gi.hli_ss) && !this->sync_wait_skip)
         this->sync_wait = 1;
+
+      if( this->position_current.still == 0 || this->skip_still ) {
+	/* no active cell still -> get us to the next cell */
+	vm_get_next_cell(this->vm);
+	this->position_current.still = 0; /* still gets activated at end of cell */
+	this->skip_still = 0;
+	this->sync_wait_skip = 0;
       }
-	if( this->position_current.still == 0 || this->skip_still ) {
-	  /* no active cell still -> get us to the next cell */
-	  vm_get_next_cell(this->vm);
-	  this->position_current.still = 0; /* still gets activated at end of cell */
-	  this->skip_still = 0;
-	  this->sync_wait_skip = 0;
-	}
       /* handle related state changes in next iteration */
       (*event) = DVDNAV_NOP;
       (*len) = 0;
