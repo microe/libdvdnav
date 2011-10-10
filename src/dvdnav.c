@@ -735,7 +735,7 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
       if ((this->position_current.still || this->pci.hli.hl_gi.hli_ss) && !this->sync_wait_skip)
         this->sync_wait = 1;
 
-      if( this->position_current.still == 0 || this->skip_still ) {
+      if(!this->position_current.still || this->skip_still ) {
 	/* no active cell still -> get us to the next cell */
 	vm_get_next_cell(this->vm);
 	this->position_current.still = 0; /* still gets activated at end of cell */
