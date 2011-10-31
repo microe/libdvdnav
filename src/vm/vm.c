@@ -1788,10 +1788,8 @@ static int set_PGN(vm_t *vm) {
   (vm->state).pgN = new_pgN;
 
   if((vm->state).domain == VTS_DOMAIN) {
-    playback_type_t *pb_ty;
     if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
       return 0; /* ?? */
-    pb_ty = &vm->vmgi->tt_srpt->title[(vm->state).TTN_REG - 1].pb_ty;
       vm_get_current_title_part(vm, &dummy, &part);
       (vm->state).PTTN_REG = part;
   }
