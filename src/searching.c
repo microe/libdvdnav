@@ -403,8 +403,7 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
-    return DVDNAV_STATUS_ERR;
+    goto fail;
   }
 
 #ifdef LOG_DEBUG
@@ -412,17 +411,25 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
 #endif
   /* make a copy of current VM and try to navigate the copy to the next PG */
   try_vm = vm_new_copy(this->vm);
+  if (try_vm == NULL) {
+    printerr("Unable to copy the VM.");
+    goto fail;
+  }
+
   if (!vm_jump_next_pg(try_vm) || try_vm->stopped) {
     vm_free_copy(try_vm);
     /* next_pg failed, try to jump at least to the next cell */
     try_vm = vm_new_copy(this->vm);
+    if (try_vm == NULL) {
+      printerr("Unable to copy the VM.");
+      goto fail;
+    }
     vm_get_next_cell(try_vm);
     if (try_vm->stopped) {
       vm_free_copy(try_vm);
       fprintf(MSG_OUT, "libdvdnav: next chapter failed.\n");
       printerr("Skip to next chapter failed.");
-      pthread_mutex_unlock(&this->vm_lock);
-      return DVDNAV_STATUS_ERR;
+      goto fail;
     }
   }
   this->cur_cell_time = 0;
@@ -437,6 +444,10 @@ dvdnav_status_t dvdnav_next_pg_search(dvdnav_t *this) {
   pthread_mutex_unlock(&this->vm_lock);
 
   return DVDNAV_STATUS_OK;
+
+fail:
+  pthread_mutex_unlock(&this->vm_lock);
+  return DVDNAV_STATUS_ERR;
 }
 
 dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
@@ -445,13 +456,17 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   pthread_mutex_lock(&this->vm_lock);
   if(!this->vm->state.pgc) {
     printerr("No current PGC.");
-    pthread_mutex_unlock(&this->vm_lock);
-    return DVDNAV_STATUS_ERR;
+    goto fail;
   }
 
   this->cur_cell_time = 0;
   /* make a copy of current VM and try to navigate the copy to the menu */
   try_vm = vm_new_copy(this->vm);
+  if (try_vm == NULL) {
+    printerr("Unable to copy VM.");
+    goto fail;
+  }
+
   if ( (menu == DVD_MENU_Escape) && (this->vm->state.domain != VTS_DOMAIN)) {
     /* Try resume */
     if (vm_jump_resume(try_vm) && !try_vm->stopped) {
@@ -477,9 +492,12 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
   } else {
     vm_free_copy(try_vm);
     printerr("No such menu or menu not reachable.");
-    pthread_mutex_unlock(&this->vm_lock);
-    return DVDNAV_STATUS_ERR;
+    goto fail;
   }
+
+fail:
+  pthread_mutex_unlock(&this->vm_lock);
+  return DVDNAV_STATUS_ERR;
 }
 
 dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
