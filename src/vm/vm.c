@@ -424,11 +424,12 @@ vm_t *vm_new_copy(vm_t *source) {
   if (vtsN > 0) {
     (target->state).vtsN = 0;
     if (!ifoOpenNewVTSI(target, target->dvd, vtsN))
-      assert(0);
+      goto fail;
 
     /* restore pgc pointer into the new vtsi */
     if (!set_PGCN(target, pgcN))
-      assert(0);
+      goto fail;
+
     (target->state).pgN = pgN;
   }
 
