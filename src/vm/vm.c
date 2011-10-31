@@ -1049,7 +1049,7 @@ static link_t play_PGC_PG(vm_t *vm, int pgN) {
 }
 
 static link_t play_PGC_post(vm_t *vm) {
-  link_t link_values;
+  link_t link_values = { LinkNoLink, 0, 0, 0 };
 
 #ifdef TRACE
   fprintf(MSG_OUT, "libdvdnav: play_PGC_post:\n");
