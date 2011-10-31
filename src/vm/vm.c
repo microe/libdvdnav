@@ -413,7 +413,8 @@ vm_t *vm_new_copy(vm_t *source) {
   int pgcN = get_PGCN(source);
   int pgN  = (source->state).pgN;
 
-  assert(pgcN);
+  if (target == NULL || pgcN == 0)
+    goto fail;
 
   memcpy(target, source, sizeof(vm_t));
 
@@ -432,6 +433,12 @@ vm_t *vm_new_copy(vm_t *source) {
   }
 
   return target;
+
+fail:
+  if (target != NULL)
+    vm_free_vm(target);
+
+  return NULL;
 }
 
 void vm_merge(vm_t *target, vm_t *source) {
