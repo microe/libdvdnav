@@ -1790,8 +1790,9 @@ static int set_PGN(vm_t *vm) {
   if((vm->state).domain == VTS_DOMAIN) {
     if((vm->state).TTN_REG > vm->vmgi->tt_srpt->nr_of_srpts)
       return 0; /* ?? */
-      vm_get_current_title_part(vm, &dummy, &part);
-      (vm->state).PTTN_REG = part;
+
+    vm_get_current_title_part(vm, &dummy, &part);
+    (vm->state).PTTN_REG = part;
   }
   return 1;
 }
