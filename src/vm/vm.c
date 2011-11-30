@@ -412,8 +412,8 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
       /* return 0; Not really used for now.. */
     }
     /* ifoRead_TXTDT_MGI(vmgi); Not implemented yet */
-    dvd_read_name(vm->dvd_name, vm->dvd_serial, dvdroot);
-    vm->map  = remap_loadmap(vm->dvd_name);
+    if (dvd_read_name(vm->dvd_name, vm->dvd_serial, dvdroot) == 1)
+      vm->map  = remap_loadmap(vm->dvd_name);
   }
   if (vm->vmgi) {
     int i, mask;
