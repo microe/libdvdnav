@@ -162,63 +162,86 @@ static int os2_open(const char *name, int oflag)
 }
 #endif
 
-static void dvd_read_name(char *name, char *serial, const char *device) {
-    /* Because we are compiling with _FILE_OFFSET_BITS=64
-     * all off_t are 64bit.
-     */
-    off_t off;
-    int fd, i;
-    uint8_t data[DVD_VIDEO_LB_LEN];
+static int dvd_read_name(char *name, char *serial, const char *device) {
+  /* Because we are compiling with _FILE_OFFSET_BITS=64
+   * all off_t are 64bit.
+   */
+  off_t off;
+  ssize_t read_size = 0;
+  int fd = -1, i;
+  uint8_t data[DVD_VIDEO_LB_LEN];
 
-    /* Read DVD name */
-    if (device && (fd = open(device, O_RDONLY)) > 0) {
-      off = lseek( fd, 32 * (off_t) DVD_VIDEO_LB_LEN, SEEK_SET );
-      if( off == ( 32 * (off_t) DVD_VIDEO_LB_LEN ) ) {
-        off = read( fd, data, DVD_VIDEO_LB_LEN );
-        close(fd);
-        if (off == ( (off_t) DVD_VIDEO_LB_LEN )) {
-          fprintf(MSG_OUT, "libdvdnav: DVD Title: ");
-          for(i=25; i < 73; i++ ) {
-            if((data[i] == 0)) break;
-            if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(MSG_OUT, "%c", data[i]);
-            } else {
-              fprintf(MSG_OUT, " ");
-            }
-          }
-          strncpy(name, (char*) &data[25], 48);
-          name[48] = 0;
-          fprintf(MSG_OUT, "\nlibdvdnav: DVD Serial Number: ");
-          for(i=73; i < 89; i++ ) {
-            if((data[i] == 0)) break;
-            if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(MSG_OUT, "%c", data[i]);
-            } else {
-              fprintf(MSG_OUT, " ");
-            }
-          }
-          strncpy(serial, (char*) &data[73], (i-73));
-          serial[14] = 0;
-          fprintf(MSG_OUT, "\nlibdvdnav: DVD Title (Alternative): ");
-          for(i=89; i < 128; i++ ) {
-            if((data[i] == 0)) break;
-            if((data[i] > 32) && (data[i] < 127)) {
-              fprintf(MSG_OUT, "%c", data[i]);
-            } else {
-              fprintf(MSG_OUT, " ");
-            }
-          }
-          fprintf(MSG_OUT, "\n");
-        } else {
-          fprintf(MSG_OUT, "libdvdnav: Can't read name block. Probably not a DVD-ROM device.\n");
-        }
-      } else {
-        fprintf(MSG_OUT, "libdvdnav: Can't seek to block %u\n", 32 );
-      }
-      close(fd);
-    } else {
-    fprintf(MSG_OUT, "NAME OPEN FAILED\n");
+  /* Read DVD name */
+  if (device == NULL) {
+    fprintf(MSG_OUT, "libdvdnav: Device name string NULL\n");
+    goto fail;
   }
+  if ((fd = open(device, O_RDONLY)) == -1) {
+    fprintf(MSG_OUT, "libdvdnav: Unable to open device file %s.\n", device);
+    goto fail;
+  }
+
+  if ((off = lseek( fd, 32 * (off_t) DVD_VIDEO_LB_LEN, SEEK_SET )) == (off_t) - 1) {
+    fprintf(MSG_OUT, "libdvdnav: Unable to seek to the title block %u.\n", 32);
+    goto fail;
+  }
+
+  if( off != ( 32 * (off_t) DVD_VIDEO_LB_LEN ) ) {
+    fprintf(MSG_OUT, "libdvdnav: Can't seek to block %u\n", 32 );
+    goto fail;
+  }
+
+  if ((read_size = read( fd, data, DVD_VIDEO_LB_LEN )) == -1) {
+    fprintf(MSG_OUT, "libdvdnav: Can't read name block. Probably not a DVD-ROM device.\n");
+    goto fail;
+  }
+
+  close(fd);
+  fd = -1;
+  if (read_size != DVD_VIDEO_LB_LEN) {
+    fprintf(MSG_OUT, "libdvdnav: Can't read name block. Probably not a DVD-ROM device.\n");
+    goto fail;
+  }
+
+  fprintf(MSG_OUT, "libdvdnav: DVD Title: ");
+  for(i=25; i < 73; i++ ) {
+    if((data[i] == 0)) break;
+    if((data[i] > 32) && (data[i] < 127)) {
+      fprintf(MSG_OUT, "%c", data[i]);
+    } else {
+      fprintf(MSG_OUT, " ");
+    }
+  }
+  strncpy(name, (char*) &data[25], 48);
+  name[48] = 0;
+  fprintf(MSG_OUT, "\nlibdvdnav: DVD Serial Number: ");
+  for(i=73; i < 89; i++ ) {
+    if((data[i] == 0)) break;
+    if((data[i] > 32) && (data[i] < 127)) {
+      fprintf(MSG_OUT, "%c", data[i]);
+    } else {
+      fprintf(MSG_OUT, " ");
+    }
+  }
+  strncpy(serial, (char*) &data[73], (i-73));
+  serial[14] = 0;
+  fprintf(MSG_OUT, "\nlibdvdnav: DVD Title (Alternative): ");
+  for(i=89; i < 128; i++ ) {
+    if((data[i] == 0)) break;
+    if((data[i] > 32) && (data[i] < 127)) {
+      fprintf(MSG_OUT, "%c", data[i]);
+    } else {
+      fprintf(MSG_OUT, " ");
+    }
+  }
+  fprintf(MSG_OUT, "\n");
+  return 1;
+
+fail:
+  if (fd >= 0)
+    close(fd);
+
+  return 0;
 }
 
 static int ifoOpenNewVTSI(vm_t *vm, dvd_reader_t *dvd, int vtsN) {
