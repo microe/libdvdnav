@@ -640,7 +640,11 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
       goto fail;
     }
 
-    cellnr = pgc->program_map[ptt[i].pgn-1];
+    if ((cellnr = pgc->program_map[ptt[i].pgn-1]) == 0) {
+      printerr("Cell new row cannot be 0");
+      continue;
+    }
+
     if(ptt[i].pgn < pgc->nr_of_programs)
       endcellnr = pgc->program_map[ptt[i].pgn];
     else
