@@ -27,7 +27,8 @@ libdvdnav_la_LDFLAGS = \
 libdvdnavmini_la_SOURCES = $(libdvdnav_la_SOURCES)
 
 libdvdnavmini_la_LIBADD = $(THREAD_LIBS) \
-	$(top_builddir)/src/vm/libdvdvm.la
+	$(top_builddir)/src/vm/libdvdvm.la \
+	-ldvdread
 
 libdvdnavmini_la_LDFLAGS = $(libdvdnav_la_LDFLAGS)
 
