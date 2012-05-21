@@ -101,8 +101,8 @@ static int get_PGCN(vm_t *vm);
 static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang);
 static pgcit_t* get_PGCIT(vm_t *vm);
 
-
 /* Helper functions */
+static void vm_close(vm_t *vm);
 
 #ifdef TRACE
 static void vm_print_current_domain_state(vm_t *vm) {
@@ -323,6 +323,10 @@ int vm_start(vm_t *vm) {
 }
 
 void vm_stop(vm_t *vm) {
+  vm->stopped = 1;
+}
+
+static void vm_close(vm_t *vm) {
   if(vm->vmgi) {
     ifoClose(vm->vmgi);
     vm->vmgi=NULL;
