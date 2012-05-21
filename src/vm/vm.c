@@ -290,7 +290,7 @@ vm_t* vm_new_vm() {
 }
 
 void vm_free_vm(vm_t *vm) {
-  vm_stop(vm);
+  vm_close(vm);
   free(vm);
 }
 
@@ -378,7 +378,7 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
 
   if (vm->dvd && dvdroot) {
     /* a new dvd device has been requested */
-    vm_stop(vm);
+    vm_close(vm);
   }
   if (!vm->dvd) {
     vm->dvd = DVDOpen(dvdroot);
