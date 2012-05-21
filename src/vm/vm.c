@@ -316,6 +316,12 @@ dvd_reader_t *vm_get_dvd_reader(vm_t *vm) {
 /* Basic Handling */
 
 int vm_start(vm_t *vm) {
+  if (vm->stopped) {
+    if (!vm_reset(vm, NULL))
+      return 0;
+
+    vm->stopped = 0;
+  }
   /* Set pgc to FP (First Play) pgc */
   set_FP_PGC(vm);
   process_command(vm, play_PGC(vm));
