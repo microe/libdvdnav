@@ -71,6 +71,67 @@ static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   return DVDNAV_STATUS_OK;
 }
 
+dvdnav_status_t dvdnav_dup(dvdnav_t **dest, dvdnav_t *src) {
+  dvdnav_t *this;
+
+  (*dest) = NULL;
+  this = (dvdnav_t*)malloc(sizeof(dvdnav_t));
+  if(!this)
+    return DVDNAV_STATUS_ERR;
+
+  memcpy(this, src, sizeof(dvdnav_t));
+  this->file = NULL;
+
+  pthread_mutex_init(&this->vm_lock, NULL);
+
+  this->vm = vm_new_copy(src->vm);
+  if(!this->vm) {
+    printerr("Error initialising the DVD VM.");
+    pthread_mutex_destroy(&this->vm_lock);
+    free(this);
+    return DVDNAV_STATUS_ERR;
+  }
+
+  /* Start the read-ahead cache. */
+  this->cache = dvdnav_read_cache_new(this);
+
+  (*dest) = this;
+  return DVDNAV_STATUS_OK;
+}
+
+dvdnav_status_t dvdnav_free_dup(dvdnav_t *this) {
+
+#ifdef LOG_DEBUG
+  fprintf(MSG_OUT, "libdvdnav: free_dup:called\n");
+#endif
+
+  if (this->file) {
+    pthread_mutex_lock(&this->vm_lock);
+    DVDCloseFile(this->file);
+#ifdef LOG_DEBUG
+    fprintf(MSG_OUT, "libdvdnav: close:file closing\n");
+#endif
+    this->file = NULL;
+    pthread_mutex_unlock(&this->vm_lock);
+  }
+
+  /* Free the VM */
+  if(this->vm)
+    vm_free_copy(this->vm);
+
+  pthread_mutex_destroy(&this->vm_lock);
+
+  /* We leave the final freeing of the entire structure to the cache,
+   * because we don't know, if there are still buffers out in the wild,
+   * that must return first. */
+  if(this->cache)
+    dvdnav_read_cache_free(this->cache);
+  else
+    free(this);
+
+  return DVDNAV_STATUS_OK;
+}
+
 dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
   dvdnav_t *this;
   struct timeval time;
