@@ -580,8 +580,10 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
     return DVDNAV_STATUS_OK;
   }
 
-  /* Check to see if we need to change the currently opened VOB */
-  if((this->position_current.vts != this->position_next.vts) ||
+  /* Check to see if we need to change the currently opened VOB or open
+   * a new one because we don't currently have an opened VOB. */
+  if((this->file == NULL) ||
+     (this->position_current.vts != this->position_next.vts) ||
      (this->position_current.domain != this->position_next.domain)) {
     dvd_read_domain_t domain;
     int32_t vtsN;
