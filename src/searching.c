@@ -634,6 +634,10 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
   length = 0;
   for(i=0; i<parts; i++) {
     uint32_t cellnr, endcellnr;
+    if (ifo->vts_pgcit->pgci_srp[ptt[i].pgcn-1].pgc_start_byte >= ifo->vts_pgcit->last_byte) {
+      printerr("PGC start out of bounds");
+      continue;
+    }
     pgc = ifo->vts_pgcit->pgci_srp[ptt[i].pgcn-1].pgc;
     if (pgc == NULL) {
       printerr("PGC missing.");
