@@ -648,6 +648,10 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
       goto fail;
     }
 
+    if (pgc->nr_of_cells == 0) {
+      printerr("Number of cells cannot be 0");
+      continue;
+    }
     if ((cellnr = pgc->program_map[ptt[i].pgn-1]) == 0) {
       printerr("Cell new row cannot be 0");
       continue;
