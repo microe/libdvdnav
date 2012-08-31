@@ -23,15 +23,6 @@
 #ifndef LIBDVDNAV_VM_H
 #define LIBDVDNAV_VM_H
 
-/* DOMAIN enum */
-
-typedef enum {
-  FP_DOMAIN   = 1,
-  VTS_DOMAIN  = 2,
-  VMGM_DOMAIN = 4,
-  VTSM_DOMAIN = 8
-} domain_t;
-
 /**
  * State: SPRM, GPRM, Domain, pgc, pgN, cellN, ?
  */
