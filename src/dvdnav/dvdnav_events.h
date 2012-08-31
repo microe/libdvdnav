@@ -118,9 +118,9 @@ typedef struct {
 
 typedef struct {
   int old_vtsN;                 /* the old VTS number */
-  dvd_read_domain_t old_domain; /* the old domain */
+  domain_t old_domain;          /* the old domain */
   int new_vtsN;                 /* the new VTS number */
-  dvd_read_domain_t new_domain; /* the new domain */
+  domain_t new_domain;          /* the new domain */
 } dvdnav_vts_change_event_t;
 
 
