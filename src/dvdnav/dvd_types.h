@@ -44,10 +44,10 @@ typedef enum {
 
 /* Domain */
 typedef enum {
-  FP_DOMAIN   = 1,  /* First Play Domain */
-  VTS_DOMAIN  = 2,  /* Video Title Set Domain */
-  VMGM_DOMAIN = 4,  /* Video Manager Domain */
-  VTSM_DOMAIN = 8   /* Video Title Set Menu Domain */
+  DVD_DOMAIN_FirstPlay = 1,  /* First Play Domain */
+  DVD_DOMAIN_VTSTitle  = 2,  /* Video Title Set Domain */
+  DVD_DOMAIN_VMGM      = 4,  /* Video Manager Domain */
+  DVD_DOMAIN_VTSMenu   = 8   /* Video Title Set Menu Domain */
 } DVDDomain_t;
 
 /*
