@@ -1141,7 +1141,7 @@ int8_t dvdnav_get_active_spu_stream(dvdnav_t *this) {
   return retval;
 }
 
-static int8_t dvdnav_is_domain(dvdnav_t *this, domain_t domain) {
+static int8_t dvdnav_is_domain(dvdnav_t *this, DVDDomain_t domain) {
   int8_t        retval;
 
   if(!this->started) {
