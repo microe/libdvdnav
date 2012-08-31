@@ -58,14 +58,14 @@ static dvdnav_status_t dvdnav_scan_admap(dvdnav_t *this, int32_t domain, uint32_
   /* Search through the VOBU_ADMAP for the nearest VOBU
    * to the target block */
   switch(domain) {
-  case FP_DOMAIN:
-  case VMGM_DOMAIN:
+  case DVD_DOMAIN_FirstPlay:
+  case DVD_DOMAIN_VMGM:
     admap = this->vm->vmgi->menu_vobu_admap;
     break;
-  case VTSM_DOMAIN:
+  case DVD_DOMAIN_VTSMenu:
     admap = this->vm->vtsi->menu_vobu_admap;
     break;
-  case VTS_DOMAIN:
+  case DVD_DOMAIN_VTSTitle:
     admap = this->vm->vtsi->vts_vobu_admap;
     break;
   default:
@@ -472,7 +472,7 @@ dvdnav_status_t dvdnav_menu_call(dvdnav_t *this, DVDMenuID_t menu) {
     goto fail;
   }
 
-  if ( (menu == DVD_MENU_Escape) && (this->vm->state.domain != VTS_DOMAIN)) {
+  if ( (menu == DVD_MENU_Escape) && (this->vm->state.domain != DVD_DOMAIN_VTSTitle)) {
     /* Try resume */
     if (vm_jump_resume(try_vm) && !try_vm->stopped) {
         /* merge changes on success */
