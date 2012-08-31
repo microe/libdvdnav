@@ -29,7 +29,7 @@
 typedef struct {
   registers_t registers;
 
-  domain_t  domain;
+  DVDDomain_t  domain;
   int       vtsN;         /* 0 is vmgm? */
   pgc_t    *pgc;          /* either this or 'int pgcN' is enough? */
   int       pgcN;         /* but provide pgcN for quick lookup */
@@ -49,7 +49,7 @@ typedef struct {
 typedef struct vm_position_s {
   int16_t  button;        /* Button highlighted */
   int32_t  vts;           /* vts number to use */
-  domain_t domain;        /* domain to use */
+  DVDDomain_t domain;     /* domain to use */
   int32_t  spu_channel;   /* spu channel to use */
   int32_t  angle_channel; /* angle channel to use */
   int32_t  audio_channel; /* audio channel to use */
