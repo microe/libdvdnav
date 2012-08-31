@@ -69,15 +69,6 @@ typedef struct {
 
 #if 0
 
-/* Domain */
-typedef enum {
-  DVD_DOMAIN_FirstPlay,  /* First Play Domain */
-  DVD_DOMAIN_VMG,        /* Video Manager Domain */
-  DVD_DOMAIN_VTSMenu,    /* Video Title Set Menu Domain */
-  DVD_DOMAIN_VTSTitle,   /* Video Title Set Domain */
-  DVD_DOMAIN_Stop        /* Stop Domain */
-} DVDDomain_t;
-
 /* User operation permissions */
 typedef enum {
   UOP_FLAG_TitleOrTimePlay            = 0x00000001,
