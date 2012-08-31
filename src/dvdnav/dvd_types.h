@@ -42,6 +42,13 @@ typedef enum {
   DVD_MENU_Part       = 7
 } DVDMenuID_t;
 
+/* Domain */
+typedef enum {
+  FP_DOMAIN   = 1,
+  VTS_DOMAIN  = 2,
+  VMGM_DOMAIN = 4,
+  VTSM_DOMAIN = 8
+} domain_t;
 
 /*
  * Structure containing info on highlight areas
