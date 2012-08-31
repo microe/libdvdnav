@@ -599,16 +599,16 @@ dvdnav_status_t dvdnav_get_next_cache_block(dvdnav_t *this, uint8_t **buf,
 
     /* Use the DOMAIN to find whether to open menu or title VOBs */
     switch(this->position_next.domain) {
-    case FP_DOMAIN:
-    case VMGM_DOMAIN:
+    case DVD_DOMAIN_FirstPlay:
+    case DVD_DOMAIN_VMGM:
       domain = DVD_READ_MENU_VOBS;
       vtsN = 0;
       break;
-    case VTSM_DOMAIN:
+    case DVD_DOMAIN_VTSMenu:
       domain = DVD_READ_MENU_VOBS;
       vtsN = this->position_next.vts;
       break;
-    case VTS_DOMAIN:
+    case DVD_DOMAIN_VTSTitle:
       domain = DVD_READ_TITLE_VOBS;
       vtsN = this->position_next.vts;
       break;
@@ -1158,19 +1158,19 @@ static int8_t dvdnav_is_domain(dvdnav_t *this, DVDDomain_t domain) {
 
 /* First Play domain. (Menu) */
 int8_t dvdnav_is_domain_fp(dvdnav_t *this) {
-  return dvdnav_is_domain(this, FP_DOMAIN);
+  return dvdnav_is_domain(this, DVD_DOMAIN_FirstPlay);
 }
 /* Video management Menu domain. (Menu) */
 int8_t dvdnav_is_domain_vmgm(dvdnav_t *this) {
-  return dvdnav_is_domain(this, VMGM_DOMAIN);
+  return dvdnav_is_domain(this, DVD_DOMAIN_VMGM);
 }
 /* Video Title Menu domain (Menu) */
 int8_t dvdnav_is_domain_vtsm(dvdnav_t *this) {
-  return dvdnav_is_domain(this, VTSM_DOMAIN);
+  return dvdnav_is_domain(this, DVD_DOMAIN_VTSMenu);
 }
 /* Video Title domain (playing movie). */
 int8_t dvdnav_is_domain_vts(dvdnav_t *this) {
-  return dvdnav_is_domain(this, VTS_DOMAIN);
+  return dvdnav_is_domain(this, DVD_DOMAIN_VTSTitle);
 }
 
 /* Generally delegate angle information handling to VM */

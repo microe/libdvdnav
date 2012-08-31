@@ -99,8 +99,8 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int32_t *title, int32_
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
-  if ( (this->vm->state.domain == VTSM_DOMAIN)
-      || (this->vm->state.domain == VMGM_DOMAIN) ) {
+  if ( (this->vm->state.domain == DVD_DOMAIN_VTSMenu)
+      || (this->vm->state.domain == DVD_DOMAIN_VMGM) ) {
     /* Get current Menu ID: into *part. */
     if(! vm_get_current_menu(this->vm, part)) {
       pthread_mutex_unlock(&this->vm_lock);
@@ -112,7 +112,7 @@ dvdnav_status_t dvdnav_current_title_info(dvdnav_t *this, int32_t *title, int32_
       return DVDNAV_STATUS_OK;
     }
   }
-  if (this->vm->state.domain == VTS_DOMAIN) {
+  if (this->vm->state.domain == DVD_DOMAIN_VTSTitle) {
     retval = vm_get_current_title_part(this->vm, title, part);
     pthread_mutex_unlock(&this->vm_lock);
     return retval ? DVDNAV_STATUS_OK : DVDNAV_STATUS_ERR;
@@ -142,8 +142,8 @@ dvdnav_status_t dvdnav_current_title_program(dvdnav_t *this, int32_t *title, int
     pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
-  if ( (this->vm->state.domain == VTSM_DOMAIN)
-      || (this->vm->state.domain == VMGM_DOMAIN) ) {
+  if ( (this->vm->state.domain == DVD_DOMAIN_VTSMenu)
+      || (this->vm->state.domain == DVD_DOMAIN_VMGM) ) {
     /* Get current Menu ID: into *part. */
     if(! vm_get_current_menu(this->vm, &part)) {
       pthread_mutex_unlock(&this->vm_lock);
@@ -157,7 +157,7 @@ dvdnav_status_t dvdnav_current_title_program(dvdnav_t *this, int32_t *title, int
       return DVDNAV_STATUS_OK;
     }
   }
-  if (this->vm->state.domain == VTS_DOMAIN) {
+  if (this->vm->state.domain == DVD_DOMAIN_VTSTitle) {
     retval = vm_get_current_title_part(this->vm, title, &part);
     *pgcn = this->vm->state.pgcN;
     *pgn = this->vm->state.pgN;
