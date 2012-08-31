@@ -48,7 +48,7 @@ typedef enum {
   VTS_DOMAIN  = 2,  /* Video Title Set Domain */
   VMGM_DOMAIN = 4,  /* Video Manager Domain */
   VTSM_DOMAIN = 8   /* Video Title Set Menu Domain */
-} domain_t;
+} DVDDomain_t;
 
 /*
  * Structure containing info on highlight areas
