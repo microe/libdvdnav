@@ -638,7 +638,7 @@ int vm_jump_up(vm_t *vm) {
 }
 
 int vm_jump_menu(vm_t *vm, DVDMenuID_t menuid) {
-  domain_t old_domain = (vm->state).domain;
+  DVDDomain_t old_domain = (vm->state).domain;
 
   switch ((vm->state).domain) {
   case VTS_DOMAIN:
