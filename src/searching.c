@@ -548,6 +548,8 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
   *len = 0;
   for (cell_nr = first_cell_nr; cell_nr <= last_cell_nr; cell_nr++) {
     cell = &(state->pgc->cell_playback[cell_nr-1]);
+    if(cell->block_type == BLOCK_TYPE_ANGLE_BLOCK && cell->block_mode != BLOCK_MODE_FIRST_CELL)
+        continue;
     if (cell_nr == state->cellN) {
       /* the current sector is in this cell,
        * pos is length of PG up to here + sector's offset in this cell */
