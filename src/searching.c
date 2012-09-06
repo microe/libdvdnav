@@ -182,7 +182,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 }
 
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
-				     uint64_t offset, int32_t origin) {
+				     int64_t offset, int32_t origin) {
   uint32_t target = 0;
   uint32_t current_pos;
   uint32_t cur_sector;
