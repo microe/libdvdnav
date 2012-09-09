@@ -182,7 +182,7 @@ dvdnav_status_t dvdnav_time_search(dvdnav_t *this,
 }
 
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
-				     uint64_t offset, int32_t origin) {
+				     int64_t offset, int32_t origin) {
   uint32_t target = 0;
   uint32_t current_pos;
   uint32_t cur_sector;
@@ -213,7 +213,7 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     return DVDNAV_STATUS_ERR;
   }
 #ifdef LOG_DEBUG
-  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lu pos=%u length=%u\n", offset, target, length);
+  fprintf(MSG_OUT, "libdvdnav: seeking to offset=%lld pos=%u length=%u\n", offset, target, length);
   fprintf(MSG_OUT, "libdvdnav: Before cellN=%u blockN=%u\n", state->cellN, state->blockN);
 #endif
 
@@ -231,8 +231,13 @@ dvdnav_status_t dvdnav_sector_search(dvdnav_t *this,
     target = offset;
     break;
    case SEEK_CUR:
-    if(target + offset >= length) {
+    if((signed)target + offset >= length) {
       printerr("Request to seek behind end.");
+      pthread_mutex_unlock(&this->vm_lock);
+      return DVDNAV_STATUS_ERR;
+    }
+    if((signed)target + offset < 0) {
+      printerr("Request to seek before start.");
       pthread_mutex_unlock(&this->vm_lock);
       return DVDNAV_STATUS_ERR;
     }
@@ -548,6 +553,8 @@ dvdnav_status_t dvdnav_get_position(dvdnav_t *this, uint32_t *pos,
   *len = 0;
   for (cell_nr = first_cell_nr; cell_nr <= last_cell_nr; cell_nr++) {
     cell = &(state->pgc->cell_playback[cell_nr-1]);
+    if(cell->block_type == BLOCK_TYPE_ANGLE_BLOCK && cell->block_mode != BLOCK_MODE_FIRST_CELL)
+        continue;
     if (cell_nr == state->cellN) {
       /* the current sector is in this cell,
        * pos is length of PG up to here + sector's offset in this cell */
