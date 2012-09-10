@@ -373,7 +373,7 @@ dvdnav_status_t dvdnav_part_search(dvdnav_t *self, int32_t part);
  * fcntl.h.
  */
 dvdnav_status_t dvdnav_sector_search(dvdnav_t *self,
-				     uint64_t offset, int32_t origin);
+				     int64_t offset, int32_t origin);
 
 /*
  returns the current stream time in PTS ticks as reported by the IFO structures
