@@ -180,6 +180,13 @@ case $host in
 esac
 
 dnl ---------------------------------------------
+dnl option for examples
+dnl ---------------------------------------------
+AC_ARG_ENABLE([examples], [  --disable-examples    disable examples],
+    [ enable_examples=$enableval ], [ enable_examples=yes ] )
+AM_CONDITIONAL(DVDNAV_ENABLE_EXAMPLES, [test "x${enable_examples}" != xno])
+
+dnl ---------------------------------------------
 dnl libdvdread
 dnl ---------------------------------------------
 AC_ARG_WITH([dvdread-config],
