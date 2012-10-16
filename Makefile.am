@@ -1,7 +1,13 @@
 include $(top_srcdir)/misc/Makefile.common
 
 
-SUBDIRS = src examples doc misc m4
+if DVDNAV_ENABLE_EXAMPLES
+EXAMPLES_DIR = examples
+else
+EXAMPLES_DIR =
+endif
+
+SUBDIRS = src $(EXAMPLES_DIR) doc misc m4
 
 EXTRA_DIST = autogen.sh \
 	     AUTHORS \
