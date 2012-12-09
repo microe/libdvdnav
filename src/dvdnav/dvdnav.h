@@ -281,7 +281,7 @@ dvdnav_status_t dvdnav_part_play(dvdnav_t *self, int32_t title, int32_t part);
 /*
  * Plays the specified title, starting from the specified program
  */
-dvdnav_status_t dvdnav_program_play(dvdnav_t *this, int32_t title, int32_t pgcn, int32_t pgn);
+dvdnav_status_t dvdnav_program_play(dvdnav_t *self, int32_t title, int32_t pgcn, int32_t pgn);
 
 /*
  * Stores in *times an array (that the application *must* free) of
