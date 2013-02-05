@@ -1762,7 +1762,7 @@ static int set_PGCN(vm_t *vm, int pgcN) {
   pgcit_t *pgcit;
 
   pgcit = get_PGCIT(vm);
-  if (pgcit != NULL)
+  if (pgcit == NULL)
     return 0;
 
   if(pgcN < 1 || pgcN > pgcit->nr_of_pgci_srp) {
