@@ -385,7 +385,8 @@ int64_t dvdnav_get_current_time(dvdnav_t *self);
  * Stop playing the current position and start playback of the title
  * from the specified timecode.
  *
- * Currently unimplemented!
+ * Currently implemented using interpolation. That interpolation is slightly
+ * inaccurate.
  */
 dvdnav_status_t dvdnav_time_search(dvdnav_t *self,
 				   uint64_t time);
