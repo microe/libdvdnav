@@ -64,6 +64,17 @@ typedef struct {
   uint32_t buttonN;
 } dvdnav_highlight_area_t;
 
+/* The audio format */
+typedef enum {
+  DVD_AUDIO_FORMAT_AC3        = 0,
+  DVD_AUDIO_FORMAT_UNKNOWN_1  = 1,
+  DVD_AUDIO_FORMAT_MPEG       = 2,
+  DVD_AUDIO_FORMAT_MPEG2_EXT  = 3,
+  DVD_AUDIO_FORMAT_LPCM       = 4,
+  DVD_AUDIO_FORMAT_UNKNOWN_5  = 5,
+  DVD_AUDIO_FORMAT_DTS        = 6,
+  DVD_AUDIO_FORMAT_SDDS       = 7
+} DVDAudioFormat_t;
 
 /* the following types are currently unused */
 
@@ -155,19 +166,6 @@ typedef enum {
   DVD_AUDIO_APP_MODE_Surround = 2,
   DVD_AUDIO_APP_MODE_Other    = 3
 } DVDAudioAppMode_t;
-
-/* The audio format */
-typedef enum {
-  DVD_AUDIO_FORMAT_AC3       = 0,
-  DVD_AUDIO_FORMAT_MPEG1     = 1,
-  DVD_AUDIO_FORMAT_MPEG1_DRC = 2,
-  DVD_AUDIO_FORMAT_MPEG2     = 3,
-  DVD_AUDIO_FORMAT_MPEG2_DRC = 4,
-  DVD_AUDIO_FORMAT_LPCM      = 5,
-  DVD_AUDIO_FORMAT_DTS       = 6,
-  DVD_AUDIO_FORMAT_SDDS      = 7,
-  DVD_AUDIO_FORMAT_Other     = 8
-} DVDAudioFormat_t;
 
 /* Audio language extension */
 typedef enum {
