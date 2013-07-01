@@ -382,6 +382,8 @@ int vm_reset(vm_t *vm, const char *dvdroot) {
 
   (vm->state).vtsN               = -1;
 
+  vm->hop_channel                = 0;
+
   if (vm->dvd && dvdroot) {
     /* a new dvd device has been requested */
     vm_close(vm);
