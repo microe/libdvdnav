@@ -972,20 +972,20 @@ uint16_t dvdnav_audio_stream_format(dvdnav_t *this, uint8_t stream) {
 
   switch(attr.audio_format) {
   case 0:
-    format = DVDNAV_FORMAT_AC3;
+    format = DVD_AUDIO_FORMAT_AC3;
     break;
   case 2: /* MPEG-1 or MPEG-2 without extension bitstream. */
   case 3: /* MPEG-2 with extension bitstream. */
-    format = DVDNAV_FORMAT_MPEGAUDIO;
+    format = DVD_AUDIO_FORMAT_MPEG2_EXT;
     break;
   case 4:
-    format = DVDNAV_FORMAT_LPCM;
+    format = DVD_AUDIO_FORMAT_LPCM;
     break;
   case 6:
-    format = DVDNAV_FORMAT_DTS;
+    format = DVD_AUDIO_FORMAT_DTS;
     break;
   case 7:
-    format = DVDNAV_FORMAT_SDDS;
+    format = DVD_AUDIO_FORMAT_SDDS;
     break;
   default:
     format = 0xffff;
