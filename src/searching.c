@@ -650,6 +650,10 @@ uint32_t dvdnav_describe_title_chapters(dvdnav_t *this, int32_t title, uint64_t 
       printerr("PGC missing.");
       continue;
     }
+    if (pgc->program_map == NULL) {
+      printerr("Program map missing.");
+      continue;
+    }
     if(ptt[i].pgn > pgc->nr_of_programs) {
       printerr("WRONG part number.");
       goto fail;
